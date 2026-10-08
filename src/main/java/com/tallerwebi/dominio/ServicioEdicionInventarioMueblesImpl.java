@@ -38,7 +38,8 @@ public class ServicioEdicionInventarioMueblesImpl implements ServicioEdicionInve
     this.inventario.removeIf(mueble -> mueble.getId() == id);
   }
 
-  private Mueble buscarPorId(int id) throws MuebleNoEncontrado {
+  @Override
+  public Mueble buscarPorId(int id) throws MuebleNoEncontrado {
     for (Mueble mueble : this.inventario) {
       if (mueble.getId() == id) {
         return mueble;

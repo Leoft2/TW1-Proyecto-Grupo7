@@ -6,4 +6,6 @@ public interface ServicioEdicionInventarioMuebles {
   void actualizar(int id, Mueble datos) throws MuebleNoEncontrado;
 
   void eliminar(int id) throws MuebleNoEncontrado;
+
+  Mueble buscarPorId(int id) throws MuebleNoEncontrado;
 }

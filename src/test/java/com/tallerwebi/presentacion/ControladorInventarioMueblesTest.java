@@ -8,6 +8,7 @@ import static org.mockito.Mockito.*;
 import com.tallerwebi.dominio.Estilo;
 import com.tallerwebi.dominio.Mueble;
 import com.tallerwebi.dominio.ServicioEdicionInventarioMuebles;
+import com.tallerwebi.dominio.ServicioPlano2D;
 import com.tallerwebi.dominio.excepcion.MuebleNoEncontrado;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,13 +23,23 @@ Criterios de aceptación:
 public class ControladorInventarioMueblesTest {
 
   private ServicioEdicionInventarioMuebles servicioEdicionInventarioMuebles;
+  private ServicioPlano2D servicioPlano2D;
   private ControladorInventarioMuebles controladorInventarioMuebles;
 
   @BeforeEach
   public void init() {
     servicioEdicionInventarioMuebles = mock(ServicioEdicionInventarioMuebles.class);
+    servicioPlano2D = mock(ServicioPlano2D.class);
+    com.tallerwebi.dominio.ServicioCategoriaDeMueble servicioCategoriaDeMueble = mock(
+      com.tallerwebi.dominio.ServicioCategoriaDeMueble.class
+    );
+    when(servicioCategoriaDeMueble.obtenerCategorias()).thenReturn(new java.util.ArrayList<>());
     controladorInventarioMuebles =
-      new ControladorInventarioMuebles(servicioEdicionInventarioMuebles);
+      new ControladorInventarioMuebles(
+        servicioEdicionInventarioMuebles,
+        servicioPlano2D,
+        servicioCategoriaDeMueble
+      );
   }
 
   @Test
@@ -107,6 +118,131 @@ public class ControladorInventarioMueblesTest {
   }
 
   @Test
+  public void deberiaMostrarElPlanoCuandoConfirmoElInventarioDesdeElFormulario() {
+    // Given
+    givenAmbienteYInventarioListos();
+
+    // When
+    ModelAndView mav = whenConfirmoElInventario();
+
+    // Then
+    thenLaVistaEsPlanoInteractivo(mav);
+  }
+
+  @Test
+  public void deberiaDelegarElPlanoAlServicioCuandoConfirmoElInventario() {
+    // Given
+    givenAmbienteYInventarioListos();
+
+    // When
+    whenConfirmoElInventario();
+
+    // Then
+    thenElServicioRecibeElAmbienteYLosMuebles();
+  }
+
+  private void givenAmbienteYInventarioListos() {
+    Mueble silla = new Mueble("Silla", 0.5, 0.5);
+    java.util.List<Mueble> muebles = new java.util.ArrayList<>();
+    muebles.add(silla);
+    when(servicioEdicionInventarioMuebles.listar()).thenReturn(muebles);
+    when(
+      servicioPlano2D.generarPlano(
+        org.mockito.ArgumentMatchers.any(com.tallerwebi.dominio.Ambiente.class),
+        org.mockito.ArgumentMatchers.anyList()
+      )
+    )
+      .thenReturn(
+        new com.tallerwebi.dominio.Plano(
+          new com.tallerwebi.dominio.Ambiente(4.0, 3.0),
+          new java.util.ArrayList<>(),
+          new java.util.ArrayList<>(),
+          new java.util.ArrayList<>()
+        )
+      );
+  }
+
+  private ModelAndView whenConfirmoElInventario() {
+    return controladorInventarioMuebles.generarPlano(4.0, 3.0);
+  }
+
+  private void thenLaVistaEsPlanoInteractivo(ModelAndView mav) {
+    assertEquals("plano-interactivo", mav.getViewName());
+  }
+
+  private void thenElServicioRecibeElAmbienteYLosMuebles() {
+    org.mockito.ArgumentCaptor<com.tallerwebi.dominio.Ambiente> captor =
+      org.mockito.ArgumentCaptor.forClass(com.tallerwebi.dominio.Ambiente.class);
+    verify(servicioPlano2D).generarPlano(captor.capture(), org.mockito.ArgumentMatchers.anyList());
+    assertEquals(4.0, captor.getValue().getAncho());
+  }
+
+  @Test
+  public void deberiaCrearElMuebleCuandoLoAgregoDesdeElFormulario() {
+    // Given
+    Mueble muebleNuevo = new Mueble("Mesa ratona", 1.2, 0.6);
+
+    // When
+    whenAgregoElMueble(muebleNuevo);
+
+    // Then
+    thenElControllerCreaElMueble(muebleNuevo);
+  }
+
+  private void whenAgregoElMueble(Mueble mueble) {
+    controladorInventarioMuebles.agregar(mueble);
+  }
+
+  private void thenElControllerCreaElMueble(Mueble mueble) {
+    verify(servicioEdicionInventarioMuebles).crear(mueble);
+  }
+
+  @Test
+  public void deberiaMostrarLaVistaInventarioCuandoSolicitoLaPagina() {
+    // Given
+    // Sin datos de entrada: abrir el inventario no necesita ningun mueble cargado.
+
+    // When
+    ModelAndView mav = whenSolicitoElInventario();
+
+    // Then
+    thenLaVistaEsInventario(mav);
+  }
+
+  @Test
+  public void deberiaPasarLosMueblesAlModeloCuandoSolicitoElInventario() {
+    // Given
+    givenInventarioConDosMuebles();
+
+    // When
+    ModelAndView mav = whenSolicitoElInventario();
+
+    // Then
+    thenElModeloTieneLosDosMuebles(mav);
+  }
+
+  private void givenInventarioConDosMuebles() {
+    Mueble mesa = new Mueble("Mesa", 1.0, 0.8);
+    Mueble silla = new Mueble("Silla", 0.5, 0.5);
+    java.util.List<Mueble> dos = new java.util.ArrayList<>();
+    dos.add(mesa);
+    dos.add(silla);
+    when(servicioEdicionInventarioMuebles.listar()).thenReturn(dos);
+  }
+
+  private ModelAndView whenSolicitoElInventario() {
+    return controladorInventarioMuebles.irAInventario(4.0, 3.0);
+  }
+
+  private void thenLaVistaEsInventario(ModelAndView mav) {
+    assertEquals("inventario-muebles", mav.getViewName());
+  }
+
+  private void thenElModeloTieneLosDosMuebles(ModelAndView mav) {
+    assertEquals(2, ((java.util.List<?>) mav.getModel().get("muebles")).size());
+  }
+
+  @Test
   public void deberiaEliminarElMuebleCuandoConfirmoLaEliminacion() throws MuebleNoEncontrado {
     // Given
     // El mueble existe en el inventario; el servicio no lanza error al eliminar.
@@ -175,7 +311,7 @@ public class ControladorInventarioMueblesTest {
   }
 
   private void whenMuestroLaConfirmacionDeEliminacion() throws MuebleNoEncontrado {
-    controladorInventarioMuebles.irAConfirmarEliminacion(1);
+    controladorInventarioMuebles.irAConfirmarEliminacion(1, 4.0, 3.0);
   }
 
   private ModelAndView whenEliminoElMuebleDesdeElController() throws MuebleNoEncontrado {
@@ -183,7 +319,7 @@ public class ControladorInventarioMueblesTest {
   }
 
   private ModelAndView whenSolicitoElFormularioDeEdicion() throws MuebleNoEncontrado {
-    return controladorInventarioMuebles.irAEditar(1);
+    return controladorInventarioMuebles.irAEditar(1, 4.0, 3.0);
   }
 
   private void whenActualizoElMuebleDesdeElController(Mueble datos) throws MuebleNoEncontrado {

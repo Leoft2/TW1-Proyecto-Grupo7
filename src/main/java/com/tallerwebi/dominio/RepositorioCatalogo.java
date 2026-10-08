@@ -6,4 +6,5 @@ public interface RepositorioCatalogo {
   void guardarMueble(Mueble mueble);
   List<Mueble> ObtenerTodosLosMuebles();
   Mueble ObtenerMueblePorId(int id);
+  void eliminar(int id);
 }

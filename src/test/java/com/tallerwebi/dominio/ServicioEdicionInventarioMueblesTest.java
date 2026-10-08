@@ -197,6 +197,38 @@ public class ServicioEdicionInventarioMueblesTest {
     return muebleAEliminar;
   }
 
+  @Test
+  public void deberiaDevolverLosMueblesDelInventario() {
+    // Given
+    givenInventarioConDosMuebles();
+
+    // When
+    List<Mueble> mueblesObtenidos = whenListoElInventario();
+
+    // Then
+    thenElInventarioTieneDosMuebles(mueblesObtenidos);
+  }
+
+  private List<Mueble> whenListoElInventario() {
+    return this.servicioEdicionInventarioMuebles.listar();
+  }
+
+  private void thenElInventarioTieneDosMuebles(List<Mueble> muebles) {
+    assertEquals(2, muebles.size());
+  }
+
+  @Test
+  public void deberiaAgregarElMuebleAlInventarioCuandoLoCreo() {
+    // Given
+    Mueble muebleNuevo = new Mueble("Mesa ratona", 1.2, 0.6);
+
+    // When
+    this.servicioEdicionInventarioMuebles.crear(muebleNuevo);
+
+    // Then
+    assertTrue(this.inventario.contains(muebleNuevo));
+  }
+
   private void whenEliminoElMueble(Mueble mueble) throws MuebleNoEncontrado {
     this.servicioEdicionInventarioMuebles.eliminar(mueble.getId());
   }

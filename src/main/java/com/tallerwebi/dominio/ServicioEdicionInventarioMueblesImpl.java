@@ -2,23 +2,32 @@ package com.tallerwebi.dominio;
 
 import com.tallerwebi.dominio.excepcion.MuebleNoEncontrado;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 /**
- * A proposito NO es un bean de Spring: no lleva @Service ni @Transactional.
+ * Dos constructores a proposito: el de {@link RepositorioCatalogo} lo usa Spring
+ * (marcado con @Autowired), y el de lista en memoria lo usan los tests unitarios del
+ * servicio (AGENTS.md: no mockear repositorios en tests de servicio).
  * <p>
- * No se pueden agregar mientras el inventario siga llegando por constructor.
- * Spring, al ver un "List&lt;Mueble&gt;", lo interpreta como "todos los beans de tipo
- * Mueble que existan" e inyecta una lista VACIA si no hay ninguno. Y Mueble es solo
- * una @Entity, no un bean.
- * <p>
- * NO agregar @Service "para que Spring la reconozca" sin resolver eso antes.
+ * No hay @Transactional: el controlador invoca los metodos desde una peticion web y
+ * la SessionFactory se encarga de la sesion por peticion.
  */
+@Service("servicioEdicionInventarioMuebles")
 public class ServicioEdicionInventarioMueblesImpl implements ServicioEdicionInventarioMuebles {
 
   private final List<Mueble> inventario;
+  private final RepositorioCatalogo repositorioCatalogo;
 
   public ServicioEdicionInventarioMueblesImpl(List<Mueble> inventario) {
     this.inventario = inventario;
+    this.repositorioCatalogo = null;
+  }
+
+  @Autowired
+  public ServicioEdicionInventarioMueblesImpl(RepositorioCatalogo repositorioCatalogo) {
+    this.repositorioCatalogo = repositorioCatalogo;
+    this.inventario = null;
   }
 
   @Override
@@ -30,16 +39,47 @@ public class ServicioEdicionInventarioMueblesImpl implements ServicioEdicionInve
     mueble.setDescripcion(datos.getDescripcion());
     mueble.setPrecio(datos.getPrecio());
     mueble.setEstilo(datos.getEstilo());
+    if (this.repositorioCatalogo != null) {
+      this.repositorioCatalogo.guardarMueble(mueble);
+    }
   }
 
   @Override
   public void eliminar(int id) throws MuebleNoEncontrado {
     this.buscarPorId(id);
-    this.inventario.removeIf(mueble -> mueble.getId() == id);
+    if (this.repositorioCatalogo != null) {
+      this.repositorioCatalogo.eliminar(id);
+    } else {
+      this.inventario.removeIf(mueble -> mueble.getId() == id);
+    }
+  }
+
+  @Override
+  public List<Mueble> listar() {
+    if (this.repositorioCatalogo != null) {
+      return this.repositorioCatalogo.ObtenerTodosLosMuebles();
+    }
+    return this.inventario;
+  }
+
+  @Override
+  public void crear(Mueble mueble) {
+    if (this.repositorioCatalogo != null) {
+      this.repositorioCatalogo.guardarMueble(mueble);
+    } else {
+      this.inventario.add(mueble);
+    }
   }
 
   @Override
   public Mueble buscarPorId(int id) throws MuebleNoEncontrado {
+    if (this.repositorioCatalogo != null) {
+      Mueble mueble = this.repositorioCatalogo.ObtenerMueblePorId(id);
+      if (mueble != null) {
+        return mueble;
+      }
+      throw new MuebleNoEncontrado("No se encontro un mueble con el id " + id);
+    }
     for (Mueble mueble : this.inventario) {
       if (mueble.getId() == id) {
         return mueble;

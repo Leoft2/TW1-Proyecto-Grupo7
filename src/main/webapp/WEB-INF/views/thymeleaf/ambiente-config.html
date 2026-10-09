@@ -52,6 +52,43 @@
 
   <footer th:replace="~{fragments/layout :: footer}"></footer>
 
+  <script>
+    // Renumera los indices de "prefijo[n]" para que al borrar una fila el POST no deje huecos.
+    function renumerar(cuerpo, prefijo) {
+      cuerpo.querySelectorAll('tr').forEach(function (fila, indice) {
+        fila.querySelectorAll('input, select').forEach(function (campo) {
+          campo.name = campo.name.replace(new RegExp(prefijo + '\\[\\d+\\]'), prefijo + '[' + indice + ']');
+        });
+      });
+    }
+
+    function renumerarMuebles() {
+      renumerar(document.getElementById('filas-muebles'), 'muebles');
+    }
+
+    document.getElementById('agregar-mueble').addEventListener('click', function () {
+      var cuerpo = document.querySelector('#filas-muebles');
+      var indice = cuerpo.querySelectorAll('tr').length;
+      var html = document.getElementById('plantilla-mueble').innerHTML
+        .replaceAll('CAMPO_CATEGORIA', 'muebles[' + indice + '].categoria')
+        .replaceAll('__NOMBRE__', 'muebles[' + indice + '].nombre')
+        .replaceAll('__ANCHO__', 'muebles[' + indice + '].ancho')
+        .replaceAll('__PROFUNDIDAD__', 'muebles[' + indice + '].profundidad');
+      var fila = document.createElement('tbody');
+      fila.innerHTML = html;
+      cuerpo.appendChild(fila.firstElementChild);
+    });
+
+    document.getElementById('filas-muebles').addEventListener('click', function (evento) {
+      if (evento.target.classList.contains('btn-outline-danger')) {
+        evento.target.closest('tr').remove();
+        renumerarMuebles();
+      }
+    });
+
+    document.getElementById('filas-muebles').addEventListener('input', renumerarMuebles);
+  </script>
+
   <script type="module" th:src="@{/js/dimensiones.js}"></script>
 
   <th:block th:replace="~{fragments/layout :: scripts}"></th:block>

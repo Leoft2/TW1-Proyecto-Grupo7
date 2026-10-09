@@ -4,16 +4,20 @@ import com.tallerwebi.dominio.excepcion.MuebleNoEncontrado;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Dos constructores a proposito: el de {@link RepositorioCatalogo} lo usa Spring
  * (marcado con @Autowired), y el de lista en memoria lo usan los tests unitarios del
  * servicio (AGENTS.md: no mockear repositorios en tests de servicio).
  * <p>
- * No hay @Transactional: el controlador invoca los metodos desde una peticion web y
- * la SessionFactory se encarga de la sesion por peticion.
+ * @Transactional es obligatorio: el repositorio usa sessionFactory.getCurrentSession(),
+ * que exige una transaccion sincronizada al thread. Sin esta anotacion, cualquier
+ * llamada desde un controller revienta con "Could not obtain transaction-synchronized
+ * Session for current thread".
  */
 @Service("servicioEdicionInventarioMuebles")
+@Transactional
 public class ServicioEdicionInventarioMueblesImpl implements ServicioEdicionInventarioMuebles {
 
   private final List<Mueble> inventario;

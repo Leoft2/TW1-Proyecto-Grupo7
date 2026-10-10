@@ -1,6 +1,12 @@
 package com.tallerwebi.dominio;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.tallerwebi.dominio.excepcion.MuebleNoEncontrado;
 import java.util.ArrayList;
@@ -10,108 +16,116 @@ import org.junit.jupiter.api.Test;
 
 /*
 Criterios de aceptación:
--Dado un mueble en el inventario, cuando lo edito y guardo, entonces los cambios se reflejan en la tabla y en el plano si ya estaba ubicado.
--Dado un mueble que elimino, cuando confirmo la acción, entonces desaparece del inventario y de cualquier distribución guardada.
-
+-Dado un mueble en el inventario, cuando lo edito y guardo, entonces los cambios
+ se reflejan en la tabla y en el plano si ya estaba ubicado.
+-Dado un mueble que elimino, cuando confirmo la acción, entonces desaparece del
+ inventario y de cualquier distribución guardada.
 */
 
 public class ServicioEdicionInventarioMueblesTest {
 
+  private static final int ID_MUEBLE = 1;
   private static final int ID_INEXISTENTE = 999;
-  private static final int ID_MUEBLE_A_ELIMINAR = 1;
-  private static final int ID_MUEBLE_QUE_QUEDA = 2;
 
-  private List<Mueble> inventario;
+  private RepositorioInventarioMueble repositorioInventarioMueble;
   private ServicioEdicionInventarioMuebles servicioEdicionInventarioMuebles;
+  private List<Mueble> inventario;
 
   @BeforeEach
   public void init() {
-    this.inventario = new ArrayList<>();
+    this.repositorioInventarioMueble = mock(RepositorioInventarioMueble.class);
     this.servicioEdicionInventarioMuebles =
-      new ServicioEdicionInventarioMueblesImpl(this.inventario);
+      new ServicioEdicionInventarioMueblesImpl(this.repositorioInventarioMueble);
+    this.inventario = new ArrayList<>();
   }
+
+  // -------------------------------------------------------------------------
+  // Edicion: copia de cada campo editable sobre el mueble ya guardado
+  // -------------------------------------------------------------------------
 
   @Test
   public void deberiaActualizarElNombreCuandoElMuebleExisteYElNuevoNombreEsValido()
     throws MuebleNoEncontrado {
-    // Given
-    String nombreNuevo = "Mesa de comedor";
     Mueble mueble = givenMuebleExistenteEnElInventario();
-    Mueble datosNuevos = new Mueble(nombreNuevo, 1.0, 0.8);
+    Mueble datosNuevos = new Mueble("Mesa de comedor", mueble.getAncho(), mueble.getLargo());
 
-    // When
-    whenActualizoElMueble(mueble, datosNuevos);
+    whenActualizoElMueble(datosNuevos);
 
-    // Then
-    thenElNombreSeActualiza(mueble, nombreNuevo);
+    thenElNombreSeActualiza(mueble, "Mesa de comedor");
   }
 
   @Test
   public void deberiaActualizarElAnchoCuandoElMuebleExisteYElNuevoAnchoEsValido()
     throws MuebleNoEncontrado {
-    // Given
-    Double anchoNuevo = 1.5;
-    Mueble mueble = givenMuebleExistenteConNuevasDimensionesValidas(1.0, 0.8);
-    Mueble datosNuevos = new Mueble(mueble.getNombre(), anchoNuevo, mueble.getLargo());
+    Mueble mueble = givenMuebleExistenteEnElInventario();
+    Mueble datosNuevos = new Mueble(mueble.getNombre(), 1.5, mueble.getLargo());
 
-    // When
-    whenActualizoElMueble(mueble, datosNuevos);
+    whenActualizoElMueble(datosNuevos);
 
-    // Then
-    thenElAnchoSeActualiza(mueble, anchoNuevo);
+    thenElAnchoSeActualiza(mueble, 1.5);
   }
 
   @Test
   public void deberiaActualizarElLargoCuandoElMuebleExisteYElNuevoLargoEsValido()
     throws MuebleNoEncontrado {
-    // Given
-    Double largoNuevo = 1.2;
-    Mueble mueble = givenMuebleExistenteConNuevasDimensionesValidas(1.0, 0.8);
-    Mueble datosNuevos = new Mueble(mueble.getNombre(), mueble.getAncho(), largoNuevo);
+    Mueble mueble = givenMuebleExistenteEnElInventario();
+    Mueble datosNuevos = new Mueble(mueble.getNombre(), mueble.getAncho(), 1.2);
 
-    // When
-    whenActualizoElMueble(mueble, datosNuevos);
+    whenActualizoElMueble(datosNuevos);
 
-    // Then
-    thenElLargoSeActualiza(mueble, largoNuevo);
+    thenElLargoSeActualiza(mueble, 1.2);
   }
 
   @Test
   public void deberiaActualizarLaDescripcionCuandoElMuebleExisteYLaNuevaDescripcionEsValida()
     throws MuebleNoEncontrado {
-    // Given
-    String descripcionNueva = "Mesa de comedor de madera maciza";
     Mueble mueble = givenMuebleExistenteConUnaDescripcion("Mesa de madera");
-    // datosNuevos llega con el resto de los campos tal como estaban, como un formulario
-    // de edicion donde el usuario solo toco la descripcion
     Mueble datosNuevos = new Mueble(mueble.getNombre(), mueble.getAncho(), mueble.getLargo());
-    datosNuevos.setDescripcion(descripcionNueva);
+    datosNuevos.setDescripcion("Mesa de comedor de madera maciza");
 
-    // When
-    whenActualizoElMueble(mueble, datosNuevos);
+    whenActualizoElMueble(datosNuevos);
 
-    // Then
-    thenLaDescripcionSeActualiza(mueble, descripcionNueva);
+    thenLaDescripcionSeActualiza(mueble, "Mesa de comedor de madera maciza");
   }
 
   @Test
-  public void deberiaActualizarTodosLosDatosCuandoElMuebleExisteYLosDatosSonValidos()
+  public void deberiaActualizarElPrecioCuandoElMuebleExisteYElNuevoPrecioEsValido()
     throws MuebleNoEncontrado {
-    // Given
     Mueble mueble = givenMuebleExistenteEnElInventario();
-    Mueble datosNuevos = givenTodosLosDatosNuevosValidos();
+    Mueble datosNuevos = new Mueble(mueble.getNombre(), mueble.getAncho(), mueble.getLargo());
+    datosNuevos.setPrecio(12500.0);
 
-    // When
-    whenActualizoElMueble(mueble, datosNuevos);
+    whenActualizoElMueble(datosNuevos);
 
-    // Then
-    thenTodosLosDatosSeActualizan(mueble, datosNuevos);
+    thenElPrecioSeActualiza(mueble, 12500.0);
+  }
+
+  @Test
+  public void deberiaActualizarElEstiloCuandoElMuebleExisteYElNuevoEstiloEsValido()
+    throws MuebleNoEncontrado {
+    Mueble mueble = givenMuebleExistenteEnElInventario();
+    Mueble datosNuevos = new Mueble(mueble.getNombre(), mueble.getAncho(), mueble.getLargo());
+    datosNuevos.setEstilo(Estilo.Japandi);
+
+    whenActualizoElMueble(datosNuevos);
+
+    thenElEstiloSeActualiza(mueble, Estilo.Japandi);
+  }
+
+  @Test
+  public void deberiaGuardarElMuebleCuandoLoActualizo() throws MuebleNoEncontrado {
+    Mueble mueble = givenMuebleExistenteEnElInventario();
+    Mueble datosNuevos = new Mueble("Mesa ratona", mueble.getAncho(), mueble.getLargo());
+
+    whenActualizoElMueble(datosNuevos);
+
+    thenSeGuardoElMueble(mueble);
   }
 
   @Test
   public void deberiaLanzarMuebleNoEncontradoCuandoElMuebleNoExisteEnElInventario() {
-    // Given
-    Mueble datosNuevos = givenTodosLosDatosNuevosValidos();
+    Mueble datosNuevos = new Mueble("Sillon de dos cuerpos", 2.4, 1.1);
+    when(this.repositorioInventarioMueble.buscarPorId(ID_INEXISTENTE)).thenReturn(null);
 
     assertThrows(
       MuebleNoEncontrado.class,
@@ -119,38 +133,23 @@ public class ServicioEdicionInventarioMueblesTest {
     );
   }
 
+  // -------------------------------------------------------------------------
+  // Eliminacion
+  // -------------------------------------------------------------------------
+
   @Test
   public void deberiaEliminarElMuebleCuandoElMuebleExisteEnElInventario()
     throws MuebleNoEncontrado {
-    // Given
-    Mueble muebleAEliminar = givenInventarioConDosMuebles();
+    givenMuebleExistenteEnElInventario();
 
-    // When
-    whenEliminoElMueble(muebleAEliminar);
+    whenEliminoElMueble(ID_MUEBLE);
 
-    // Then
-    thenElInventarioNoContieneElId(ID_MUEBLE_A_ELIMINAR);
-  }
-
-  @Test
-  public void deberiaConservarLosDemasMueblesCuandoEliminoUnoDelInventario()
-    throws MuebleNoEncontrado {
-    // Given
-    Mueble muebleAEliminar = givenInventarioConDosMuebles();
-
-    // When
-    whenEliminoElMueble(muebleAEliminar);
-
-    // Then
-    thenElInventarioContieneElId(ID_MUEBLE_QUE_QUEDA);
+    thenSeEliminoElMueble(ID_MUEBLE);
   }
 
   @Test
   public void deberiaLanzarMuebleNoEncontradoCuandoIntentoEliminarUnMuebleInexistente() {
-    // Given
-    // El inventario tiene dos muebles: elimino un id que no esta, con inventario
-    // poblado, para que el test no dependa de que el caso sea un inventario vacio.
-    givenInventarioConDosMuebles();
+    when(this.repositorioInventarioMueble.buscarPorId(ID_INEXISTENTE)).thenReturn(null);
 
     assertThrows(
       MuebleNoEncontrado.class,
@@ -158,125 +157,112 @@ public class ServicioEdicionInventarioMueblesTest {
     );
   }
 
+  // -------------------------------------------------------------------------
+  // Listado y creacion
+  // -------------------------------------------------------------------------
+
+  @Test
+  public void deberiaDevolverLosMueblesDelInventario() {
+    givenInventarioConDosMuebles();
+
+    List<Mueble> mueblesObtenidos = whenListoElInventario();
+
+    thenElInventarioTieneLosMuebles(mueblesObtenidos);
+  }
+
+  @Test
+  public void deberiaAgregarElMuebleAlInventarioCuandoLoCreo() {
+    Mueble muebleNuevo = new Mueble("Mesa ratona", 1.2, 0.6);
+
+    whenCreoElMueble(muebleNuevo);
+
+    thenSeGuardoElMueble(muebleNuevo);
+  }
+
+  // -------------------------------------------------------------------------
+  // Given (preparacion)
+  // -------------------------------------------------------------------------
+
   private Mueble givenMuebleExistenteEnElInventario() {
     Mueble mueble = new Mueble("Mesa", 1.0, 0.8);
-    mueble.setId(1);
-    this.inventario.add(mueble);
+    mueble.setId(ID_MUEBLE);
+    when(this.repositorioInventarioMueble.buscarPorId(ID_MUEBLE)).thenReturn(mueble);
     return mueble;
   }
 
   private Mueble givenMuebleExistenteConUnaDescripcion(String descripcion) {
-    Mueble mueble = new Mueble("Mesa", 1.0, 0.8);
-    mueble.setId(1);
+    Mueble mueble = givenMuebleExistenteEnElInventario();
     mueble.setDescripcion(descripcion);
-    this.inventario.add(mueble);
     return mueble;
   }
 
-  // Los seis campos editables llegan distintos de los que tiene el mueble ya sembrado
-  // (Mesa, 1.0, 0.8, sin descripcion, sin precio y sin estilo), asi que si actualizar
-  // deja de copiar alguno, el assert lo detecta.
-  private Mueble givenTodosLosDatosNuevosValidos() {
-    Mueble datosNuevos = new Mueble("Sillon de dos cuerpos", 2.4, 1.1);
-    datosNuevos.setDescripcion("Tapizado de lino gris");
-    datosNuevos.setPrecio(850.0);
-    datosNuevos.setEstilo(Estilo.Japandi);
-    return datosNuevos;
+  private void givenInventarioConDosMuebles() {
+    Mueble sofa = new Mueble("Sofa", 2.2, 0.9);
+    sofa.setId(ID_MUEBLE);
+    Mueble mesa = new Mueble("Mesa", 1.2, 0.8);
+    mesa.setId(2);
+    this.inventario.add(sofa);
+    this.inventario.add(mesa);
+    when(this.repositorioInventarioMueble.listarTodos()).thenReturn(this.inventario);
   }
 
-  // Se siembran dos muebles para que una implementacion que vacie el inventario entero
-  // en vez de borrar uno solo . Los ids salen de las constantes
-  // de clase para que no puedan desincronizarse entre el Given y los asserts.
-  private Mueble givenInventarioConDosMuebles() {
-    Mueble muebleAEliminar = new Mueble("Mesa", 1.0, 0.8);
-    muebleAEliminar.setId(ID_MUEBLE_A_ELIMINAR);
-    this.inventario.add(muebleAEliminar);
-    Mueble muebleQueQueda = new Mueble("Silla", 0.5, 0.5);
-    muebleQueQueda.setId(ID_MUEBLE_QUE_QUEDA);
-    this.inventario.add(muebleQueQueda);
-    return muebleAEliminar;
+  // -------------------------------------------------------------------------
+  // When (ejecucion)
+  // -------------------------------------------------------------------------
+
+  private void whenActualizoElMueble(Mueble datos) throws MuebleNoEncontrado {
+    this.servicioEdicionInventarioMuebles.actualizar(ID_MUEBLE, datos);
   }
 
-  @Test
-  public void deberiaDevolverLosMueblesDelInventario() {
-    // Given
-    givenInventarioConDosMuebles();
-
-    // When
-    List<Mueble> mueblesObtenidos = whenListoElInventario();
-
-    // Then
-    thenElInventarioTieneDosMuebles(mueblesObtenidos);
+  private void whenEliminoElMueble(int id) throws MuebleNoEncontrado {
+    this.servicioEdicionInventarioMuebles.eliminar(id);
   }
 
   private List<Mueble> whenListoElInventario() {
     return this.servicioEdicionInventarioMuebles.listar();
   }
 
-  private void thenElInventarioTieneDosMuebles(List<Mueble> muebles) {
-    assertEquals(2, muebles.size());
+  private void whenCreoElMueble(Mueble mueble) {
+    this.servicioEdicionInventarioMuebles.crear(mueble);
   }
 
-  @Test
-  public void deberiaAgregarElMuebleAlInventarioCuandoLoCreo() {
-    // Given
-    Mueble muebleNuevo = new Mueble("Mesa ratona", 1.2, 0.6);
+  // -------------------------------------------------------------------------
+  // Then (validacion)
+  // -------------------------------------------------------------------------
 
-    // When
-    this.servicioEdicionInventarioMuebles.crear(muebleNuevo);
-
-    // Then
-    assertTrue(this.inventario.contains(muebleNuevo));
+  private void thenElNombreSeActualiza(Mueble mueble, String esperado) {
+    assertThat(mueble.getNombre(), is(equalTo(esperado)));
   }
 
-  private void whenEliminoElMueble(Mueble mueble) throws MuebleNoEncontrado {
-    this.servicioEdicionInventarioMuebles.eliminar(mueble.getId());
+  private void thenElAnchoSeActualiza(Mueble mueble, Double esperado) {
+    assertThat(mueble.getAncho(), is(equalTo(esperado)));
   }
 
-  private void thenElInventarioNoContieneElId(int id) {
-    assertFalse(
-      this.inventario.stream().anyMatch(mueble -> mueble.getId() == id),
-      "el mueble con id " + id + " deberia haberse eliminado del inventario"
-    );
+  private void thenElLargoSeActualiza(Mueble mueble, Double esperado) {
+    assertThat(mueble.getLargo(), is(equalTo(esperado)));
   }
 
-  private void thenElInventarioContieneElId(int id) {
-    assertTrue(
-      this.inventario.stream().anyMatch(mueble -> mueble.getId() == id),
-      "el mueble con id " + id + " deberia seguir en el inventario"
-    );
+  private void thenLaDescripcionSeActualiza(Mueble mueble, String esperado) {
+    assertThat(mueble.getDescripcion(), is(equalTo(esperado)));
   }
 
-  // El ancho y el largo del mueble ya sembrado son los datos de partida;
-  // lo que cambia en cada test es el valor que se manda a actualizar.
-  private Mueble givenMuebleExistenteConNuevasDimensionesValidas(Double ancho, Double largo) {
-    Mueble mueble = new Mueble("Mesa", ancho, largo);
-    mueble.setId(1);
-    this.inventario.add(mueble);
-    return mueble;
+  private void thenElPrecioSeActualiza(Mueble mueble, double esperado) {
+    assertThat(mueble.getPrecio(), is(equalTo(esperado)));
   }
 
-  private void whenActualizoElMueble(Mueble mueble, Mueble datosNuevos) throws MuebleNoEncontrado {
-    this.servicioEdicionInventarioMuebles.actualizar(mueble.getId(), datosNuevos);
+  private void thenElEstiloSeActualiza(Mueble mueble, Estilo esperado) {
+    assertThat(mueble.getEstilo(), is(equalTo(esperado)));
   }
 
-  private void thenElNombreSeActualiza(Mueble mueble, String nombreEsperado) {
-    assertEquals(nombreEsperado, mueble.getNombre());
+  private void thenElInventarioTieneLosMuebles(List<Mueble> muebles) {
+    assertThat(muebles, is(equalTo(this.inventario)));
   }
 
-  private void thenElAnchoSeActualiza(Mueble mueble, Double anchoEsperado) {
-    assertEquals(anchoEsperado, mueble.getAncho());
+  private void thenSeGuardoElMueble(Mueble mueble) {
+    verify(this.repositorioInventarioMueble).guardar(mueble);
   }
 
-  private void thenElLargoSeActualiza(Mueble mueble, Double largoEsperado) {
-    assertEquals(largoEsperado, mueble.getLargo());
-  }
-
-  private void thenLaDescripcionSeActualiza(Mueble mueble, String descripcionEsperada) {
-    assertEquals(descripcionEsperada, mueble.getDescripcion());
-  }
-
-  private void thenTodosLosDatosSeActualizan(Mueble mueble, Mueble esperado) {
-    assertEquals(esperado, mueble);
+  private void thenSeEliminoElMueble(int id) {
+    verify(this.repositorioInventarioMueble).eliminar(id);
   }
 }

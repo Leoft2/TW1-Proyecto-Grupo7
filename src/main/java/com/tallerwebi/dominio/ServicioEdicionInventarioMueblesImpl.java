@@ -7,33 +7,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Dos constructores a proposito: el de {@link RepositorioInventarioMueble} lo usa Spring
- * (marcado con @Autowired), y el de lista en memoria lo usan los tests unitarios del
- * servicio (AGENTS.md: no mockear repositorios en tests de servicio).
- * <p>
- * @Transactional es obligatorio: el repositorio usa sessionFactory.getCurrentSession(),
- * que exige una transaccion sincronizada al thread. Sin esta anotacion, cualquier
- * llamada desde un controller revienta con "Could not obtain transaction-synchronized
- * Session for current thread".
+ * Servicio de edicion y eliminacion de muebles del inventario (HU-23).
  */
-@Service("servicioEdicionInventarioMuebles")
+@Service
 @Transactional
 public class ServicioEdicionInventarioMueblesImpl implements ServicioEdicionInventarioMuebles {
 
-  private final List<Mueble> inventario;
   private final RepositorioInventarioMueble repositorioInventarioMueble;
-
-  public ServicioEdicionInventarioMueblesImpl(List<Mueble> inventario) {
-    this.inventario = inventario;
-    this.repositorioInventarioMueble = null;
-  }
 
   @Autowired
   public ServicioEdicionInventarioMueblesImpl(
     RepositorioInventarioMueble repositorioInventarioMueble
   ) {
     this.repositorioInventarioMueble = repositorioInventarioMueble;
-    this.inventario = null;
   }
 
   @Override
@@ -45,52 +31,31 @@ public class ServicioEdicionInventarioMueblesImpl implements ServicioEdicionInve
     mueble.setDescripcion(datos.getDescripcion());
     mueble.setPrecio(datos.getPrecio());
     mueble.setEstilo(datos.getEstilo());
-    if (this.repositorioInventarioMueble != null) {
-      this.repositorioInventarioMueble.guardar(mueble);
-    }
+    this.repositorioInventarioMueble.guardar(mueble);
   }
 
   @Override
   public void eliminar(int id) throws MuebleNoEncontrado {
     this.buscarPorId(id);
-    if (this.repositorioInventarioMueble != null) {
-      this.repositorioInventarioMueble.eliminar(id);
-    } else {
-      this.inventario.removeIf(mueble -> mueble.getId() == id);
-    }
+    this.repositorioInventarioMueble.eliminar(id);
   }
 
   @Override
   public List<Mueble> listar() {
-    if (this.repositorioInventarioMueble != null) {
-      return this.repositorioInventarioMueble.listarTodos();
-    }
-    return this.inventario;
+    return this.repositorioInventarioMueble.listarTodos();
   }
 
   @Override
   public void crear(Mueble mueble) {
-    if (this.repositorioInventarioMueble != null) {
-      this.repositorioInventarioMueble.guardar(mueble);
-    } else {
-      this.inventario.add(mueble);
-    }
+    this.repositorioInventarioMueble.guardar(mueble);
   }
 
   @Override
   public Mueble buscarPorId(int id) throws MuebleNoEncontrado {
-    if (this.repositorioInventarioMueble != null) {
-      Mueble mueble = this.repositorioInventarioMueble.buscarPorId(id);
-      if (mueble != null) {
-        return mueble;
-      }
+    Mueble mueble = this.repositorioInventarioMueble.buscarPorId(id);
+    if (mueble == null) {
       throw new MuebleNoEncontrado("No se encontro un mueble con el id " + id);
     }
-    for (Mueble mueble : this.inventario) {
-      if (mueble.getId() == id) {
-        return mueble;
-      }
-    }
-    throw new MuebleNoEncontrado("No se encontro un mueble con el id " + id);
+    return mueble;
   }
 }

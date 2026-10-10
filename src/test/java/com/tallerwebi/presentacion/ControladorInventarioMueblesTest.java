@@ -5,11 +5,14 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import com.tallerwebi.dominio.Ambiente;
 import com.tallerwebi.dominio.Estilo;
 import com.tallerwebi.dominio.Mueble;
+import com.tallerwebi.dominio.Plano;
 import com.tallerwebi.dominio.ServicioEdicionInventarioMuebles;
 import com.tallerwebi.dominio.ServicioPlano2D;
 import com.tallerwebi.dominio.excepcion.MuebleNoEncontrado;
+import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.servlet.ModelAndView;
@@ -24,12 +27,14 @@ public class ControladorInventarioMueblesTest {
 
   private ServicioEdicionInventarioMuebles servicioEdicionInventarioMuebles;
   private ServicioPlano2D servicioPlano2D;
+  private HttpSession sesion;
   private ControladorInventarioMuebles controladorInventarioMuebles;
 
   @BeforeEach
   public void init() {
     servicioEdicionInventarioMuebles = mock(ServicioEdicionInventarioMuebles.class);
     servicioPlano2D = mock(ServicioPlano2D.class);
+    sesion = mock(HttpSession.class);
     com.tallerwebi.dominio.ServicioCategoriaDeMueble servicioCategoriaDeMueble = mock(
       com.tallerwebi.dominio.ServicioCategoriaDeMueble.class
     );
@@ -163,11 +168,37 @@ public class ControladorInventarioMueblesTest {
   }
 
   private ModelAndView whenConfirmoElInventario() {
-    return controladorInventarioMuebles.generarPlano(4.0, 3.0);
+    return controladorInventarioMuebles.generarPlano(4.0, 3.0, sesion);
   }
 
   private void thenLaVistaEsPlanoInteractivo(ModelAndView mav) {
     assertEquals("plano-interactivo", mav.getViewName());
+  }
+
+  @Test
+  public void deberiaUsarElAmbienteDeSesionCuandoExiste() {
+    // Given
+    Ambiente ambienteDeSesion = new Ambiente(5.0, 4.0);
+    when(sesion.getAttribute("ambiente")).thenReturn(ambienteDeSesion);
+    when(servicioPlano2D.generarPlano(any(Ambiente.class), anyList()))
+      .thenReturn(
+        new Plano(
+          ambienteDeSesion,
+          new java.util.ArrayList<>(),
+          new java.util.ArrayList<>(),
+          new java.util.ArrayList<>()
+        )
+      );
+
+    // When
+    controladorInventarioMuebles.generarPlano(4.0, 3.0, sesion);
+
+    // Then
+    thenElServicioRecibeElAmbiente(ambienteDeSesion);
+  }
+
+  private void thenElServicioRecibeElAmbiente(Ambiente ambienteEsperado) {
+    verify(servicioPlano2D).generarPlano(eq(ambienteEsperado), anyList());
   }
 
   private void thenElServicioRecibeElAmbienteYLosMuebles() {

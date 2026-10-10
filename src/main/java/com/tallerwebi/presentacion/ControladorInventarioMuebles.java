@@ -1,10 +1,12 @@
 package com.tallerwebi.presentacion;
 
+import com.tallerwebi.dominio.Ambiente;
 import com.tallerwebi.dominio.Mueble;
 import com.tallerwebi.dominio.ServicioCategoriaDeMueble;
 import com.tallerwebi.dominio.ServicioEdicionInventarioMuebles;
 import com.tallerwebi.dominio.ServicioPlano2D;
 import com.tallerwebi.dominio.excepcion.MuebleNoEncontrado;
+import jakarta.servlet.http.HttpSession;
 import java.util.Map;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -21,6 +23,7 @@ public class ControladorInventarioMuebles {
   private static final String PARAM_ANCHO = "ancho";
   private static final String PARAM_LARGO = "largo";
   private static final String ATTR_CATEGORIAS = "categorias";
+  private static final String ATRIBUTO_AMBIENTE = "ambiente";
 
   private final ServicioEdicionInventarioMuebles servicioEdicionInventarioMuebles;
   private final ServicioPlano2D servicioPlano2D;
@@ -133,9 +136,13 @@ public class ControladorInventarioMuebles {
   @PostMapping("/inventario-muebles/plano")
   public ModelAndView generarPlano(
     @RequestParam(name = PARAM_ANCHO, required = false) Double ancho,
-    @RequestParam(name = PARAM_LARGO, required = false) Double largo
+    @RequestParam(name = PARAM_LARGO, required = false) Double largo,
+    HttpSession sesion
   ) {
-    com.tallerwebi.dominio.Ambiente ambiente = new com.tallerwebi.dominio.Ambiente(ancho, largo);
+    Ambiente ambiente = (Ambiente) sesion.getAttribute(ATRIBUTO_AMBIENTE);
+    if (ambiente == null) {
+      ambiente = new Ambiente(ancho, largo);
+    }
     Map<String, Object> model = new ModelMap();
     model.put(
       "plano",

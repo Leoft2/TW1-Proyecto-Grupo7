@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Dos constructores a proposito: el de {@link RepositorioCatalogo} lo usa Spring
+ * Dos constructores a proposito: el de {@link RepositorioInventarioMueble} lo usa Spring
  * (marcado con @Autowired), y el de lista en memoria lo usan los tests unitarios del
  * servicio (AGENTS.md: no mockear repositorios en tests de servicio).
  * <p>
@@ -21,16 +21,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class ServicioEdicionInventarioMueblesImpl implements ServicioEdicionInventarioMuebles {
 
   private final List<Mueble> inventario;
-  private final RepositorioCatalogo repositorioCatalogo;
+  private final RepositorioInventarioMueble repositorioInventarioMueble;
 
   public ServicioEdicionInventarioMueblesImpl(List<Mueble> inventario) {
     this.inventario = inventario;
-    this.repositorioCatalogo = null;
+    this.repositorioInventarioMueble = null;
   }
 
   @Autowired
-  public ServicioEdicionInventarioMueblesImpl(RepositorioCatalogo repositorioCatalogo) {
-    this.repositorioCatalogo = repositorioCatalogo;
+  public ServicioEdicionInventarioMueblesImpl(
+    RepositorioInventarioMueble repositorioInventarioMueble
+  ) {
+    this.repositorioInventarioMueble = repositorioInventarioMueble;
     this.inventario = null;
   }
 
@@ -43,16 +45,16 @@ public class ServicioEdicionInventarioMueblesImpl implements ServicioEdicionInve
     mueble.setDescripcion(datos.getDescripcion());
     mueble.setPrecio(datos.getPrecio());
     mueble.setEstilo(datos.getEstilo());
-    if (this.repositorioCatalogo != null) {
-      this.repositorioCatalogo.guardarMueble(mueble);
+    if (this.repositorioInventarioMueble != null) {
+      this.repositorioInventarioMueble.guardar(mueble);
     }
   }
 
   @Override
   public void eliminar(int id) throws MuebleNoEncontrado {
     this.buscarPorId(id);
-    if (this.repositorioCatalogo != null) {
-      this.repositorioCatalogo.eliminar(id);
+    if (this.repositorioInventarioMueble != null) {
+      this.repositorioInventarioMueble.eliminar(id);
     } else {
       this.inventario.removeIf(mueble -> mueble.getId() == id);
     }
@@ -60,16 +62,16 @@ public class ServicioEdicionInventarioMueblesImpl implements ServicioEdicionInve
 
   @Override
   public List<Mueble> listar() {
-    if (this.repositorioCatalogo != null) {
-      return this.repositorioCatalogo.ObtenerTodosLosMuebles();
+    if (this.repositorioInventarioMueble != null) {
+      return this.repositorioInventarioMueble.listarTodos();
     }
     return this.inventario;
   }
 
   @Override
   public void crear(Mueble mueble) {
-    if (this.repositorioCatalogo != null) {
-      this.repositorioCatalogo.guardarMueble(mueble);
+    if (this.repositorioInventarioMueble != null) {
+      this.repositorioInventarioMueble.guardar(mueble);
     } else {
       this.inventario.add(mueble);
     }
@@ -77,8 +79,8 @@ public class ServicioEdicionInventarioMueblesImpl implements ServicioEdicionInve
 
   @Override
   public Mueble buscarPorId(int id) throws MuebleNoEncontrado {
-    if (this.repositorioCatalogo != null) {
-      Mueble mueble = this.repositorioCatalogo.ObtenerMueblePorId(id);
+    if (this.repositorioInventarioMueble != null) {
+      Mueble mueble = this.repositorioInventarioMueble.buscarPorId(id);
       if (mueble != null) {
         return mueble;
       }

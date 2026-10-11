@@ -1,84 +1,95 @@
 package com.tallerwebi.dominio;
 
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 public class Ambiente {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  private Double ancho;
-  private Double largo;
+    private Double ancho;
+    private Double largo;
 
-  @ManyToOne(optional = false)
-  @JoinColumn(name = "tipo_de_ambiente_id", nullable = false)
-  private TipoDeAmbiente tipoDeAmbiente;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "tipo_de_ambiente_id", nullable = false)
+    private TipoDeAmbiente tipoDeAmbiente;
 
-  @ManyToOne
-  @JoinColumn(name = "usuario_id")
-  private Usuario usuario;
+    @ManyToOne
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
 
-  @ElementCollection
-  @CollectionTable(name = "ambiente_obstaculos", joinColumns = @JoinColumn(name = "ambiente_id"))
-  private List<Obstaculo> obstaculos = new ArrayList<>();
+    @ElementCollection
+    @CollectionTable(name = "ambiente_obstaculos", joinColumns = @JoinColumn(name = "ambiente_id"))
+    private List<Obstaculo> obstaculos = new ArrayList<>();
 
-  public Ambiente() {}
+    @ManyToMany
+    @JoinTable(
+            name = "ambiente_muebles",
+            joinColumns = @JoinColumn(name = "ambiente_id"),
+            inverseJoinColumns = @JoinColumn(name = "mueble_id")
+    )
+    private List<Mueble> muebles = new ArrayList<>();
 
-  public Ambiente(Double ancho, Double largo) {
-    this.ancho = ancho;
-    this.largo = largo;
-  }
+    public Ambiente() {
+    }
 
-  public Ambiente(Double ancho, Double largo, TipoDeAmbiente tipoDeAmbiente) {
-    this.ancho = ancho;
-    this.largo = largo;
-    this.tipoDeAmbiente = tipoDeAmbiente;
-  }
+    public Ambiente(Double ancho, Double largo) {
+        this.ancho = ancho;
+        this.largo = largo;
+    }
 
-  public Long getId() {
-    return id;
-  }
+    public Ambiente(Double ancho, Double largo, TipoDeAmbiente tipoDeAmbiente) {
+        this.ancho = ancho;
+        this.largo = largo;
+        this.tipoDeAmbiente = tipoDeAmbiente;
+    }
 
-  public Double getAncho() {
-    return ancho;
-  }
+    public Long getId() {
+        return id;
+    }
 
-  public Double getLargo() {
-    return largo;
-  }
+    public Double getAncho() {
+        return ancho;
+    }
 
-  public TipoDeAmbiente getTipoDeAmbiente() {
-    return tipoDeAmbiente;
-  }
+    public Double getLargo() {
+        return largo;
+    }
 
-  public void setTipoDeAmbiente(TipoDeAmbiente tipoDeAmbiente) {
-    this.tipoDeAmbiente = tipoDeAmbiente;
-  }
+    public TipoDeAmbiente getTipoDeAmbiente() {
+        return tipoDeAmbiente;
+    }
 
-  public Usuario getUsuario() {
-    return usuario;
-  }
+    public void setTipoDeAmbiente(TipoDeAmbiente tipoDeAmbiente) {
+        this.tipoDeAmbiente = tipoDeAmbiente;
+    }
 
-  public void setUsuario(Usuario usuario) {
-    this.usuario = usuario;
-  }
+    public Usuario getUsuario() {
+        return usuario;
+    }
 
-  public List<Obstaculo> getObstaculos() {
-    return obstaculos;
-  }
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
+    }
 
-  public void agregarObstaculo(Obstaculo obstaculo) {
-    this.obstaculos.add(obstaculo);
-  }
+    public List<Obstaculo> getObstaculos() {
+        return obstaculos;
+    }
+
+    public void agregarObstaculo(Obstaculo obstaculo) {
+        this.obstaculos.add(obstaculo);
+    }
+
+    public List<Mueble> getMuebles() {
+        return muebles;
+    }
+
+    public void agregarMueble(Mueble mueble) {
+        this.muebles.add(mueble);
+    }
 }

@@ -29,6 +29,10 @@ public class Mueble {
   )
   private List<TipoDeAmbiente> tiposDeAmbiente = new ArrayList<>();
 
+  @ManyToOne
+  @JoinColumn(name = "categoria_de_mueble_id")
+  private CategoriaDeMueble categoriaDeMueble;
+
   public int getId() {
     return this.id;
   }
@@ -142,5 +146,13 @@ public class Mueble {
 
   public void agregarTipoDeAmbiente(TipoDeAmbiente tipoDeAmbiente) {
     this.tiposDeAmbiente.add(tipoDeAmbiente);
+  }
+
+  public CategoriaDeMueble getCategoriaDeMueble() {
+    return categoriaDeMueble;
+  }
+
+  public void setCategoriaDeMueble(CategoriaDeMueble categoriaDeMueble) {
+    this.categoriaDeMueble = categoriaDeMueble;
   }
 }

@@ -7,16 +7,20 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 
 import com.tallerwebi.datos.HsqldbConDatosTestConfig;
+import com.tallerwebi.dominio.Ambiente;
 import com.tallerwebi.dominio.CategoriaDeMueble;
 import com.tallerwebi.dominio.Estilo;
 import com.tallerwebi.dominio.Mueble;
+import com.tallerwebi.dominio.RepositorioAmbiente;
 import com.tallerwebi.dominio.ServicioCatalogo;
 import com.tallerwebi.dominio.ServicioCatalogoImpl;
 import com.tallerwebi.dominio.TipoDeAmbiente;
 import com.tallerwebi.dominio.excepcion.PresupuestoNegativoException;
 import jakarta.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.List;
 import org.hibernate.SessionFactory;
 import org.junit.jupiter.api.Test;
@@ -159,6 +163,55 @@ public class DataSqlTest {
     for (Mueble mueble : rango) {
       assertThat(mueble.getPrecio() >= 20000.0 && mueble.getPrecio() <= 50000.0, is(true));
     }
+  }
+
+  @Test
+  @Transactional
+  public void dadoQueArrancaLaAplicacion_cuandoConsultoLosAmbientes_entoncesElUsuarioDeTestTieneAmbientesConTipo() {
+    List<Ambiente> ambientes = this.obtenerAmbientes();
+
+    assertThat(ambientes, hasSize(2));
+    List<String> tipos = new ArrayList<>();
+    for (Ambiente ambiente : ambientes) {
+      assertThat(ambiente.getUsuario(), is(notNullValue()));
+      assertThat(ambiente.getUsuario().getEmail(), is("test@unlam.edu.ar"));
+      assertThat(ambiente.getTipoDeAmbiente(), is(notNullValue()));
+      tipos.add(ambiente.getTipoDeAmbiente().getNombre());
+    }
+
+    assertThat(tipos, containsInAnyOrder("Habitación", "Cocina"));
+  }
+
+  @Test
+  @Transactional
+  public void dadoQueArrancaLaAplicacion_cuandoConsultoLosAmbientesDelUsuarioDeTest_entoncesCadaAmbienteTieneSusMuebles() {
+    RepositorioAmbiente repositorioAmbiente = new RepositorioAmbienteImpl(this.sessionFactory);
+
+    List<Ambiente> ambientes = repositorioAmbiente.obtenerAmbientesDe("test@unlam.edu.ar");
+
+    assertThat(ambientes, hasSize(2));
+    assertThat(
+      nombresDeMueblesDe(ambientes.get(0)),
+      containsInAnyOrder("Cama Boho", "Escritorio Minimalista", "Lámpara de Mesa Japandi")
+    );
+    assertThat(
+      nombresDeMueblesDe(ambientes.get(1)),
+      containsInAnyOrder(
+        "Mesada de Cocina Minimalista",
+        "Alacena Industrial",
+        "Zapatero Escandinavo"
+      )
+    );
+  }
+
+  private List<String> nombresDeMueblesDe(Ambiente ambiente) {
+    return ambiente.getMuebles().stream().map(Mueble::getNombre).toList();
+  }
+
+  private List<Ambiente> obtenerAmbientes() {
+    return this.sessionFactory.getCurrentSession()
+      .createQuery("FROM Ambiente", Ambiente.class)
+      .getResultList();
   }
 
   private List<CategoriaDeMueble> obtenerCategorias() {

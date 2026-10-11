@@ -42,59 +42,6 @@
           </div>
         </fieldset>
 
-        <fieldset class="mb-4">
-          <legend class="h5">Muebles cargados</legend>
-
-          <p class="text-muted">
-            En el wireframe los muebles se cargan en un paso aparte (inventario-muebles.html, FU-08).
-            Como esa pantalla todavía no existe, este paso los carga también.
-          </p>
-
-          <div class="table-responsive position-relative">
-          <table class="table align-middle hb-tabla-muebles">
-            <thead>
-              <tr>
-                <th scope="col">Categoría</th>
-                <th scope="col">Nombre</th>
-                <th scope="col">Ancho (m)</th>
-                <th scope="col">Profundidad (m)</th>
-                <th scope="col"><span class="visually-hidden">Quitar</span></th>
-              </tr>
-            </thead>
-            <tbody id="filas-muebles">
-              <tr>
-                <td><select th:replace="~{fragments/selector-categoria :: selector('muebles[0].categoria')}"></select></td>
-                <td><input type="text" class="form-control" name="muebles[0].nombre" value="Sofa"></td>
-                <td><input type="number" step="0.01" min="0" class="form-control" name="muebles[0].ancho" value="2.1"></td>
-                <td><input type="number" step="0.01" min="0" class="form-control" name="muebles[0].profundidad" value="0.9"></td>
-                <td><button type="button" class="btn btn-outline-danger btn-sm">Eliminar</button></td>
-              </tr>
-              <tr>
-                <td><select th:replace="~{fragments/selector-categoria :: selector('muebles[1].categoria')}"></select></td>
-                <td><input type="text" class="form-control" name="muebles[1].nombre" value="Rack TV"></td>
-                <td><input type="number" step="0.01" min="0" class="form-control" name="muebles[1].ancho" value="1.6"></td>
-                <td><input type="number" step="0.01" min="0" class="form-control" name="muebles[1].profundidad" value="0.4"></td>
-                <td><button type="button" class="btn btn-outline-danger btn-sm">Eliminar</button></td>
-              </tr>
-            </tbody>
-          </table>
-          </div>
-
-          <template id="plantilla-mueble">
-            <tr>
-              <td><select th:replace="~{fragments/selector-categoria :: selector('CAMPO_CATEGORIA')}"></select></td>
-              <td><input type="text" class="form-control" name="__NOMBRE__"></td>
-              <td><input type="number" step="0.01" min="0" class="form-control" name="__ANCHO__"></td>
-              <td><input type="number" step="0.01" min="0" class="form-control" name="__PROFUNDIDAD__"></td>
-              <td><button type="button" class="btn btn-outline-danger btn-sm">Eliminar</button></td>
-            </tr>
-          </template>
-
-          <button type="button" id="agregar-mueble" class="btn btn-outline-primary">
-            Agregar mueble
-          </button>
-        </fieldset>
-
         <hr>
 
         <a th:href="@{/ambientes}" class="btn btn-secondary">Atrás</a>

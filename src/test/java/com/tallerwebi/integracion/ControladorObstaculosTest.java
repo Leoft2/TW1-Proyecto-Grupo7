@@ -3,7 +3,7 @@ package com.tallerwebi.integracion;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.tallerwebi.integracion.config.HibernateTestConfig;
@@ -64,12 +64,12 @@ public class ControladorObstaculosTest {
 
     assertThat(html, containsString("Toma de corriente se sale del muro izquierdo"));
     assertThat(html, containsString("name=\"obstaculos[0].posicion\" value=\"3.0\""));
-    assertThat(html, containsString("value=\"IZQUIERDO\" selected=\"selected\""));
+    assertThat(html, containsString("selected=\"selected\">Izquierdo</option>"));
     assertThat(html, containsString("name=\"muebles[0].nombre\" value=\"Rack\""));
   }
 
   @Test
-  public void dadoQueLosObstaculosSonValidos_cuandoConfirmo_entoncesSigoAGenerarElPlano()
+  public void dadoQueLosObstaculosSonValidos_cuandoConfirmo_entoncesSigoAlInventario()
     throws Exception {
     this.mockMvc.perform(
         this.conElAmbienteYUnRack(post("/plano/obstaculos/confirmar"))
@@ -79,8 +79,7 @@ public class ControladorObstaculosTest {
           .param("obstaculos[0].ancho", "0.8")
           .param("obstaculos[0].profundidad", "0.15")
       )
-      .andExpect(status().isOk())
-      .andExpect(forwardedUrl("/plano/generar"));
+      .andExpect(redirectedUrl("/inventario-muebles?ancho=4.0&largo=3.0"));
   }
 
   private MockHttpServletRequestBuilder conElAmbienteYUnRack(MockHttpServletRequestBuilder pedido) {

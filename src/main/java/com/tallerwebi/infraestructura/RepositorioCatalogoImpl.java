@@ -34,6 +34,14 @@ public class RepositorioCatalogoImpl implements RepositorioCatalogo {
   }
 
   @Override
+  public void eliminar(int id) {
+    String hql = "DELETE FROM Mueble WHERE id = :id";
+    Query<Mueble> query = sessionFactory.getCurrentSession().createQuery(hql, Mueble.class);
+    query.setParameter("id", id);
+    query.executeUpdate();
+  }
+
+  @Override
   public Mueble ObtenerMueblePorId(int id) {
     String query = "FROM Mueble m LEFT JOIN FETCH m.categoriaDeMueble WHERE m.id = :id";
     Query<Mueble> hibernateQuery = sessionFactory

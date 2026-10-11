@@ -71,7 +71,7 @@ public class ControladorPlano2DCategoriasTest {
     throws Exception {
     this.dadoQueExisteLaCategoria("Cama doble", 1.4, 1.9);
 
-    String html = this.cuandoAbroElFormularioDelPlano().getResponse().getContentAsString();
+    String html = this.cuandoAbroElInventario().getResponse().getContentAsString();
 
     assertThat(html, containsString("data-ancho=\"1.4\""));
     assertThat(html, containsString("data-profundidad=\"1.9\""));
@@ -84,9 +84,9 @@ public class ControladorPlano2DCategoriasTest {
     throws Exception {
     CategoriaDeMueble cama = this.dadoQueExisteLaCategoria("Cama doble", 1.4, 1.9);
 
-    String html = this.cuandoAbroElFormularioDelPlano().getResponse().getContentAsString();
+    String html = this.cuandoAbroElInventario().getResponse().getContentAsString();
 
-    assertThat(html, containsString("name=\"muebles[0].categoria\""));
+    assertThat(html, containsString("name=\"categoria\""));
     assertThat(html, containsString("value=\"" + cama.getId() + "\""));
   }
 
@@ -126,5 +126,9 @@ public class ControladorPlano2DCategoriasTest {
 
   private MvcResult cuandoAbroElFormularioDelPlano() throws Exception {
     return this.mockMvc.perform(get("/plano/ambiente")).andExpect(status().isOk()).andReturn();
+  }
+
+  private MvcResult cuandoAbroElInventario() throws Exception {
+    return this.mockMvc.perform(get("/inventario-muebles")).andExpect(status().isOk()).andReturn();
   }
 }

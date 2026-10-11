@@ -1,0 +1,94 @@
+package com.tallerwebi.integracion;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.tallerwebi.dominio.CategoriaDeMueble;
+import com.tallerwebi.dominio.Estilo;
+import com.tallerwebi.dominio.Mueble;
+import com.tallerwebi.integracion.config.HibernateTestConfig;
+import com.tallerwebi.integracion.config.SpringWebTestConfig;
+import jakarta.transaction.Transactional;
+import org.hibernate.SessionFactory;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
+
+@ExtendWith(SpringExtension.class)
+@WebAppConfiguration
+@ContextConfiguration(classes = { SpringWebTestConfig.class, HibernateTestConfig.class })
+public class SelectorCategoriaEdicionTest {
+
+  @Autowired
+  private WebApplicationContext wac;
+
+  @Autowired
+  private SessionFactory sessionFactory;
+
+  private MockMvc mockMvc;
+
+  @BeforeEach
+  public void init() {
+    this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac).build();
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaPreseleccionarLaCategoriaActualCuandoAbroElFormularioDeEdicion()
+    throws Exception {
+    Mueble mueble = this.dadoUnMuebleConCategoria("Sillón");
+
+    String html = this.cuandoAbroElFormularioDeEdicion(mueble.getId());
+
+    this.entoncesLaOpcionEstaSeleccionada("Sillón", html);
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaPreseleccionarSinCategoriaCuandoElMuebleNoTieneCategoria() throws Exception {
+    Mueble mueble = this.dadoUnMuebleConCategoria(null);
+
+    String html = this.cuandoAbroElFormularioDeEdicion(mueble.getId());
+
+    this.entoncesLaOpcionEstaSeleccionada("Sin categoría", html);
+  }
+
+  private Mueble dadoUnMuebleConCategoria(String nombreDeCategoria) {
+    Mueble mueble = new Mueble("Sillón propio", 0.9, 0.8);
+    mueble.setPrecio(55000.0);
+    mueble.setEstilo(Estilo.Japandi);
+    if (nombreDeCategoria != null) {
+      CategoriaDeMueble categoria = new CategoriaDeMueble(nombreDeCategoria, 1.0, 0.8);
+      this.sessionFactory.getCurrentSession().persist(categoria);
+      this.sessionFactory.getCurrentSession().flush();
+      mueble.setCategoriaDeMueble(categoria);
+    }
+    this.sessionFactory.getCurrentSession().persist(mueble);
+    this.sessionFactory.getCurrentSession().flush();
+    return mueble;
+  }
+
+  private String cuandoAbroElFormularioDeEdicion(int id) throws Exception {
+    return this.mockMvc.perform(get("/inventario-muebles/editar/{id}", id))
+      .andExpect(status().isOk())
+      .andReturn()
+      .getResponse()
+      .getContentAsString();
+  }
+
+  private void entoncesLaOpcionEstaSeleccionada(String textoOpcion, String html) {
+    assertThat(html, containsString("selected=\"selected\">" + textoOpcion + "</option>"));
+  }
+}

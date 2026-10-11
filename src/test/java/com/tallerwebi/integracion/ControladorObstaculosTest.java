@@ -64,7 +64,7 @@ public class ControladorObstaculosTest {
 
     assertThat(html, containsString("Toma de corriente se sale del muro izquierdo"));
     assertThat(html, containsString("name=\"obstaculos[0].posicion\" value=\"3.0\""));
-    assertThat(html, containsString("value=\"IZQUIERDO\" selected=\"selected\""));
+    assertThat(html, containsString("selected=\"selected\">Izquierdo</option>"));
     assertThat(html, containsString("name=\"muebles[0].nombre\" value=\"Rack\""));
   }
 

@@ -29,7 +29,7 @@
       <div class="col-md-4">
         <h2 class="h5">Agregar mueble</h2>
 
-        <form th:action="@{/inventario-muebles/agregar}" method="post">
+        <form th:action="@{/inventario-muebles/agregar}" method="post" id="agregar-mueble">
           <div class="mb-3">
             <label class="form-label">Categoría (autocompleta medidas)</label>
             <select th:replace="~{fragments/selector-categoria :: selector('categoria')}"></select>
@@ -49,10 +49,6 @@
           <div class="mb-3">
             <label for="agregar-descripcion" class="form-label">Descripción</label>
             <input type="text" class="form-control" id="agregar-descripcion" name="descripcion">
-          </div>
-          <div class="mb-3">
-            <label for="agregar-precio" class="form-label">Precio</label>
-            <input type="number" step="0.01" min="0" class="form-control" id="agregar-precio" name="precio">
           </div>
           <div class="mb-3">
             <label for="agregar-estilo" class="form-label">Estilo</label>
@@ -102,7 +98,7 @@
           <form th:action="@{/inventario-muebles/plano}" method="post" class="d-inline">
             <input type="hidden" name="ancho" th:value="${ancho}">
             <input type="hidden" name="largo" th:value="${largo}">
-            <button type="submit" class="btn btn-dark">Siguiente →</button>
+            <button type="submit" class="btn btn-dark">Generar plano →</button>
           </form>
         </div>
       </div>
@@ -133,10 +129,6 @@
               <div class="mb-3">
                 <label class="form-label">Descripción</label>
                 <input type="text" class="form-control" name="descripcion" th:value="${mueble.descripcion}">
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Precio</label>
-                <input type="number" step="0.01" min="0" class="form-control" name="precio" th:value="${mueble.precio}">
               </div>
               <div class="mb-3">
                 <label class="form-label">Estilo</label>
@@ -182,7 +174,7 @@
   </main>
 
   <footer th:replace="~{fragments/layout :: footer}"></footer>
-  <script type="module" th:src="@{/js/dimensiones.js}"></script>
+  <script type="module" th:src="@{/js/inventario-muebles.js}"></script>
   <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 </body>
 

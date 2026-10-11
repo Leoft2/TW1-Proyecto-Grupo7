@@ -6,6 +6,7 @@ import com.tallerwebi.dominio.ServicioCategoriaDeMueble;
 import com.tallerwebi.dominio.ServicioEdicionInventarioMuebles;
 import com.tallerwebi.dominio.ServicioPlano2D;
 import com.tallerwebi.dominio.excepcion.MuebleNoEncontrado;
+import com.tallerwebi.dominio.excepcion.ValidacionException;
 import jakarta.servlet.http.HttpSession;
 import java.util.Map;
 import org.springframework.stereotype.Controller;
@@ -139,16 +140,23 @@ public class ControladorInventarioMuebles {
     @RequestParam(name = PARAM_LARGO, required = false) Double largo,
     HttpSession sesion
   ) {
+    // Si el usuario llego sin pasar por el asistente, no hay medidas del ambiente en la
+    // sesion ni en el formulario: el servicio valida y este catch lo devuelve al primer
+    // paso del asistente en vez de dejar que termine en un 500.
     Ambiente ambiente = (Ambiente) sesion.getAttribute(ATRIBUTO_AMBIENTE);
     if (ambiente == null) {
       ambiente = new Ambiente(ancho, largo);
     }
-    Map<String, Object> model = new ModelMap();
-    model.put(
-      "plano",
-      servicioPlano2D.generarPlano(ambiente, servicioEdicionInventarioMuebles.listar())
-    );
-    return new ModelAndView("plano-interactivo", model);
+    try {
+      Map<String, Object> model = new ModelMap();
+      model.put(
+        "plano",
+        servicioPlano2D.generarPlano(ambiente, servicioEdicionInventarioMuebles.listar())
+      );
+      return new ModelAndView("plano-interactivo", model);
+    } catch (ValidacionException e) {
+      return new ModelAndView("redirect:/plano/ambiente");
+    }
   }
 
   @PostMapping("/inventario-muebles/agregar")

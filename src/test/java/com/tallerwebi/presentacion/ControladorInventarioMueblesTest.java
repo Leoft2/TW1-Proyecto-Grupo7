@@ -12,6 +12,7 @@ import com.tallerwebi.dominio.Plano;
 import com.tallerwebi.dominio.ServicioEdicionInventarioMuebles;
 import com.tallerwebi.dominio.ServicioPlano2D;
 import com.tallerwebi.dominio.excepcion.MuebleNoEncontrado;
+import com.tallerwebi.dominio.excepcion.ValidacionException;
 import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -197,6 +198,30 @@ public class ControladorInventarioMueblesTest {
     thenElServicioRecibeElAmbiente(ambienteDeSesion);
   }
 
+  @Test
+  public void deberiaRedirigirAConfigurarElAmbienteCuandoFaltanLasMedidasParaGenerarElPlano() {
+    // Given
+    when(sesion.getAttribute("ambiente")).thenReturn(null);
+    when(servicioEdicionInventarioMuebles.listar()).thenReturn(new java.util.ArrayList<>());
+    doThrow(new ValidacionException("El ancho del ambiente debe ser mayor a 0"))
+      .when(servicioPlano2D)
+      .generarPlano(any(Ambiente.class), anyList());
+
+    // When
+    ModelAndView mav = whenGeneroElPlanoSinMedidas();
+
+    // Then
+    thenRedirigeAConfigurarElAmbiente(mav);
+  }
+
+  private ModelAndView whenGeneroElPlanoSinMedidas() {
+    return controladorInventarioMuebles.generarPlano(null, null, sesion);
+  }
+
+  private void thenRedirigeAConfigurarElAmbiente(ModelAndView mav) {
+    assertEquals("redirect:/plano/ambiente", mav.getViewName());
+  }
+
   private void thenElServicioRecibeElAmbiente(Ambiente ambienteEsperado) {
     verify(servicioPlano2D).generarPlano(eq(ambienteEsperado), anyList());
   }
@@ -212,6 +237,19 @@ public class ControladorInventarioMueblesTest {
   public void deberiaCrearElMuebleCuandoLoAgregoDesdeElFormulario() {
     // Given
     Mueble muebleNuevo = new Mueble("Mesa ratona", 1.2, 0.6);
+
+    // When
+    whenAgregoElMueble(muebleNuevo);
+
+    // Then
+    thenElControllerCreaElMueble(muebleNuevo);
+  }
+
+  @Test
+  public void deberiaCrearElMuebleCuandoLaDescripcionVieneVacia() {
+    // Given: la descripcion es opcional en el form de alta, llega como cadena vacia.
+    Mueble muebleNuevo = new Mueble("Mesa ratona", 1.2, 0.6);
+    muebleNuevo.setDescripcion("");
 
     // When
     whenAgregoElMueble(muebleNuevo);

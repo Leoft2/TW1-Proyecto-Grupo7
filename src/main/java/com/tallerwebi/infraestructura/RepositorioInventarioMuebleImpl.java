@@ -30,7 +30,9 @@ public class RepositorioInventarioMuebleImpl implements RepositorioInventarioMue
 
   @Override
   public List<Mueble> listarTodos() {
-    String query = "FROM Mueble";
+    // El inventario solo lista muebles con medidas: los del catalogo (data.sql) se
+    // guardan sin ancho/largo y no pertenecen al inventario del usuario.
+    String query = "FROM Mueble WHERE ancho IS NOT NULL AND largo IS NOT NULL";
     return sessionFactory.getCurrentSession().createQuery(query, Mueble.class).getResultList();
   }
 

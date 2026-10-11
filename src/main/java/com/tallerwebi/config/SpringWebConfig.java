@@ -5,6 +5,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.CacheControl;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -26,8 +27,17 @@ public class SpringWebConfig implements WebMvcConfigurer {
 
   @Override
   public void addResourceHandlers(final ResourceHandlerRegistry registry) {
-    registry.addResourceHandler("/css/**").addResourceLocations("/resources/core/css/");
-    registry.addResourceHandler("/js/**").addResourceLocations("/resources/core/js/");
+    // Sin cache de estaticos: los navegadores cachean los ES modules de forma agresiva
+    // y si se quedan con una version vieja (ej. el import de dimensiones_funciones.js),
+    // la vista deja de autocompletar hasta reiniciar limpio.
+    registry
+      .addResourceHandler("/css/**")
+      .addResourceLocations("/resources/core/css/")
+      .setCacheControl(CacheControl.noCache());
+    registry
+      .addResourceHandler("/js/**")
+      .addResourceLocations("/resources/core/js/")
+      .setCacheControl(CacheControl.noCache());
     registry.addResourceHandler("/webjars/**").addResourceLocations("/webjars/");
   }
 

@@ -162,6 +162,25 @@ public class RepositorioInventarioMueblesTest {
   }
 
   // -------------------------------------------------------------------------
+  // Listado: el inventario solo lista muebles con medidas.
+  // Los muebles del catalogo (data.sql) no tienen ancho/largo: no pertenecen
+  // al inventario del usuario y hasta pueden romper la generacion del plano.
+  // -------------------------------------------------------------------------
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaExcluirDelInventarioLosMueblesSinMedidasCuandoListoElInventario() {
+    givenMuebleGuardado("Sillon del catalogo", null, null, Estilo.Retro);
+    Mueble mesa = givenMuebleGuardado("Mesa", 1.2, 0.8, Estilo.Japandi);
+    flushYClear();
+
+    List<Mueble> inventario = whenListoElInventario();
+
+    thenElInventarioContieneSoloElMuebleConMedidas(inventario, mesa);
+  }
+
+  // -------------------------------------------------------------------------
   // Eliminacion (criterio 2) - sin distribuciones
   // -------------------------------------------------------------------------
 
@@ -375,6 +394,10 @@ public class RepositorioInventarioMueblesTest {
     flushYClear();
   }
 
+  private List<Mueble> whenListoElInventario() {
+    return this.repositorioInventarioMueble.listarTodos();
+  }
+
   // -------------------------------------------------------------------------
   // Then (validacion)
   // -------------------------------------------------------------------------
@@ -460,6 +483,13 @@ public class RepositorioInventarioMueblesTest {
 
   private void thenElInventarioEstaVacio() {
     assertThat(this.repositorioInventarioMueble.listarTodos(), is(empty()));
+  }
+
+  private void thenElInventarioContieneSoloElMuebleConMedidas(
+    List<Mueble> inventario,
+    Mueble esperado
+  ) {
+    assertThat(inventario, contains(esperado));
   }
 
   private void thenElMuebleNoTieneUbicaciones(int id) {

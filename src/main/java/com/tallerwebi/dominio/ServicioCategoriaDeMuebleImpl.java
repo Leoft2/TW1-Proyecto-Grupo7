@@ -23,6 +23,11 @@ public class ServicioCategoriaDeMuebleImpl implements ServicioCategoriaDeMueble 
   }
 
   @Override
+  public CategoriaDeMueble buscarPorId(Long id) {
+    return repositorioCategoriaDeMueble.buscarPorId(id);
+  }
+
+  @Override
   public Mueble crearMueble(String nombre, Long idCategoria, Double ancho, Double profundidad) {
     if (idCategoria == null) {
       if (ancho == null || profundidad == null) {

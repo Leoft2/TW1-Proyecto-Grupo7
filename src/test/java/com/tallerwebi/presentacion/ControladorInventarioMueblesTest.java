@@ -23,6 +23,7 @@ public class ControladorInventarioMueblesTest {
 
   private ServicioEdicionInventarioMuebles servicioEdicionInventarioMuebles;
   private ServicioPlano2D servicioPlano2D;
+  private ServicioCategoriaDeMueble servicioCategoriaDeMueble;
   private HttpSession sesion;
   private ControladorInventarioMuebles controladorInventarioMuebles;
 
@@ -31,9 +32,7 @@ public class ControladorInventarioMueblesTest {
     servicioEdicionInventarioMuebles = mock(ServicioEdicionInventarioMuebles.class);
     servicioPlano2D = mock(ServicioPlano2D.class);
     sesion = mock(HttpSession.class);
-    com.tallerwebi.dominio.ServicioCategoriaDeMueble servicioCategoriaDeMueble = mock(
-      com.tallerwebi.dominio.ServicioCategoriaDeMueble.class
-    );
+    servicioCategoriaDeMueble = mock(ServicioCategoriaDeMueble.class);
     when(servicioCategoriaDeMueble.obtenerCategorias()).thenReturn(new java.util.ArrayList<>());
     controladorInventarioMuebles =
       new ControladorInventarioMuebles(
@@ -226,6 +225,55 @@ public class ControladorInventarioMueblesTest {
       org.mockito.ArgumentCaptor.forClass(com.tallerwebi.dominio.Ambiente.class);
     verify(servicioPlano2D).generarPlano(captor.capture(), org.mockito.ArgumentMatchers.anyList());
     assertEquals(4.0, captor.getValue().getAncho());
+  }
+
+  @Test
+  public void deberiaAsignarLaCategoriaAlMuebleCuandoLaIndicoEnElAlta() {
+    // Given
+    CategoriaDeMueble sillones = new CategoriaDeMueble("Sillón", 1.0, 0.8);
+    when(servicioCategoriaDeMueble.buscarPorId(2L)).thenReturn(sillones);
+    Mueble muebleNuevo = new Mueble("Mesa ratona", 1.2, 0.6);
+
+    // When
+    whenAgregoElMuebleConCategoria(muebleNuevo, 2L);
+
+    // Then
+    thenElControllerCreaElMuebleConCategoria(sillones);
+  }
+
+  private void whenAgregoElMuebleConCategoria(Mueble mueble, Long categoriaId) {
+    controladorInventarioMuebles.agregar(mueble, categoriaId);
+  }
+
+  private void thenElControllerCreaElMuebleConCategoria(CategoriaDeMueble categoria) {
+    verify(servicioEdicionInventarioMuebles)
+      .crear(argThat(m -> m.getCategoriaDeMueble() == categoria));
+  }
+
+  @Test
+  public void deberiaAsignarLaCategoriaAlMuebleCuandoLaIndicoEnLaEdicion()
+    throws MuebleNoEncontrado {
+    // Given
+    CategoriaDeMueble sillones = new CategoriaDeMueble("Sillón", 1.0, 0.8);
+    when(servicioCategoriaDeMueble.buscarPorId(2L)).thenReturn(sillones);
+    Mueble datos = new Mueble("Mesa ratona", 1.2, 0.6);
+
+    // When
+    whenActualizoElMuebleConCategoria(datos, 2L);
+
+    // Then
+    thenElControllerActualizaElMuebleConCategoria(sillones);
+  }
+
+  private void whenActualizoElMuebleConCategoria(Mueble datos, Long categoriaId)
+    throws MuebleNoEncontrado {
+    controladorInventarioMuebles.editar(1, datos, null, null, categoriaId);
+  }
+
+  private void thenElControllerActualizaElMuebleConCategoria(CategoriaDeMueble categoria)
+    throws MuebleNoEncontrado {
+    verify(servicioEdicionInventarioMuebles)
+      .actualizar(eq(1), argThat(m -> m.getCategoriaDeMueble() == categoria));
   }
 
   @Test

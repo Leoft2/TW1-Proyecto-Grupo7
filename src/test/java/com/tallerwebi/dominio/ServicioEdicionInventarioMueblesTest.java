@@ -111,6 +111,19 @@ public class ServicioEdicionInventarioMueblesTest {
   }
 
   @Test
+  public void deberiaActualizarLaCategoriaCuandoElMuebleExisteYLaNuevaCategoriaEsValida()
+    throws MuebleNoEncontrado {
+    Mueble mueble = givenMuebleExistenteEnElInventario();
+    CategoriaDeMueble sillones = new CategoriaDeMueble("Sillón", 1.0, 0.8);
+    Mueble datosNuevos = new Mueble(mueble.getNombre(), mueble.getAncho(), mueble.getLargo());
+    datosNuevos.setCategoriaDeMueble(sillones);
+
+    whenActualizoElMueble(datosNuevos);
+
+    thenLaCategoriaSeActualiza(mueble, sillones);
+  }
+
+  @Test
   public void deberiaGuardarElMuebleCuandoLoActualizo() throws MuebleNoEncontrado {
     Mueble mueble = givenMuebleExistenteEnElInventario();
     Mueble datosNuevos = new Mueble("Mesa ratona", mueble.getAncho(), mueble.getLargo());
@@ -250,6 +263,10 @@ public class ServicioEdicionInventarioMueblesTest {
 
   private void thenElEstiloSeActualiza(Mueble mueble, Estilo esperado) {
     assertThat(mueble.getEstilo(), is(equalTo(esperado)));
+  }
+
+  private void thenLaCategoriaSeActualiza(Mueble mueble, CategoriaDeMueble esperada) {
+    assertThat(mueble.getCategoriaDeMueble(), is(esperada));
   }
 
   private void thenElInventarioTieneLosMuebles(List<Mueble> muebles) {

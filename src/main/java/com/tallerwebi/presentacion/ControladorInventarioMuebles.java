@@ -19,6 +19,7 @@ public class ControladorInventarioMuebles {
   private static final String VISTA_INVENTARIO = "inventario-muebles";
   private static final String PARAM_ANCHO = "ancho";
   private static final String PARAM_LARGO = "largo";
+  private static final String PARAM_CATEGORIA = "categoria";
   private static final String ATTR_CATEGORIAS = "categorias";
   private static final String ATRIBUTO_AMBIENTE = "ambiente";
 
@@ -65,7 +66,7 @@ public class ControladorInventarioMuebles {
   }
 
   public ModelAndView editar(int id, Mueble datos) throws MuebleNoEncontrado {
-    return editar(id, datos, null, null);
+    return editar(id, datos, null, null, null);
   }
 
   @PostMapping("/inventario-muebles/editar/{id}")
@@ -73,8 +74,10 @@ public class ControladorInventarioMuebles {
     @PathVariable("id") int id,
     Mueble datos,
     @RequestParam(name = PARAM_ANCHO, required = false) Double ancho,
-    @RequestParam(name = PARAM_LARGO, required = false) Double largo
+    @RequestParam(name = PARAM_LARGO, required = false) Double largo,
+    @RequestParam(name = PARAM_CATEGORIA, required = false) Long categoriaId
   ) throws MuebleNoEncontrado {
+    asignarCategoria(datos, categoriaId);
     try {
       servicioEdicionInventarioMuebles.actualizar(id, datos);
       return new ModelAndView(
@@ -155,9 +158,23 @@ public class ControladorInventarioMuebles {
     }
   }
 
-  @PostMapping("/inventario-muebles/agregar")
   public ModelAndView agregar(Mueble datos) {
+    return agregar(datos, null);
+  }
+
+  @PostMapping("/inventario-muebles/agregar")
+  public ModelAndView agregar(
+    Mueble datos,
+    @RequestParam(name = PARAM_CATEGORIA, required = false) Long categoriaId
+  ) {
+    asignarCategoria(datos, categoriaId);
     servicioEdicionInventarioMuebles.crear(datos);
     return new ModelAndView("redirect:/inventario-muebles");
+  }
+
+  private void asignarCategoria(Mueble datos, Long categoriaId) {
+    if (categoriaId != null) {
+      datos.setCategoriaDeMueble(servicioCategoriaDeMueble.buscarPorId(categoriaId));
+    }
   }
 }

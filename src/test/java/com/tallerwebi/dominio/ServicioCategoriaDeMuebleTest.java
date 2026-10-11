@@ -78,9 +78,28 @@ public class ServicioCategoriaDeMuebleTest {
     assertThat(error.getMessage(), is("Completá las medidas de Baúl o elegí una categoría"));
   }
 
-  private void dadoQueExisteLaCamaDoble() {
-    when(repositorioCategoriaDeMueble.buscarPorId(ID_CAMA_DOBLE))
-      .thenReturn(new CategoriaDeMueble("Cama doble", 1.4, 1.9));
+  //Nuevo test para arreglo bug
+  @Test
+  public void deberiaDevolverLaCategoriaCuandoBuscoPorSuId() {
+    CategoriaDeMueble camaDoble = this.dadoQueExisteLaCamaDoble();
+
+    CategoriaDeMueble categoria = this.cuandoBuscoLaCategoria(ID_CAMA_DOBLE);
+
+    this.entoncesEsLaCategoria(camaDoble, categoria);
+  }
+
+  private CategoriaDeMueble dadoQueExisteLaCamaDoble() {
+    CategoriaDeMueble camaDoble = new CategoriaDeMueble("Cama doble", 1.4, 1.9);
+    when(repositorioCategoriaDeMueble.buscarPorId(ID_CAMA_DOBLE)).thenReturn(camaDoble);
+    return camaDoble;
+  }
+
+  private CategoriaDeMueble cuandoBuscoLaCategoria(Long id) {
+    return servicioCategoriaDeMueble.buscarPorId(id);
+  }
+
+  private void entoncesEsLaCategoria(CategoriaDeMueble esperada, CategoriaDeMueble obtenida) {
+    assertThat(obtenida, is(esperada));
   }
 
   private Mueble cuandoCreoElMueble(

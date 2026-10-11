@@ -31,6 +31,7 @@ public class ServicioEdicionInventarioMueblesImpl implements ServicioEdicionInve
     mueble.setDescripcion(datos.getDescripcion());
     mueble.setPrecio(datos.getPrecio());
     mueble.setEstilo(datos.getEstilo());
+    mueble.setCategoriaDeMueble(datos.getCategoriaDeMueble());
     this.repositorioInventarioMueble.guardar(mueble);
   }
 

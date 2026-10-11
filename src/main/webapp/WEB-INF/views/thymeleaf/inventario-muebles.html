@@ -32,7 +32,7 @@
         <form th:action="@{/inventario-muebles/agregar}" method="post" id="agregar-mueble">
           <div class="mb-3">
             <label class="form-label">Categoría (autocompleta medidas)</label>
-            <select th:replace="~{fragments/selector-categoria :: selector('categoria')}"></select>
+            <select th:replace="~{fragments/selector-categoria :: selector('categoria', null)}"></select>
           </div>
           <div class="mb-3">
             <label for="agregar-nombre" class="form-label">Nombre</label>
@@ -129,6 +129,10 @@
               <div class="mb-3">
                 <label class="form-label">Descripción</label>
                 <input type="text" class="form-control" name="descripcion" th:value="${mueble.descripcion}">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Categoría</label>
+                <select th:replace="~{fragments/selector-categoria :: selector('categoria', ${mueble.categoriaDeMueble?.id})}"></select>
               </div>
               <div class="mb-3">
                 <label class="form-label">Estilo</label>

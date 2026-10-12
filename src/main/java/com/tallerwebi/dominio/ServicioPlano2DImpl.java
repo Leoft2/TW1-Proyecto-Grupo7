@@ -173,7 +173,9 @@ public class ServicioPlano2DImpl implements ServicioPlano2D {
         .orElse(null);
     }
 
-    /** Posicion del cursor que deja al mueble justo despues de la zona, en el sentido del tramo. */
+    /**
+     * Posicion del cursor que deja al mueble justo despues de la zona, en el sentido del tramo.
+     */
     private Double recorridoDespuesDe(ZonaNoDisponible zona, Mueble mueble) {
       return switch (tramoActual) {
         case MURO_DERECHO -> zona.getPosicionY() + zona.getLargo();
@@ -183,7 +185,9 @@ public class ServicioPlano2DImpl implements ServicioPlano2D {
       };
     }
 
-    /** Evita bucles: solo se salta si el cursor avanza de verdad en el sentido del tramo. */
+    /**
+     * Evita bucles: solo se salta si el cursor avanza de verdad en el sentido del tramo.
+     */
     private Boolean avanzaEnElTramo(Double desde, Double hasta) {
       return (hasta - desde) * sentidoDelTramo() > 0;
     }

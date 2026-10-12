@@ -1,6 +1,8 @@
 package com.tallerwebi.dominio;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.tallerwebi.dominio.excepcion.ValidacionException;
 import java.util.ArrayList;
@@ -23,20 +25,19 @@ import org.junit.jupiter.api.Test;
  * entonces el sistema define un criterio de orden de colocación (ej. por tamaño o por orden de carga) y lo aplica de forma consistente.
  */
 
-public class ServicioRenderizadoPlano2DTest {
+public class ServicioPlano2DTest {
 
   private final ServicioPlano2D servicioPlano2D = new ServicioPlano2DImpl();
-  private final Ambiente ambiente = new Ambiente(4.0, 3.0);
-  private final Mueble silla = new Mueble("Silla", 0.5, 0.5);
-  private final Mueble mesa = new Mueble("Mesa", 1.0, 1.0);
-  private final List<Mueble> muebles = new ArrayList<>(Arrays.asList(silla, mesa));
+
+  // -------------------------------------------------------------------------
+  // Validacion de las dimensiones del ambiente
+  // -------------------------------------------------------------------------
 
   @Test
   public void deberiaLanzarValidacionExceptionCuandoElAnchoDelAmbienteEsNegativo() {
-    // preparacion
-    Ambiente ambienteConAnchoNegativo = new Ambiente(-5.0, 3.0);
+    Ambiente ambienteConAnchoNegativo = givenAmbiente(-5.0, 3.0);
+    List<Mueble> muebles = givenMueblesPorDefecto();
 
-    // ejecucion y validacion
     assertThrows(
       ValidacionException.class,
       () -> servicioPlano2D.generarPlano(ambienteConAnchoNegativo, muebles)
@@ -45,10 +46,9 @@ public class ServicioRenderizadoPlano2DTest {
 
   @Test
   public void deberiaLanzarValidacionExceptionCuandoElAnchoDelAmbienteEsCero() {
-    // preparacion
-    Ambiente ambienteSinAncho = new Ambiente(0.0, 3.0);
+    Ambiente ambienteSinAncho = givenAmbiente(0.0, 3.0);
+    List<Mueble> muebles = givenMueblesPorDefecto();
 
-    // ejecucion y validacion
     assertThrows(
       ValidacionException.class,
       () -> servicioPlano2D.generarPlano(ambienteSinAncho, muebles)
@@ -57,290 +57,305 @@ public class ServicioRenderizadoPlano2DTest {
 
   @Test
   public void deberiaLanzarValidacionExceptionCuandoElAnchoDelAmbienteEsNulo() {
-    // preparacion
-    Ambiente ambienteSinAncho = new Ambiente(null, 3.0);
+    Ambiente ambienteSinAncho = givenAmbiente(null, 3.0);
+    List<Mueble> muebles = givenMueblesPorDefecto();
 
-    // ejecucion y validacion
     assertThrows(
       ValidacionException.class,
       () -> servicioPlano2D.generarPlano(ambienteSinAncho, muebles)
     );
   }
 
+  // -------------------------------------------------------------------------
+  // Generacion del plano
+  // -------------------------------------------------------------------------
+
   @Test
   public void deberiaConservarElAmbienteDelPlanoCuandoLasDimensionesYMueblesSonValidos() {
-    // ejecucion
+    Ambiente ambiente = givenAmbiente(4.0, 3.0);
+    List<Mueble> muebles = givenMueblesPorDefecto();
+
     Plano planoGenerado = whenCargoDimensionesYMueblesDelAmbienteGeneraUnPlano(ambiente, muebles);
 
-    // validacion
     thenElAmbienteDelPlanoEs(planoGenerado, ambiente);
   }
 
   @Test
   public void deberiaUbicarTodosLosMueblesValidosEnElPlanoCuandoLasDimensionesYMueblesSonValidos() {
+    Ambiente ambiente = givenAmbiente(4.0, 3.0);
+    List<Mueble> muebles = givenMueblesPorDefecto();
+
     Plano planoGenerado = whenCargoDimensionesYMueblesDelAmbienteGeneraUnPlano(ambiente, muebles);
 
     thenLaCantidadDeMueblesDelPlanoEs(planoGenerado, muebles.size());
   }
 
   @Test
-  public void deberiaConsiderarQueUnMuebleEstaDentroDelPerimetroCuandoElMuebleCabeEnElPerimetro() {
-    // preparacion
-    Mueble mueble = new Mueble("Mesa", 1.0, 1.0);
-    MuebleUbicado muebleUbicado = new MuebleUbicado(mueble, 3.0, 2.0);
-
-    // ejecucion
-    Boolean muebleEstaDentroDelPerimetro = whenVerificoSiElMuebleEstaEnElPerimetro(
-      muebleUbicado,
-      ambiente
-    );
-
-    // validacion
-    thenElResultadoDeEstarDentroDelPerimetroEs(true, muebleEstaDentroDelPerimetro);
-  }
-
-  @Test
-  public void deberiaConsiderarQueNoEstaDentroDelPerimetroCuandoLaCoordenadaXEsNegativa() {
-    // preparacion
-    MuebleUbicado muebleUbicado = new MuebleUbicado(mesa, -0.5, 0.0);
-
-    // ejecucion
-    Boolean muebleEstaDentroDelPerimetro = whenVerificoSiElMuebleEstaEnElPerimetro(
-      muebleUbicado,
-      ambiente
-    );
-
-    // validacion
-    thenElResultadoDeEstarDentroDelPerimetroEs(false, muebleEstaDentroDelPerimetro);
-  }
-
-  @Test
-  public void deberiaConsiderarQueUnMuebleNoEstaDentroDelPerimetroCuandoElMuebleSeSaleDelPerimetro() {
-    // preparacion
-    MuebleUbicado muebleUbicado = new MuebleUbicado(mesa, 3.5, 0.0);
-
-    // ejecucion
-    Boolean muebleEstaDentroDelPerimetro = whenVerificoSiElMuebleEstaEnElPerimetro(
-      muebleUbicado,
-      ambiente
-    );
-
-    // validacion
-    thenElResultadoDeEstarDentroDelPerimetroEs(false, muebleEstaDentroDelPerimetro);
-  }
-
-  @Test
-  public void deberiaConsiderarQueNoEstaDentroDelPerimetroCuandoElMuebleSeSaleDelPerimetroEnElEjeY() {
-    // preparacion
-    MuebleUbicado muebleUbicado = new MuebleUbicado(mesa, 0.0, 2.5);
-    // 2.5 + 1.0 = 3.5 > 3.0 (largo)
-    // ejecucion
-    Boolean muebleEstaDentroDelPerimetro = whenVerificoSiElMuebleEstaEnElPerimetro(
-      muebleUbicado,
-      ambiente
-    );
-
-    // validacion
-    thenElResultadoDeEstarDentroDelPerimetroEs(false, muebleEstaDentroDelPerimetro);
-  }
-
-  @Test
   public void deberiaRetornarMismoResultadoCuandoSeEjecutaDosVecesConMismoInput() {
-    // ejecucion
+    Ambiente ambiente = givenAmbiente(4.0, 3.0);
+    List<Mueble> muebles = givenMueblesPorDefecto();
+
     Plano primerPlano = whenCargoDimensionesYMueblesDelAmbienteGeneraUnPlano(ambiente, muebles);
     Plano segundoPlano = whenCargoDimensionesYMueblesDelAmbienteGeneraUnPlano(ambiente, muebles);
 
-    // validacion
     thenLasPosicionesDeAmbosPlanosSonIguales(primerPlano, segundoPlano);
   }
 
   @Test
   public void deberiaUbicarLosMueblesDentroDelPerimetroCuandoDimensionesYMueblesSonValidos() {
-    // ejecucion
+    Ambiente ambiente = givenAmbiente(4.0, 3.0);
+    List<Mueble> muebles = givenMueblesPorDefecto();
+
     Plano planoGenerado = whenCargoDimensionesYMueblesDelAmbienteGeneraUnPlano(ambiente, muebles);
     List<Boolean> resultadosDePerimetro = whenVerificoSiCadaMuebleEstaEnElPerimetro(planoGenerado);
 
-    // validacion
     thenTodosLosMueblesEstanDentroDelPerimetro(resultadosDePerimetro);
   }
 
+  // -------------------------------------------------------------------------
+  // Perimetro
+  // -------------------------------------------------------------------------
+
   @Test
-  public void deberiaUbicarElMuebleEnElMuroDerechoCuandoElMuroSuperiorEstaOcupado() {
-    // preparacion
-    // el muro superior del ambiente mide 4.0, asi que los primeros 4 sillones de 1.0 lo llenan
-    List<Mueble> sillones = new ArrayList<>(
-      Arrays.asList(
-        new Mueble("Sillon", 1.0, 0.5),
-        new Mueble("Sillon", 1.0, 0.5),
-        new Mueble("Sillon", 1.0, 0.5),
-        new Mueble("Sillon", 1.0, 0.5),
-        new Mueble("Sillon", 1.0, 0.5)
-      )
+  public void deberiaConsiderarQueUnMuebleEstaDentroDelPerimetroCuandoElMuebleCabeEnElPerimetro() {
+    Ambiente ambiente = givenAmbiente(4.0, 3.0);
+    MuebleUbicado muebleUbicado = givenMuebleUbicado(givenMueble("Mesa", 1.0, 1.0), 3.0, 2.0);
+
+    Boolean muebleEstaDentroDelPerimetro = whenVerificoSiElMuebleEstaEnElPerimetro(
+      muebleUbicado,
+      ambiente
     );
 
-    // ejecucion
+    thenElResultadoDeEstarDentroDelPerimetroEs(true, muebleEstaDentroDelPerimetro);
+  }
+
+  @Test
+  public void deberiaConsiderarQueNoEstaDentroDelPerimetroCuandoLaCoordenadaXEsNegativa() {
+    Ambiente ambiente = givenAmbiente(4.0, 3.0);
+    MuebleUbicado muebleUbicado = givenMuebleUbicado(givenMueble("Mesa", 1.0, 1.0), -0.5, 0.0);
+
+    Boolean muebleEstaDentroDelPerimetro = whenVerificoSiElMuebleEstaEnElPerimetro(
+      muebleUbicado,
+      ambiente
+    );
+
+    thenElResultadoDeEstarDentroDelPerimetroEs(false, muebleEstaDentroDelPerimetro);
+  }
+
+  @Test
+  public void deberiaConsiderarQueUnMuebleNoEstaDentroDelPerimetroCuandoElMuebleSeSaleDelPerimetro() {
+    Ambiente ambiente = givenAmbiente(4.0, 3.0);
+    MuebleUbicado muebleUbicado = givenMuebleUbicado(givenMueble("Mesa", 1.0, 1.0), 3.5, 0.0);
+
+    Boolean muebleEstaDentroDelPerimetro = whenVerificoSiElMuebleEstaEnElPerimetro(
+      muebleUbicado,
+      ambiente
+    );
+
+    thenElResultadoDeEstarDentroDelPerimetroEs(false, muebleEstaDentroDelPerimetro);
+  }
+
+  @Test
+  public void deberiaConsiderarQueNoEstaDentroDelPerimetroCuandoElMuebleSeSaleDelPerimetroEnElEjeY() {
+    Ambiente ambiente = givenAmbiente(4.0, 3.0);
+    // 2.5 + 1.0 = 3.5 > 3.0 (largo)
+    MuebleUbicado muebleUbicado = givenMuebleUbicado(givenMueble("Mesa", 1.0, 1.0), 0.0, 2.5);
+
+    Boolean muebleEstaDentroDelPerimetro = whenVerificoSiElMuebleEstaEnElPerimetro(
+      muebleUbicado,
+      ambiente
+    );
+
+    thenElResultadoDeEstarDentroDelPerimetroEs(false, muebleEstaDentroDelPerimetro);
+  }
+
+  // -------------------------------------------------------------------------
+  // Recorrido de los muros
+  // -------------------------------------------------------------------------
+
+  @Test
+  public void deberiaUbicarElMuebleEnElMuroDerechoCuandoElMuroSuperiorEstaOcupado() {
+    Ambiente ambiente = givenAmbiente(4.0, 3.0);
+    // el muro superior del ambiente mide 4.0, asi que los primeros 4 sillones de 1.0 lo llenan
+    List<Mueble> sillones = givenSillones(5);
+
     Plano planoGenerado = whenCargoDimensionesYMueblesDelAmbienteGeneraUnPlano(ambiente, sillones);
 
-    // validacion
     thenElUltimoMuebleEstaEnLaPosicion(new ArrayList<>(Arrays.asList(3.0, 0.5)), planoGenerado);
   }
 
   @Test
   public void deberiaUbicarElMuebleEnElMuroInferiorCuandoElMuroDerechoEstaOcupado() {
-    // preparacion
+    Ambiente ambiente = givenAmbiente(4.0, 3.0);
     // el muro superior consume 4 sillones y el derecho 4 mas, porque cada sillon
     // avanza 0.5 de largo entre Y 0.5 y Y 2.5 con la esquina superior libre, asi que
     // el noveno sillon es el primero que toca el muro inferior
-    List<Mueble> sillones = new ArrayList<>();
-    for (int i = 0; i < 9; i++) {
-      sillones.add(new Mueble("Sillon", 1.0, 0.5));
-    }
+    List<Mueble> sillones = givenSillones(9);
 
-    // ejecucion
     Plano planoGenerado = whenCargoDimensionesYMueblesDelAmbienteGeneraUnPlano(ambiente, sillones);
 
-    // validacion
     thenElUltimoMuebleEstaEnLaPosicion(new ArrayList<>(Arrays.asList(2.0, 2.5)), planoGenerado);
   }
 
   @Test
   public void deberiaUbicarElMuebleEnElMuroIzquierdoCuandoLosMurosPreviosEstanOcupados() {
-    // preparacion
+    Ambiente ambiente = givenAmbiente(4.0, 3.0);
     // el muro superior consume 4 sillones, el derecho 4 mas y el inferior 3, asi que
     // el duodecimo es el primero que toca el muro izquierdo, que se recorre de abajo
     // hacia arriba arrancando con la esquina inferior libre
-    List<Mueble> sillones = new ArrayList<>();
-    for (int i = 0; i < 12; i++) {
-      sillones.add(new Mueble("Sillon", 1.0, 0.5));
-    }
+    List<Mueble> sillones = givenSillones(12);
 
-    // ejecucion
     Plano planoGenerado = whenCargoDimensionesYMueblesDelAmbienteGeneraUnPlano(ambiente, sillones);
 
-    // validacion
     thenElUltimoMuebleEstaEnLaPosicion(new ArrayList<>(Arrays.asList(0.0, 2.0)), planoGenerado);
   }
 
+  // -------------------------------------------------------------------------
+  // Criterio de orden: mismo tipo de mueble
+  // -------------------------------------------------------------------------
+
   @Test
   public void deberiaAsignarPosicionesDistintasCuandoHayMueblesDelMismoTipo() {
-    // preparacion
-    Mueble sillonChico = new Mueble("Sillon", 0.5, 0.5);
-    Mueble sillonGrande = new Mueble("Sillon", 1.0, 1.0);
+    Ambiente ambiente = givenAmbiente(4.0, 3.0);
+    Mueble sillonChico = givenMueble("Sillon", 0.5, 0.5);
+    Mueble sillonGrande = givenMueble("Sillon", 1.0, 1.0);
     List<Mueble> sillones = new ArrayList<>(Arrays.asList(sillonChico, sillonGrande));
 
-    // ejecucion
     Plano planoGenerado = whenCargoDimensionesYMueblesDelAmbienteGeneraUnPlano(ambiente, sillones);
 
-    // validacion
     thenLosMueblesTienenPosicionesDistintas(planoGenerado);
   }
 
   @Test
   public void deberiaUbicarElMuebleMasGrandePrimeroCuandoHayMueblesDelMismoTipo() {
-    // preparacion
-    Mueble sillonChico = new Mueble("Sillon", 0.5, 0.5);
-    Mueble sillonGrande = new Mueble("Sillon", 1.0, 1.0);
+    Ambiente ambiente = givenAmbiente(4.0, 3.0);
+    Mueble sillonChico = givenMueble("Sillon", 0.5, 0.5);
+    Mueble sillonGrande = givenMueble("Sillon", 1.0, 1.0);
     // el chico se carga primero, a proposito, para que el orden de entrada no alcance
     List<Mueble> sillones = new ArrayList<>(Arrays.asList(sillonChico, sillonGrande));
 
-    // ejecucion
     Plano planoGenerado = whenCargoDimensionesYMueblesDelAmbienteGeneraUnPlano(ambiente, sillones);
 
-    // validacion
     thenElPrimerMuebleDelPlanoEs(sillonGrande, planoGenerado);
   }
 
+  // -------------------------------------------------------------------------
+  // Ambiente sin mobiliario
+  // -------------------------------------------------------------------------
+
   @Test
   public void deberiaRetornarMensajeSinMobiliarioCuandoNoHayMueblesCargadosEnElPlano() {
-    // preparacion
-    List<Mueble> mueblesVacios = new ArrayList<>();
+    Ambiente ambiente = givenAmbiente(4.0, 3.0);
+    List<Mueble> mueblesVacios = givenMueblesVacios();
 
-    // ejecucion
     Plano planoGenerado = whenCargoDimensionesYMueblesDelAmbienteGeneraUnPlano(
       ambiente,
       mueblesVacios
     );
 
-    // validacion
     thenDevuelveMensajeSinMobiliario(planoGenerado);
   }
 
   @Test
   public void deberiaRetornarListaVaciaCuandoNoHayMueblesCargados() {
-    // preparacion
-    List<Mueble> mueblesVacios = new ArrayList<>();
+    Ambiente ambiente = givenAmbiente(4.0, 3.0);
+    List<Mueble> mueblesVacios = givenMueblesVacios();
 
-    // ejecucion
     Plano planoGenerado = whenCargoDimensionesYMueblesDelAmbienteGeneraUnPlano(
       ambiente,
       mueblesVacios
     );
 
-    //validacion
     thenDevuelveListaVaciaDeMuebles(planoGenerado);
   }
 
+  // -------------------------------------------------------------------------
+  // Mueble que excede el espacio disponible
+  // -------------------------------------------------------------------------
+
   @Test
   public void deberiaSeguirDesdeDondeQuedoElRecorridoCuandoUnMuebleSeExcluye() {
-    // preparacion
-    Mueble placard = new Mueble("Placard", 1.5, 3.0);
-    Mueble cama = new Mueble("Cama", 3.0, 1.5);
-    Mueble mesa = new Mueble("Mesa", 0.5, 0.5);
+    Ambiente ambiente = givenAmbiente(4.0, 3.0);
+    Mueble placard = givenMueble("Placard", 1.5, 3.0);
+    Mueble cama = givenMueble("Cama", 3.0, 1.5);
+    Mueble mesa = givenMueble("Mesa", 0.5, 0.5);
+    List<Mueble> muebles = new ArrayList<>(Arrays.asList(placard, cama, mesa));
 
-    // ejecucion
-    Plano plano = servicioPlano2D.generarPlano(ambiente, List.of(placard, cama, mesa));
+    Plano plano = whenCargoDimensionesYMueblesDelAmbienteGeneraUnPlano(ambiente, muebles);
 
-    // validacion
-    thenElUltimoMuebleEstaEnLaPosicion(List.of(1.5, 0.0), plano);
+    thenElUltimoMuebleEstaEnLaPosicion(new ArrayList<>(Arrays.asList(1.5, 0.0)), plano);
   }
 
   @Test
   public void deberiaExcluirMueblesDelResultadoCuandoElMuebleExcedeElEspacioDisponible() {
-    // preparacion
-    Ambiente ambiente = new Ambiente(2.0, 2.0);
-    Mueble muebleGrande = new Mueble("Sofa", 3.0, 2.0);
+    Ambiente ambiente = givenAmbiente(2.0, 2.0);
+    List<Mueble> muebles = new ArrayList<>(Arrays.asList(givenMueble("Sofa", 3.0, 2.0)));
 
-    //ejecucion
-    Plano plano = whenCargoDimensionesYMueblesDelAmbienteGeneraUnPlano(
-      ambiente,
-      new ArrayList<>(Arrays.asList(muebleGrande))
-    );
+    Plano plano = whenCargoDimensionesYMueblesDelAmbienteGeneraUnPlano(ambiente, muebles);
 
-    // validacion
     thenExcluyeMuebleDelResultado(plano);
   }
 
   @Test
   public void deberiaRegistrarMuebleComoExcluidoCuandoElMuebleExcedeElEspacioDisponible() {
-    // preparacion
-    Ambiente ambientePequeno = new Ambiente(2.0, 2.0);
-    Mueble muebleGrande = new Mueble("Sofa", 3.0, 2.0);
+    Ambiente ambientePequeno = givenAmbiente(2.0, 2.0);
+    Mueble muebleGrande = givenMueble("Sofa", 3.0, 2.0);
 
-    // ejecucion
     Plano plano = whenCargoDimensionesYMueblesDelAmbienteGeneraUnPlano(
       ambientePequeno,
       new ArrayList<>(Arrays.asList(muebleGrande))
     );
 
-    // validacion
     thenElMuebleEstaEnLaListaDeExcluidos(muebleGrande, plano);
   }
 
   @Test
   public void deberiaIncluirMotivoDeExclusionCuandoElMuebleExcedeElEspacioDisponible() {
-    // preparacion
-    Ambiente ambientePequeno = new Ambiente(2.0, 2.0);
-    Mueble muebleGrande = new Mueble("Sofa", 3.0, 2.0);
+    Ambiente ambientePequeno = givenAmbiente(2.0, 2.0);
+    List<Mueble> muebles = new ArrayList<>(Arrays.asList(givenMueble("Sofa", 3.0, 2.0)));
 
-    // ejecucion
-    Plano plano = whenCargoDimensionesYMueblesDelAmbienteGeneraUnPlano(
-      ambientePequeno,
-      new ArrayList<>(Arrays.asList(muebleGrande))
-    );
+    Plano plano = whenCargoDimensionesYMueblesDelAmbienteGeneraUnPlano(ambientePequeno, muebles);
 
-    // validacion
     thenElMotivoDeExclusionDiceQueElMuebleNoEntra(plano);
   }
+
+  // -------------------------------------------------------------------------
+  // Given (preparacion)
+  // -------------------------------------------------------------------------
+
+  private Ambiente givenAmbiente(Double ancho, Double largo) {
+    return new Ambiente(ancho, largo);
+  }
+
+  private Mueble givenMueble(String nombre, Double ancho, Double largo) {
+    return new Mueble(nombre, ancho, largo);
+  }
+
+  private MuebleUbicado givenMuebleUbicado(Mueble mueble, Double posicionX, Double posicionY) {
+    return new MuebleUbicado(mueble, posicionX, posicionY);
+  }
+
+  private List<Mueble> givenMueblesPorDefecto() {
+    return new ArrayList<>(
+      Arrays.asList(givenMueble("Silla", 0.5, 0.5), givenMueble("Mesa", 1.0, 1.0))
+    );
+  }
+
+  private List<Mueble> givenMueblesVacios() {
+    return new ArrayList<>();
+  }
+
+  private List<Mueble> givenSillones(int cantidad) {
+    List<Mueble> sillones = new ArrayList<>();
+    for (int i = 0; i < cantidad; i++) {
+      sillones.add(givenMueble("Sillon", 1.0, 0.5));
+    }
+    return sillones;
+  }
+
+  // -------------------------------------------------------------------------
+  // When (ejecucion)
+  // -------------------------------------------------------------------------
 
   private Plano whenCargoDimensionesYMueblesDelAmbienteGeneraUnPlano(
     Ambiente ambiente,
@@ -364,23 +379,27 @@ public class ServicioRenderizadoPlano2DTest {
     return resultados;
   }
 
+  // -------------------------------------------------------------------------
+  // Then (validacion)
+  // -------------------------------------------------------------------------
+
   private void thenElAmbienteDelPlanoEs(Plano plano, Ambiente ambienteEsperado) {
-    assertEquals(ambienteEsperado, plano.getAmbiente());
+    assertThat(plano.getAmbiente(), is(equalTo(ambienteEsperado)));
   }
 
   private void thenLaCantidadDeMueblesDelPlanoEs(Plano plano, int cantidadEsperada) {
-    assertEquals(cantidadEsperada, plano.getMuebles().size());
+    assertThat(plano.getMuebles().size(), is(equalTo(cantidadEsperada)));
   }
 
   private void thenElResultadoDeEstarDentroDelPerimetroEs(
     Boolean resultadoEsperado,
     Boolean elMuebleEstaDentroDelPerimetro
   ) {
-    assertEquals(resultadoEsperado, elMuebleEstaDentroDelPerimetro);
+    assertThat(elMuebleEstaDentroDelPerimetro, is(equalTo(resultadoEsperado)));
   }
 
   private void thenLasPosicionesDeAmbosPlanosSonIguales(Plano primerPlano, Plano segundoPlano) {
-    assertEquals(posicionesDe(primerPlano), posicionesDe(segundoPlano));
+    assertThat(posicionesDe(segundoPlano), is(equalTo(posicionesDe(primerPlano))));
   }
 
   private List<List<Double>> posicionesDe(Plano plano) {
@@ -394,51 +413,51 @@ public class ServicioRenderizadoPlano2DTest {
   }
 
   private void thenTodosLosMueblesEstanDentroDelPerimetro(List<Boolean> resultadosDePerimetro) {
-    assertEquals(new ArrayList<>(Arrays.asList(true, true)), resultadosDePerimetro);
+    assertThat(resultadosDePerimetro, is(equalTo(new ArrayList<>(Arrays.asList(true, true)))));
   }
 
   private void thenElUltimoMuebleEstaEnLaPosicion(List<Double> posicionEsperada, Plano plano) {
     List<MuebleUbicado> muebles = plano.getMuebles();
     MuebleUbicado ultimo = muebles.get(muebles.size() - 1);
-    assertEquals(
-      posicionEsperada,
-      new ArrayList<>(Arrays.asList(ultimo.getPosicionX(), ultimo.getPosicionY()))
+    assertThat(
+      new ArrayList<>(Arrays.asList(ultimo.getPosicionX(), ultimo.getPosicionY())),
+      is(equalTo(posicionEsperada))
     );
   }
 
   private void thenElPrimerMuebleDelPlanoEs(Mueble muebleEsperado, Plano plano) {
-    assertEquals(muebleEsperado, plano.getMuebles().get(0).getMueble());
+    assertThat(plano.getMuebles().get(0).getMueble(), is(equalTo(muebleEsperado)));
   }
 
   private void thenLosMueblesTienenPosicionesDistintas(Plano plano) {
     MuebleUbicado primero = plano.getMuebles().get(0);
     MuebleUbicado segundo = plano.getMuebles().get(1);
-    assertNotEquals(
-      new ArrayList<>(Arrays.asList(primero.getPosicionX(), primero.getPosicionY())),
-      new ArrayList<>(Arrays.asList(segundo.getPosicionX(), segundo.getPosicionY()))
+    assertThat(
+      new ArrayList<>(Arrays.asList(segundo.getPosicionX(), segundo.getPosicionY())),
+      not(equalTo(new ArrayList<>(Arrays.asList(primero.getPosicionX(), primero.getPosicionY()))))
     );
   }
 
   private void thenDevuelveMensajeSinMobiliario(Plano planoGenerado) {
-    assertEquals("No hay mobiliario para distribuir", planoGenerado.getMensaje());
+    assertThat(planoGenerado.getMensaje(), is(equalTo("No hay mobiliario para distribuir")));
   }
 
   private void thenDevuelveListaVaciaDeMuebles(Plano planoGenerado) {
-    assertTrue(planoGenerado.getMuebles().isEmpty());
+    assertThat(planoGenerado.getMuebles().isEmpty(), is(true));
   }
 
   private void thenElMotivoDeExclusionDiceQueElMuebleNoEntra(Plano plano) {
-    assertEquals(
-      new ArrayList<>(Arrays.asList("El mueble Sofa no entra en el ambiente")),
-      plano.getMotivosDeExclusion()
+    assertThat(
+      plano.getMotivosDeExclusion(),
+      is(equalTo(new ArrayList<>(Arrays.asList("El mueble Sofa no entra en el ambiente"))))
     );
   }
 
   private void thenElMuebleEstaEnLaListaDeExcluidos(Mueble mueble, Plano plano) {
-    assertEquals(new ArrayList<>(Arrays.asList(mueble)), plano.getMueblesExcluidos());
+    assertThat(plano.getMueblesExcluidos(), is(equalTo(new ArrayList<>(Arrays.asList(mueble)))));
   }
 
   private void thenExcluyeMuebleDelResultado(Plano plano) {
-    assertTrue(plano.getMuebles().isEmpty());
+    assertThat(plano.getMuebles().isEmpty(), is(true));
   }
 }

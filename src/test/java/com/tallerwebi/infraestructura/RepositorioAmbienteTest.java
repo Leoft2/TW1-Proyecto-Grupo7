@@ -1,17 +1,9 @@
 package com.tallerwebi.infraestructura;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 
-import com.tallerwebi.dominio.Ambiente;
-import com.tallerwebi.dominio.Mueble;
-import com.tallerwebi.dominio.RepositorioAmbiente;
-import com.tallerwebi.dominio.TipoDeAmbiente;
-import com.tallerwebi.dominio.Usuario;
+import com.tallerwebi.dominio.*;
 import com.tallerwebi.infraestructura.config.HibernateInfraestructuraTestConfig;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -99,6 +91,48 @@ public class RepositorioAmbienteTest {
     assertThat(ambientes.get(0).getMuebles(), contains(cama, escritorio));
   }
 
+  // -------------------------------------------------------------------------
+  // Tests para HU-01
+  // -------------------------------------------------------------------------
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaDevolverLaListaDeMueblesVaciaCuandoElAmbienteNoTieneMuebles() {
+    Ambiente ambiente = this.dadoQueExisteElAmbiente(4.0, 5.0, "Living");
+    this.flushYClear();
+
+    List<Mueble> muebles = this.whenBuscoLosMueblesDelAmbiente(ambiente.getId());
+
+    this.thenLaListaDeMueblesEstaVacia(muebles);
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaRecuperarElAnchoDelPrimerAmbienteCuandoGuardoDos() {
+    Ambiente living = this.dadoQueExisteElAmbiente(4.0, 5.0, "Living");
+    this.dadoQueExisteElAmbiente(3.0, 3.5, "Dormitorio");
+    this.flushYClear();
+
+    Ambiente obtenido = this.whenBuscoElAmbiente(living.getId());
+
+    this.thenElAnchoEs(obtenido, 4.0);
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaRecuperarElAnchoDelSegundoAmbienteCuandoGuardoDos() {
+    this.dadoQueExisteElAmbiente(4.0, 5.0, "Living");
+    Ambiente dormitorio = this.dadoQueExisteElAmbiente(3.0, 3.5, "Dormitorio");
+    this.flushYClear();
+
+    Ambiente obtenido = this.whenBuscoElAmbiente(dormitorio.getId());
+
+    this.thenElAnchoEs(obtenido, 3.0);
+  }
+
   private Ambiente dadoQueExisteElAmbientePara(
     Double ancho,
     Double largo,
@@ -126,5 +160,34 @@ public class RepositorioAmbienteTest {
     this.sessionFactory.getCurrentSession().persist(ambiente);
     this.sessionFactory.getCurrentSession().flush();
     return ambiente;
+  }
+
+  // -------------------------------------------------------------------------
+  // When (ejecucion) - HU-01
+  // -------------------------------------------------------------------------
+
+  private Ambiente whenBuscoElAmbiente(Long id) {
+    return this.repositorioAmbiente.buscarPorId(id);
+  }
+
+  private List<Mueble> whenBuscoLosMueblesDelAmbiente(Long id) {
+    return this.repositorioAmbiente.buscarPorId(id).getMuebles();
+  }
+
+  // -------------------------------------------------------------------------
+  // Then (validacion) - HU-01
+  // -------------------------------------------------------------------------
+
+  private void thenLaListaDeMueblesEstaVacia(List<Mueble> muebles) {
+    assertThat(muebles, is(empty()));
+  }
+
+  private void thenElAnchoEs(Ambiente ambiente, Double anchoEsperado) {
+    assertThat(ambiente.getAncho(), is(anchoEsperado));
+  }
+
+  private void flushYClear() {
+    this.sessionFactory.getCurrentSession().flush();
+    this.sessionFactory.getCurrentSession().clear();
   }
 }

@@ -34,6 +34,26 @@ public class RepositorioInventarioMueblesTest {
   }
 
   // -------------------------------------------------------------------------
+  // Test repositorio para HU-01
+  // -------------------------------------------------------------------------
+
+  // Alta (guardar un mueble nuevo)
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaPersistirLasMedidasCuandoGuardoUnMuebleNuevo() {
+    Mueble mesa = givenMuebleNuevo("Mesa", 1.2, 0.8);
+
+    whenGuardoElMueble(mesa);
+
+    thenElMuebleTieneLasMedidas(mesa.getId(), "Mesa", 1.2, 0.8);
+  }
+
+  // -------------------------------------------------------------------------
+  // Tests repositorio para HU-23
+  // -------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
   // Edicion (criterio 1)
   // -------------------------------------------------------------------------
 
@@ -161,11 +181,9 @@ public class RepositorioInventarioMueblesTest {
     thenElMuebleConservaSuId(mueble.getId());
   }
 
-  // -------------------------------------------------------------------------
   // Listado: el inventario solo lista muebles con medidas.
   // Los muebles del catalogo (data.sql) no tienen ancho/largo: no pertenecen
   // al inventario del usuario y hasta pueden romper la generacion del plano.
-  // -------------------------------------------------------------------------
 
   @Test
   @Transactional
@@ -330,13 +348,19 @@ public class RepositorioInventarioMueblesTest {
     thenElTipoDeAmbienteNoTieneMuebles(living.getId());
   }
 
+  // -------------------------------------------------------------------------
   // Given (preparacion)
+  // -------------------------------------------------------------------------
 
   private Mueble givenMuebleGuardado(String nombre, Double ancho, Double largo, Estilo estilo) {
     Mueble mueble = new Mueble(nombre, ancho, largo);
     mueble.setEstilo(estilo);
     this.sessionFactory.getCurrentSession().persist(mueble);
     return mueble;
+  }
+
+  private Mueble givenMuebleNuevo(String nombre, Double ancho, Double largo) {
+    return new Mueble(nombre, ancho, largo);
   }
 
   private TipoDeAmbiente givenTipoDeAmbienteGuardado(String nombre) {
@@ -382,6 +406,11 @@ public class RepositorioInventarioMueblesTest {
   // When (ejecucion)
   // -------------------------------------------------------------------------
 
+  private void whenGuardoElMueble(Mueble mueble) {
+    this.repositorioInventarioMueble.guardar(mueble);
+    flushYClear();
+  }
+
   private void whenModificoElMueble(int id, Consumer<Mueble> cambio) {
     Mueble aModificar = this.repositorioInventarioMueble.buscarPorId(id);
     cambio.accept(aModificar);
@@ -401,6 +430,13 @@ public class RepositorioInventarioMueblesTest {
   // -------------------------------------------------------------------------
   // Then (validacion)
   // -------------------------------------------------------------------------
+
+  private void thenElMuebleTieneLasMedidas(int id, String nombre, Double ancho, Double largo) {
+    assertThat(
+      this.repositorioInventarioMueble.buscarPorId(id),
+      is(equalTo(new Mueble(nombre, ancho, largo)))
+    );
+  }
 
   private void thenElNombrePersiste(int id, String nombreEsperado) {
     assertThat(

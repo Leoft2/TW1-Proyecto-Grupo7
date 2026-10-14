@@ -11,6 +11,12 @@ import org.springframework.stereotype.Service;
 @Transactional
 public class ServicioPlano2DImpl implements ServicioPlano2D {
 
+  private final ServicioZonaExclusion servicioZonaExclusion;
+
+  public ServicioPlano2DImpl(ServicioZonaExclusion servicioZonaExclusion) {
+    this.servicioZonaExclusion = servicioZonaExclusion;
+  }
+
   @Override
   public Plano generarPlano(Ambiente ambiente, List<Mueble> muebles) {
     Double ancho = ambiente.getAncho();
@@ -31,7 +37,10 @@ public class ServicioPlano2DImpl implements ServicioPlano2D {
       return plano;
     }
 
-    RecorridoPerimetral recorrido = new RecorridoPerimetral(ambiente);
+    RecorridoPerimetral recorrido = new RecorridoPerimetral(
+      ambiente,
+      servicioZonaExclusion.calcularZonas(ambiente)
+    );
     for (Mueble mueble : ordenarPorAreaDescendente(muebles)) {
       MuebleUbicado muebleUbicado = recorrido.ubicar(mueble);
       if (muebleUbicado != null) {
@@ -79,6 +88,25 @@ public class ServicioPlano2DImpl implements ServicioPlano2D {
     return noSeSaleEnX && noSeSaleEnY;
   }
 
+  @Override
+  public ValidacionMovimiento validarMovimiento(
+    MuebleUbicado muebleUbicado,
+    Ambiente ambiente,
+    Double posicionXNueva,
+    Double posicionYNueva
+  ) {
+    MuebleUbicado candidato = new MuebleUbicado(
+      muebleUbicado.getMueble(),
+      posicionXNueva,
+      posicionYNueva
+    );
+    boolean hayInterferencia = servicioZonaExclusion
+      .calcularZonas(ambiente)
+      .stream()
+      .anyMatch(zona -> zona.seSolapaCon(candidato));
+    return new ValidacionMovimiento(hayInterferencia);
+  }
+
   /**
    * Recorre los muros perimetrales del ambiente en orden fijo: muro superior de izquierda a
    * derecha, luego derecho de arriba hacia abajo, luego inferior de derecha a izquierda, y
@@ -98,8 +126,9 @@ public class ServicioPlano2DImpl implements ServicioPlano2D {
     private int tramoActual = MURO_SUPERIOR;
     private Double posicionEnElTramo = 0.0;
     private final List<ZonaNoDisponible> zonasNoDisponibles;
+    private final List<ZonaNoDisponible> zonasDuras;
 
-    public RecorridoPerimetral(Ambiente ambiente) {
+    public RecorridoPerimetral(Ambiente ambiente, List<ZonaExclusion> zonasDeExclusion) {
       this.ambiente = ambiente;
       this.zonasNoDisponibles =
         ambiente
@@ -107,6 +136,7 @@ public class ServicioPlano2DImpl implements ServicioPlano2D {
           .stream()
           .map(obstaculo -> obstaculo.zonaNoDisponible(ambiente))
           .toList();
+      this.zonasDuras = zonasDeExclusion.stream().map(this::comoZonaNoDisponible).toList();
     }
 
     public MuebleUbicado ubicar(Mueble mueble) {
@@ -137,20 +167,29 @@ public class ServicioPlano2DImpl implements ServicioPlano2D {
             coordenadaYDelTramo(mueble, recorridoEnElTramo)
           );
           if (estaDentroDelPerimetro(candidato, ambiente)) {
-            ZonaNoDisponible zona = zonaPisadaPor(candidato);
-            if (zona == null || !evitarObstaculos) {
-              avanzarEnElTramo(mueble, recorridoEnElTramo);
-              return new MuebleUbicado(
-                mueble,
-                candidato.getPosicionX(),
-                candidato.getPosicionY(),
-                zona != null
-              );
-            }
-            Double despuesDeLaZona = recorridoDespuesDe(zona, mueble);
-            if (avanzaEnElTramo(recorridoEnElTramo, despuesDeLaZona)) {
-              recorridoEnElTramo = despuesDeLaZona;
-              continue;
+            ZonaNoDisponible zonaDura = zonaPisadaPor(candidato, zonasDuras);
+            if (zonaDura != null) {
+              Double despuesDeLaZonaDura = recorridoDespuesDe(zonaDura, mueble);
+              if (avanzaEnElTramo(recorridoEnElTramo, despuesDeLaZonaDura)) {
+                recorridoEnElTramo = despuesDeLaZonaDura;
+                continue;
+              }
+            } else {
+              ZonaNoDisponible zona = zonaPisadaPor(candidato, zonasNoDisponibles);
+              if (zona == null || !evitarObstaculos) {
+                avanzarEnElTramo(mueble, recorridoEnElTramo);
+                return new MuebleUbicado(
+                  mueble,
+                  candidato.getPosicionX(),
+                  candidato.getPosicionY(),
+                  zona != null
+                );
+              }
+              Double despuesDeLaZona = recorridoDespuesDe(zona, mueble);
+              if (avanzaEnElTramo(recorridoEnElTramo, despuesDeLaZona)) {
+                recorridoEnElTramo = despuesDeLaZona;
+                continue;
+              }
             }
           }
         }
@@ -165,12 +204,17 @@ public class ServicioPlano2DImpl implements ServicioPlano2D {
       posicionEnElTramo = posicion;
     }
 
-    private ZonaNoDisponible zonaPisadaPor(MuebleUbicado candidato) {
-      return zonasNoDisponibles
-        .stream()
-        .filter(zona -> zona.seSolapaCon(candidato))
-        .findFirst()
-        .orElse(null);
+    private ZonaNoDisponible zonaPisadaPor(MuebleUbicado candidato, List<ZonaNoDisponible> zonas) {
+      return zonas.stream().filter(zona -> zona.seSolapaCon(candidato)).findFirst().orElse(null);
+    }
+
+    private ZonaNoDisponible comoZonaNoDisponible(ZonaExclusion zona) {
+      return new ZonaNoDisponible(
+        zona.getPosicionX(),
+        zona.getPosicionY(),
+        zona.getAncho(),
+        zona.getProfundidad()
+      );
     }
 
     /**

@@ -27,7 +27,9 @@ import org.junit.jupiter.api.Test;
 
 public class ServicioPlano2DTest {
 
-  private final ServicioPlano2D servicioPlano2D = new ServicioPlano2DImpl();
+  private final ServicioPlano2D servicioPlano2D = new ServicioPlano2DImpl(
+    new ServicioZonaExclusionImpl()
+  );
 
   // -------------------------------------------------------------------------
   // Validacion de las dimensiones del ambiente

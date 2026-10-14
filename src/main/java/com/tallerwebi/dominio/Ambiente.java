@@ -26,6 +26,10 @@ public class Ambiente {
   @CollectionTable(name = "ambiente_obstaculos", joinColumns = @JoinColumn(name = "ambiente_id"))
   private List<Obstaculo> obstaculos = new ArrayList<>();
 
+  @ElementCollection
+  @CollectionTable(name = "ambiente_aberturas", joinColumns = @JoinColumn(name = "ambiente_id"))
+  private List<Abertura> aberturas = new ArrayList<>();
+
   @ManyToMany
   @JoinTable(
     name = "ambiente_muebles",
@@ -81,6 +85,14 @@ public class Ambiente {
 
   public void agregarObstaculo(Obstaculo obstaculo) {
     this.obstaculos.add(obstaculo);
+  }
+
+  public List<Abertura> getAberturas() {
+    return aberturas;
+  }
+
+  public void agregarAbertura(Abertura abertura) {
+    this.aberturas.add(abertura);
   }
 
   public List<Mueble> getMuebles() {

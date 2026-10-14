@@ -22,12 +22,16 @@ public enum Muro {
     return nombre;
   }
 
-  /** Desde donde se cuenta la posicion de un obstaculo sobre este muro. */
+  /**
+   * Desde donde se cuenta la posicion de un obstaculo sobre este muro.
+   */
   public String getOrigenDeLaPosicion() {
     return origenDeLaPosicion;
   }
 
-  /** Cuanto mide el muro: los horizontales miden el ancho del ambiente, los verticales el largo. */
+  /**
+   * Cuanto mide el muro: los horizontales miden el ancho del ambiente, los verticales el largo.
+   */
   public Double largoEn(Ambiente ambiente) {
     return switch (this) {
       case SUPERIOR, INFERIOR -> ambiente.getAncho();
@@ -35,7 +39,9 @@ public enum Muro {
     };
   }
 
-  /** Cuanto espacio hay desde el muro hasta el muro de enfrente. */
+  /**
+   * Cuanto espacio hay desde el muro hasta el muro de enfrente.
+   */
   public Double profundidadDisponibleEn(Ambiente ambiente) {
     return switch (this) {
       case SUPERIOR, INFERIOR -> ambiente.getLargo();

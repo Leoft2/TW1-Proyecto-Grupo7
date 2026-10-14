@@ -21,7 +21,9 @@ public class ServicioObstaculosPlano2DTest {
 
   private static final double TOLERANCIA = 1e-9;
 
-  private final ServicioPlano2D servicioPlano2D = new ServicioPlano2DImpl();
+  private final ServicioPlano2D servicioPlano2D = new ServicioPlano2DImpl(
+    new ServicioZonaExclusionImpl()
+  );
   private final Ambiente ambiente = new Ambiente(4.0, 3.0);
   private final Mueble rack = new Mueble("Rack", 1.0, 0.5);
 

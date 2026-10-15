@@ -51,11 +51,15 @@ public class RepositorioInventarioMuebleImpl implements RepositorioInventarioMue
     }
     sessionFactory.getCurrentSession().flush();
     // Las ubicaciones en planos guardados tienen FK al mueble y no cascadean: se borran
-    // antes que el mueble. La tabla puente de tipos de ambiente la limpia Hibernate al
-    // borrar la entidad.
+    // antes que el mueble. Borrar tambien las asociaciones Mueble-TipoDeAmbiente.
     sessionFactory
       .getCurrentSession()
       .createQuery("delete from MuebleUbicado u where u.mueble.id = :id")
+      .setParameter("id", id)
+      .executeUpdate();
+    sessionFactory
+      .getCurrentSession()
+      .createQuery("delete from MuebleTipoDeAmbiente mta where mta.mueble.id = :id")
       .setParameter("id", id)
       .executeUpdate();
     sessionFactory

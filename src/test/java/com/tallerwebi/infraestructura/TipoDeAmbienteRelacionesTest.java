@@ -126,7 +126,7 @@ public class TipoDeAmbienteRelacionesTest {
     Mueble sillon = this.dadoQueExisteElMuebleConTipos("Sillón Retró", living);
     int idDelMueble = sillon.getId();
 
-    sillon.getTiposDeAmbiente().remove(living);
+    sillon.quitarTipoDeAmbiente(living);
     this.sessionFactory.getCurrentSession().flush();
     this.cuandoBorro(living);
 

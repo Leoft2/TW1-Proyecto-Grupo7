@@ -14,7 +14,6 @@ import com.tallerwebi.infraestructura.config.HibernateInfraestructuraTestConfig;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import org.hibernate.SessionFactory;
-import org.hibernate.query.Query;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -117,13 +116,15 @@ public class RepositorioCatalogoTest {
     Estilo estilo,
     Mueble muebleEsperado
   ) {
-    String hql = "FROM Mueble WHERE nombre = :nombre AND precio = :precio AND estilo = :estilo";
-    //Cambiar
-    Query query = this.sessionFactory.getCurrentSession().createQuery(hql, Mueble.class);
-    query.setParameter("nombre", nombre);
-    query.setParameter("precio", precio);
-    query.setParameter("estilo", estilo);
-    Mueble muebleObtenido = (Mueble) query.getSingleResult();
+    String query = "FROM Mueble WHERE nombre = :nombre AND precio = :precio AND estilo = :estilo";
+    Mueble muebleObtenido =
+      this.sessionFactory.getCurrentSession()
+        .createQuery(query, Mueble.class)
+        .setParameter("nombre", nombre)
+        .setParameter("precio", precio)
+        .setParameter("estilo", estilo)
+        .getSingleResult();
+
     this.entoncesElMuebleObtenidoEsCorrecto(muebleEsperado, muebleObtenido);
   }
 
@@ -134,12 +135,14 @@ public class RepositorioCatalogoTest {
   }
 
   private void entoncesElMuebleObtenidoEsNull(Mueble muebleEsperado) {
-    String hql = "FROM Mueble WHERE nombre = :nombre AND precio = :precio AND estilo = :estilo";
-    Query query = this.sessionFactory.getCurrentSession().createQuery(hql, Mueble.class);
-    query.setParameter("nombre", muebleEsperado.getNombre());
-    query.setParameter("precio", muebleEsperado.getPrecio());
-    query.setParameter("estilo", muebleEsperado.getEstilo());
-    Mueble muebleObtenido = (Mueble) query.uniqueResult();
+    String query = "FROM Mueble WHERE nombre = :nombre AND precio = :precio AND estilo = :estilo";
+    Mueble muebleObtenido =
+      this.sessionFactory.getCurrentSession()
+        .createQuery(query, Mueble.class)
+        .setParameter("nombre", muebleEsperado.getNombre())
+        .setParameter("precio", muebleEsperado.getPrecio())
+        .setParameter("estilo", muebleEsperado.getEstilo())
+        .uniqueResult();
     assertNull(muebleObtenido);
   }
 }

@@ -118,6 +118,7 @@ public class RepositorioCatalogoTest {
     Mueble muebleEsperado
   ) {
     String hql = "FROM Mueble WHERE nombre = :nombre AND precio = :precio AND estilo = :estilo";
+    //Cambiar
     Query query = this.sessionFactory.getCurrentSession().createQuery(hql, Mueble.class);
     query.setParameter("nombre", nombre);
     query.setParameter("precio", precio);

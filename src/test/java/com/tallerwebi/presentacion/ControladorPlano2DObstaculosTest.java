@@ -1,71 +1,70 @@
 package com.tallerwebi.presentacion;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
+
 import com.tallerwebi.dominio.*;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
-
 public class ControladorPlano2DObstaculosTest {
 
-    private ServicioPlano2D servicioPlano2D;
-    private ControladorPlano2D controladorPlano2D;
+  private ServicioPlano2D servicioPlano2D;
+  private ControladorPlano2D controladorPlano2D;
 
-    @BeforeEach
-    public void init() {
-        servicioPlano2D = mock(ServicioPlano2D.class);
-        controladorPlano2D =
-                new ControladorPlano2D(servicioPlano2D, mock(ServicioCategoriaDeMueble.class));
-        when(servicioPlano2D.generarPlano(any(Ambiente.class), anyList()))
-                .thenReturn(new Plano(new Ambiente(4.0, 3.0), List.of(), List.of(), List.of()));
-    }
+  @BeforeEach
+  public void init() {
+    servicioPlano2D = mock(ServicioPlano2D.class);
+    controladorPlano2D =
+      new ControladorPlano2D(servicioPlano2D, mock(ServicioCategoriaDeMueble.class));
+    when(servicioPlano2D.generarPlano(any(Ambiente.class), anyList()))
+      .thenReturn(new Plano(new Ambiente(4.0, 3.0), List.of(), List.of(), List.of()));
+  }
 
-    @Test
-    public void deberiaPasarleAlServicioElAmbienteConLosObstaculosDelFormulario() {
-        DatosPlano formulario = givenUnFormularioConElObstaculo(
-                new DatosObstaculo(TipoDeObstaculo.RADIADOR, Muro.DERECHO, 0.5, 0.8, 0.15)
-        );
+  @Test
+  public void deberiaPasarleAlServicioElAmbienteConLosObstaculosDelFormulario() {
+    DatosPlano formulario = givenUnFormularioConElObstaculo(
+      new DatosObstaculo(TipoDeObstaculo.RADIADOR, Muro.DERECHO, 0.5, 0.8, 0.15)
+    );
 
-        controladorPlano2D.generarPlanoDesdeFormulario(formulario);
+    controladorPlano2D.generarPlanoDesdeFormulario(formulario);
 
-        Obstaculo obstaculo = thenElAmbienteQueRecibeElServicio().getObstaculos().get(0);
-        assertEquals(TipoDeObstaculo.RADIADOR, obstaculo.getTipo());
-        assertEquals(Muro.DERECHO, obstaculo.getMuro());
-        assertEquals(
-                List.of(0.5, 0.8, 0.15),
-                List.of(obstaculo.getPosicion(), obstaculo.getAncho(), obstaculo.getProfundidad())
-        );
-    }
+    Obstaculo obstaculo = thenElAmbienteQueRecibeElServicio().getObstaculos().get(0);
+    assertEquals(TipoDeObstaculo.RADIADOR, obstaculo.getTipo());
+    assertEquals(Muro.DERECHO, obstaculo.getMuro());
+    assertEquals(
+      List.of(0.5, 0.8, 0.15),
+      List.of(obstaculo.getPosicion(), obstaculo.getAncho(), obstaculo.getProfundidad())
+    );
+  }
 
-    @Test
-    public void deberiaIgnorarLasFilasDeObstaculoSinMedidas() {
-        DatosPlano formulario = givenUnFormularioConElObstaculo(
-                new DatosObstaculo(TipoDeObstaculo.RADIADOR, Muro.SUPERIOR, null, null, null)
-        );
+  @Test
+  public void deberiaIgnorarLasFilasDeObstaculoSinMedidas() {
+    DatosPlano formulario = givenUnFormularioConElObstaculo(
+      new DatosObstaculo(TipoDeObstaculo.RADIADOR, Muro.SUPERIOR, null, null, null)
+    );
 
-        controladorPlano2D.generarPlanoDesdeFormulario(formulario);
+    controladorPlano2D.generarPlanoDesdeFormulario(formulario);
 
-        assertEquals(List.of(), thenElAmbienteQueRecibeElServicio().getObstaculos());
-    }
+    assertEquals(List.of(), thenElAmbienteQueRecibeElServicio().getObstaculos());
+  }
 
-    private DatosPlano givenUnFormularioConElObstaculo(DatosObstaculo datosObstaculo) {
-        List<DatosObstaculo> obstaculos = new ArrayList<>();
-        obstaculos.add(datosObstaculo);
-        DatosPlano formulario = new DatosPlano();
-        formulario.setAncho(4.0);
-        formulario.setLargo(3.0);
-        formulario.setObstaculos(obstaculos);
-        return formulario;
-    }
+  private DatosPlano givenUnFormularioConElObstaculo(DatosObstaculo datosObstaculo) {
+    List<DatosObstaculo> obstaculos = new ArrayList<>();
+    obstaculos.add(datosObstaculo);
+    DatosPlano formulario = new DatosPlano();
+    formulario.setAncho(4.0);
+    formulario.setLargo(3.0);
+    formulario.setObstaculos(obstaculos);
+    return formulario;
+  }
 
-    private Ambiente thenElAmbienteQueRecibeElServicio() {
-        ArgumentCaptor<Ambiente> ambiente = ArgumentCaptor.forClass(Ambiente.class);
-        verify(servicioPlano2D).generarPlano(ambiente.capture(), anyList());
-        return ambiente.getValue();
-    }
+  private Ambiente thenElAmbienteQueRecibeElServicio() {
+    ArgumentCaptor<Ambiente> ambiente = ArgumentCaptor.forClass(Ambiente.class);
+    verify(servicioPlano2D).generarPlano(ambiente.capture(), anyList());
+    return ambiente.getValue();
+  }
 }

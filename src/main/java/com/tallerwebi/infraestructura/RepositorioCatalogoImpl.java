@@ -35,10 +35,12 @@ public class RepositorioCatalogoImpl implements RepositorioCatalogo {
 
   @Override
   public void eliminar(int id) {
-    String hql = "DELETE FROM Mueble WHERE id = :id";
-    Query<Mueble> query = sessionFactory.getCurrentSession().createQuery(hql, Mueble.class);
-    query.setParameter("id", id);
-    query.executeUpdate();
+    String query = "FROM MuebleTipoDeAmbiente mta WHERE mta.mueble.id = :id";
+    sessionFactory
+      .getCurrentSession()
+      .createQuery(query, Mueble.class)
+      .setParameter("id", id)
+      .executeUpdate();
   }
 
   @Override

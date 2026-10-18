@@ -5,6 +5,7 @@ import com.tallerwebi.dominio.excepcion.MuebleNoEncontrado;
 import com.tallerwebi.dominio.excepcion.ValidacionException;
 import jakarta.servlet.http.HttpSession;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,19 +23,32 @@ public class ControladorInventarioMuebles {
   private static final String PARAM_CATEGORIA = "categoria";
   private static final String ATTR_CATEGORIAS = "categorias";
   private static final String ATRIBUTO_AMBIENTE = "ambiente";
+  private static final String ATRIBUTO_PLANO = "plano";
 
   private final ServicioEdicionInventarioMuebles servicioEdicionInventarioMuebles;
   private final ServicioPlano2D servicioPlano2D;
   private final ServicioCategoriaDeMueble servicioCategoriaDeMueble;
+  private final ServicioPersistenciaPlano servicioPersistenciaPlano;
 
   public ControladorInventarioMuebles(
     ServicioEdicionInventarioMuebles servicioEdicionInventarioMuebles,
     ServicioPlano2D servicioPlano2D,
     ServicioCategoriaDeMueble servicioCategoriaDeMueble
   ) {
+    this(servicioEdicionInventarioMuebles, servicioPlano2D, servicioCategoriaDeMueble, null);
+  }
+
+  @Autowired
+  public ControladorInventarioMuebles(
+    ServicioEdicionInventarioMuebles servicioEdicionInventarioMuebles,
+    ServicioPlano2D servicioPlano2D,
+    ServicioCategoriaDeMueble servicioCategoriaDeMueble,
+    ServicioPersistenciaPlano servicioPersistenciaPlano
+  ) {
     this.servicioEdicionInventarioMuebles = servicioEdicionInventarioMuebles;
     this.servicioPlano2D = servicioPlano2D;
     this.servicioCategoriaDeMueble = servicioCategoriaDeMueble;
+    this.servicioPersistenciaPlano = servicioPersistenciaPlano;
   }
 
   @GetMapping("/inventario-muebles")
@@ -148,10 +162,16 @@ public class ControladorInventarioMuebles {
     }
     try {
       Map<String, Object> model = new ModelMap();
-      model.put(
-        "plano",
-        servicioPlano2D.generarPlano(ambiente, servicioEdicionInventarioMuebles.listar())
+      Plano plano = servicioPlano2D.generarPlano(
+        ambiente,
+        servicioEdicionInventarioMuebles.listar()
       );
+      String usuarioEmail = (String) sesion.getAttribute("USUARIO_EMAIL");
+      if (usuarioEmail != null) {
+        servicioPersistenciaPlano.guardar(plano, usuarioEmail);
+      }
+      sesion.setAttribute(ATRIBUTO_PLANO, plano);
+      model.put(ATRIBUTO_PLANO, plano);
       return new ModelAndView("plano-interactivo", model);
     } catch (ValidacionException e) {
       return new ModelAndView("redirect:/plano/ambiente");

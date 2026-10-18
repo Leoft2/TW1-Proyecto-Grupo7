@@ -386,6 +386,15 @@ h1, h2, h3, h4, h5, h6,
   cursor: default;
 }
 
+.plano-mueble-arrastrable {
+  cursor: grab;
+  touch-action: none;
+}
+
+.plano-mueble-arrastrable:active {
+  cursor: grabbing;
+}
+
 .plano-mueble-cuerpo {
   fill: var(--hb-terracota-suave);
   stroke: var(--hb-terracota);

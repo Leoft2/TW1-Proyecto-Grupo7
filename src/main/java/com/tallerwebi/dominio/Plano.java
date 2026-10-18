@@ -14,6 +14,10 @@ public class Plano {
   @OneToOne(cascade = CascadeType.ALL)
   private Ambiente ambiente;
 
+  @ManyToOne
+  @JoinColumn(name = "usuario_id")
+  private Usuario usuario;
+
   @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "plano_id")
   @OrderColumn(name = "posicion")
@@ -72,6 +76,18 @@ public class Plano {
 
   public Ambiente getAmbiente() {
     return ambiente;
+  }
+
+  public Long getId() {
+    return id;
+  }
+
+  public Usuario getUsuario() {
+    return usuario;
+  }
+
+  public void setUsuario(Usuario usuario) {
+    this.usuario = usuario;
   }
 
   public String getMensaje() {

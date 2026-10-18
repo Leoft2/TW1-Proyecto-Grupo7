@@ -73,12 +73,17 @@
             <div class="hb-plano-card">
                 <div class="hb-plano-toolbar">
                     <span><i class="bi bi-compass"></i> Vista superior</span>
-                    <span class="hb-plano-toolbar-help">Las medidas están expresadas en metros</span>
+                    <span class="hb-plano-toolbar-help">Arrastrá los muebles para ajustar su posición. Las medidas están expresadas en metros</span>
                 </div>
+
+                <div id="plano-alerta-movimiento" class="alert alert-warning m-3 d-none"
+                     role="alert" aria-live="assertive"></div>
 
                 <!-- El viewBox usa las mismas coordenadas en metros que devuelve el servicio. -->
                 <svg th:if="${not #lists.isEmpty(plano.muebles) or not #lists.isEmpty(plano.ambiente.obstaculos)}"
-                     th:attr="viewBox=${'-0.45 -0.45 ' + (plano.ambiente.ancho + 0.9) + ' ' + (plano.ambiente.largo + 0.9)}"
+                     th:attr="viewBox=${'-0.45 -0.45 ' + (plano.ambiente.ancho + 0.9) + ' ' + (plano.ambiente.largo + 0.9)},
+                              data-url=@{/plano/mover-mueble},data-ancho=${plano.ambiente.ancho},
+                              data-largo=${plano.ambiente.largo}"
                      class="plano-svg w-100" preserveAspectRatio="xMidYMid meet"
                      role="img" aria-label="Plano 2D del ambiente con los muebles ubicados">
                     <defs>
@@ -113,7 +118,9 @@
                                        width=${zona.ancho}, height=${zona.largo}, stroke-width=${0.02}"></rect>
                     </g>
 
-                    <g th:each="ubicado, i : ${plano.muebles}" class="plano-mueble"
+                    <g th:each="ubicado, i : ${plano.muebles}" class="plano-mueble plano-mueble-arrastrable"
+                       th:attr="data-indice=${i.index},data-posicion-x=${ubicado.posicionX},
+                                data-posicion-y=${ubicado.posicionY}"
                        th:classappend="${ubicado.enConflicto} ? 'plano-mueble-conflicto'">
                         <title th:if="${ubicado.enConflicto}"
                                th:text="${plano.descripcionDelConflicto(ubicado)}">Sofa choca con Radiador (muro derecho)</title>
@@ -176,12 +183,12 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr th:each="ubicado : ${plano.muebles}">
+                    <tr th:each="ubicado, i : ${plano.muebles}" th:attr="data-indice=${i.index}">
                         <td th:text="${ubicado.mueble.nombre}">Sofa</td>
                         <td th:text="${#numbers.formatDecimal(ubicado.mueble.ancho, 1, 1)}">2,1</td>
                         <td th:text="${#numbers.formatDecimal(ubicado.mueble.largo, 1, 1)}">0,9</td>
-                        <td th:text="${#numbers.formatDecimal(ubicado.posicionX, 1, 1)}">0,0</td>
-                        <td th:text="${#numbers.formatDecimal(ubicado.posicionY, 1, 1)}">0,0</td>
+                        <td class="plano-posicion-x" th:text="${#numbers.formatDecimal(ubicado.posicionX, 1, 1)}">0,0</td>
+                        <td class="plano-posicion-y" th:text="${#numbers.formatDecimal(ubicado.posicionY, 1, 1)}">0,0</td>
                         <td>
                             <span th:if="${ubicado.enConflicto}" class="badge text-bg-danger">En conflicto</span>
                             <span th:unless="${ubicado.enConflicto}" class="badge text-bg-success">OK</span>
@@ -229,6 +236,7 @@
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script type="module" th:src="@{/js/plano-interactivo.js}"></script>
 </body>
 
 </html>

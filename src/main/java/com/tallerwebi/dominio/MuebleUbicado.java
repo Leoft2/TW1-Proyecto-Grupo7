@@ -44,6 +44,11 @@ public class MuebleUbicado {
     return coordenadaY;
   }
 
+  public void moverA(Double coordenadaX, Double coordenadaY) {
+    this.coordenadaX = coordenadaX;
+    this.coordenadaY = coordenadaY;
+  }
+
   public boolean isEnConflicto() {
     return enConflicto;
   }

@@ -1,6 +1,8 @@
 package com.tallerwebi.presentacion;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.*;
 
 import com.tallerwebi.dominio.Ambiente;
@@ -31,61 +33,74 @@ public class ControladorPlano2DMovimientoTest {
     controladorPlano2D =
       new ControladorPlano2D(servicioPlano2D, mock(ServicioCategoriaDeMueble.class));
     sesion = new MockHttpSession();
-    muebleUbicado = new MuebleUbicado(new Mueble("Sofa", 1.0, 1.0), 0.0, 0.0);
-    Plano plano = new Plano(
-      new Ambiente(4.0, 3.0),
-      new ArrayList<>(List.of(muebleUbicado)),
-      new ArrayList<>(),
-      new ArrayList<>()
-    );
-    sesion.setAttribute("plano", plano);
   }
 
   @Test
   public void deberiaActualizarYGuardarLaPosicionCuandoElMovimientoEsValido() {
-    when(servicioPlano2D.estaDentroDelPerimetro(any(MuebleUbicado.class), any(Ambiente.class)))
-      .thenReturn(true);
-    when(
-      servicioPlano2D.validarMovimiento(eq(muebleUbicado), any(Ambiente.class), eq(1.0), eq(1.0))
-    )
-      .thenReturn(new ValidacionMovimiento(false));
+    //Given
+    givenTengoUnPlanoEnSesion();
+    givenElMuebleEstaDentroDelPerimetro(true);
+    givenElMovimientoTieneInterferencia(1.0, 1.0, false);
 
+    //When
     ResponseEntity<String> respuesta = controladorPlano2D.moverMueble(0, 1.0, 1.0, sesion);
 
-    assertEquals(HttpStatus.OK, respuesta.getStatusCode());
-    assertEquals(1.0, muebleUbicado.getPosicionX(), 0.0);
-    assertEquals(1.0, muebleUbicado.getPosicionY(), 0.0);
+    //Then
     Plano planoGuardado = (Plano) sesion.getAttribute("plano");
-    assertEquals(muebleUbicado, planoGuardado.getMuebles().get(0));
+    assertThat(respuesta.getStatusCode(), is(equalTo(HttpStatus.OK)));
+    assertThat(muebleUbicado.getPosicionX(), is(equalTo(1.0)));
+    assertThat(muebleUbicado.getPosicionY(), is(equalTo(1.0)));
+    assertThat(planoGuardado.getMuebles().get(0), is(equalTo(muebleUbicado)));
   }
 
   @Test
   public void deberiaRechazarElMovimientoCuandoElMuebleSaleDelAmbiente() {
-    when(servicioPlano2D.estaDentroDelPerimetro(any(MuebleUbicado.class), any(Ambiente.class)))
-      .thenReturn(false);
+    //Given
+    givenTengoUnPlanoEnSesion();
+    givenElMuebleEstaDentroDelPerimetro(false);
 
+    //When
     ResponseEntity<String> respuesta = controladorPlano2D.moverMueble(0, 3.5, 0.0, sesion);
 
-    assertEquals(HttpStatus.BAD_REQUEST, respuesta.getStatusCode());
-    assertEquals(0.0, muebleUbicado.getPosicionX(), 0.0);
-    assertEquals(0.0, muebleUbicado.getPosicionY(), 0.0);
+    //Then
+    assertThat(respuesta.getStatusCode(), is(equalTo(HttpStatus.BAD_REQUEST)));
+    assertThat(muebleUbicado.getPosicionX(), is(equalTo(0.0)));
+    assertThat(muebleUbicado.getPosicionY(), is(equalTo(0.0)));
     verify(servicioPlano2D, never())
       .validarMovimiento(any(MuebleUbicado.class), any(Ambiente.class), anyDouble(), anyDouble());
   }
 
   @Test
   public void deberiaRechazarElMovimientoCuandoInterfiereConUnaZonaRestringida() {
-    when(servicioPlano2D.estaDentroDelPerimetro(any(MuebleUbicado.class), any(Ambiente.class)))
-      .thenReturn(true);
-    when(
-      servicioPlano2D.validarMovimiento(eq(muebleUbicado), any(Ambiente.class), eq(1.0), eq(1.0))
-    )
-      .thenReturn(new ValidacionMovimiento(true));
+    //Given
+    givenTengoUnPlanoEnSesion();
+    givenElMuebleEstaDentroDelPerimetro(true);
+    givenElMovimientoTieneInterferencia(1.0, 1.0, true);
 
+    //When
     ResponseEntity<String> respuesta = controladorPlano2D.moverMueble(0, 1.0, 1.0, sesion);
 
-    assertEquals(HttpStatus.CONFLICT, respuesta.getStatusCode());
-    assertEquals(0.0, muebleUbicado.getPosicionX(), 0.0);
-    assertEquals(0.0, muebleUbicado.getPosicionY(), 0.0);
+    //Then
+    assertThat(respuesta.getStatusCode(), is(equalTo(HttpStatus.CONFLICT)));
+    assertThat(muebleUbicado.getPosicionX(), is(equalTo(0.0)));
+    assertThat(muebleUbicado.getPosicionY(), is(equalTo(0.0)));
+  }
+
+  private void givenTengoUnPlanoEnSesion() {
+    muebleUbicado = new MuebleUbicado(new Mueble("Sofa", 1.0, 1.0), 0.0, 0.0);
+    List<MuebleUbicado> muebles = new ArrayList<>();
+    muebles.add(muebleUbicado);
+    Plano plano = new Plano(new Ambiente(4.0, 3.0), muebles, new ArrayList<>(), new ArrayList<>());
+    sesion.setAttribute("plano", plano);
+  }
+
+  private void givenElMuebleEstaDentroDelPerimetro(boolean dentro) {
+    when(servicioPlano2D.estaDentroDelPerimetro(any(MuebleUbicado.class), any(Ambiente.class)))
+      .thenReturn(dentro);
+  }
+
+  private void givenElMovimientoTieneInterferencia(double x, double y, boolean interfiere) {
+    when(servicioPlano2D.validarMovimiento(eq(muebleUbicado), any(Ambiente.class), eq(x), eq(y)))
+      .thenReturn(new ValidacionMovimiento(interfiere));
   }
 }

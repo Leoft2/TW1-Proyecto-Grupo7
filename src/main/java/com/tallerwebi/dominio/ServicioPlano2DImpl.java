@@ -104,12 +104,11 @@ public class ServicioPlano2DImpl implements ServicioPlano2D {
       .calcularZonas(ambiente)
       .stream()
       .anyMatch(zona -> zona.seSolapaCon(candidato));
-    hayInterferencia =
-      hayInterferencia ||
-      ambiente
-        .getObstaculos()
-        .stream()
-        .anyMatch(obstaculo -> obstaculo.colisionaCon(candidato, ambiente));
+    for (Obstaculo obstaculo : ambiente.getObstaculos()) {
+      if (obstaculo.colisionaCon(candidato, ambiente)) {
+        hayInterferencia = true;
+      }
+    }
     return new ValidacionMovimiento(hayInterferencia);
   }
 

@@ -26,7 +26,7 @@ INSERT INTO CategoriaDeMueble(id, nombre, anchoPromedio, profundidadPromedio) VA
   (16, 'Alacena', 1.20, 0.50),
   (17, 'Zapatero', 1.00, 0.30);
 
---Hacer datos mas realistas... Scraping de muebles
+-- Hacer datos mas realistas... Scraping de muebles
 INSERT INTO Mueble(id, nombre, descripcion, precio, estilo, categoria_de_mueble_id) VALUES
   (1, 'Sillón Retró', 'Sillón de voluteadas tapizado en terciopelo color mostaza, con patas de madera maciza.', 85000.0, 'Retro', 12),
   (2, 'Lámpara de Pie Retro', 'Lámpara de pie con pantalla de tela y base de metal esmaltado, para rincón de lectura.', 25000.0, 'Retro', 14),

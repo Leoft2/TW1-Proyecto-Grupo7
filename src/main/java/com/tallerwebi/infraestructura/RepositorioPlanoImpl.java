@@ -1,5 +1,6 @@
 package com.tallerwebi.infraestructura;
 
+import com.tallerwebi.dominio.MuebleUbicado;
 import com.tallerwebi.dominio.Plano;
 import com.tallerwebi.dominio.RepositorioPlano;
 import com.tallerwebi.dominio.TipoDeAmbiente;
@@ -67,7 +68,7 @@ public class RepositorioPlanoImpl implements RepositorioPlano {
       Hibernate.initialize(plano.getMotivosDeExclusion());
       Hibernate.initialize(plano.getAmbiente().getObstaculos());
       Hibernate.initialize(plano.getAmbiente().getAberturas());
-      for (var muebleUbicado : plano.getMuebles()) {
+      for (MuebleUbicado muebleUbicado : plano.getMuebles()) {
         Hibernate.initialize(muebleUbicado.getMueble());
       }
     }

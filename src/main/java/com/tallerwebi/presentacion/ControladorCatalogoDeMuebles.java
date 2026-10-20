@@ -1,17 +1,23 @@
 package com.tallerwebi.presentacion;
 
+import com.tallerwebi.dominio.CategoriaDeMueble;
 import com.tallerwebi.dominio.Estilo;
 import com.tallerwebi.dominio.Mueble;
 import com.tallerwebi.dominio.ServicioCatalogo;
+import com.tallerwebi.dominio.ServicioCategoriaDeMueble;
 import com.tallerwebi.dominio.TipoDeAmbiente;
 import com.tallerwebi.dominio.excepcion.MuebleNoEncontrado;
 import com.tallerwebi.dominio.excepcion.PresupuestoNegativoException;
+import com.tallerwebi.dominio.excepcion.ValidacionException;
 import com.tallerwebi.presentacion.excepcion.FiltroDeMueblesInvalidoException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -21,11 +27,20 @@ import org.springframework.web.servlet.ModelAndView;
 @Controller
 public class ControladorCatalogoDeMuebles {
 
+  private static final String ROL_ADMIN = "ADMIN";
+  private static final String REDIRECCION_AL_CATALOGO = "redirect:/catalogo";
+  private static final String VISTA_CREAR_MUEBLE = "crearMueble";
+
   private final ServicioCatalogo servicioCatalogo;
+  private final ServicioCategoriaDeMueble servicioCategoriaDeMueble;
 
   @Autowired
-  public ControladorCatalogoDeMuebles(ServicioCatalogo servicioCatalogo) {
+  public ControladorCatalogoDeMuebles(
+    ServicioCatalogo servicioCatalogo,
+    ServicioCategoriaDeMueble servicioCategoriaDeMueble
+  ) {
     this.servicioCatalogo = servicioCatalogo;
+    this.servicioCategoriaDeMueble = servicioCategoriaDeMueble;
   }
 
   @RequestMapping(path = "/catalogo", method = RequestMethod.GET)
@@ -42,7 +57,7 @@ public class ControladorCatalogoDeMuebles {
       filtro =
         FiltroDeMuebles.delCatalogo(estilo, precioMaximo, precioMinimo, tipoDeAmbiente, orden);
     } catch (FiltroDeMueblesInvalidoException e) {
-      return new ModelAndView("redirect:/catalogo");
+      return new ModelAndView(REDIRECCION_AL_CATALOGO);
     }
 
     return new ModelAndView("catalogo", this.modeloDelCatalogo(filtro));
@@ -54,8 +69,29 @@ public class ControladorCatalogoDeMuebles {
   }
 
   @RequestMapping(path = "/muebles/crear", method = RequestMethod.GET)
-  public ModelAndView crearMueble() {
-    return new ModelAndView("crearMueble");
+  public ModelAndView crearMueble(HttpServletRequest request) {
+    if (!this.esAdministrador(request)) {
+      return new ModelAndView(REDIRECCION_AL_CATALOGO);
+    }
+    return new ModelAndView(VISTA_CREAR_MUEBLE, this.modeloDelFormularioDeCreacion());
+  }
+
+  @RequestMapping(path = "/muebles/crear", method = RequestMethod.POST)
+  public ModelAndView crearMuebleDelCatalogo(
+    @ModelAttribute("datosMuebleCatalogo") DTONuevoMuebleCatalogo datos,
+    HttpServletRequest request
+  ) {
+    if (!this.esAdministrador(request)) {
+      return new ModelAndView(REDIRECCION_AL_CATALOGO);
+    }
+    try {
+      this.servicioCatalogo.RegistrarMuebleDelCatalogo(this.aMuebleDelCatalogo(datos));
+    } catch (ValidacionException e) {
+      Map<String, Object> modelo = this.modeloDelFormularioDeCreacion();
+      modelo.put("error", e.getMessage());
+      return new ModelAndView(VISTA_CREAR_MUEBLE, modelo);
+    }
+    return new ModelAndView(REDIRECCION_AL_CATALOGO);
   }
 
   @RequestMapping(path = "/mueble/{id}", method = RequestMethod.GET)
@@ -65,7 +101,7 @@ public class ControladorCatalogoDeMuebles {
     try {
       mueble = this.servicioCatalogo.ObtenerMueblePorId(id);
     } catch (MuebleNoEncontrado e) {
-      return new ModelAndView("redirect:/catalogo");
+      return new ModelAndView(REDIRECCION_AL_CATALOGO);
     }
 
     Map<String, Object> modelo = new ModelMap();
@@ -108,5 +144,55 @@ public class ControladorCatalogoDeMuebles {
       return null;
     }
     return new TipoDeAmbiente(nombre);
+  }
+
+  private boolean esAdministrador(HttpServletRequest request) {
+    HttpSession sesion = request.getSession();
+    boolean esAdmin = sesion != null && ROL_ADMIN.equals(sesion.getAttribute("ROL"));
+    return esAdmin;
+  }
+
+  private Map<String, Object> modeloDelFormularioDeCreacion() {
+    Map<String, Object> modelo = new ModelMap();
+    modelo.put("estilos", Estilo.values());
+    modelo.put("categorias", this.servicioCategoriaDeMueble.obtenerCategorias());
+    modelo.put("tiposDeAmbiente", TipoDeAmbiente.nombresConocidos());
+    return modelo;
+  }
+
+  private Mueble aMuebleDelCatalogo(DTONuevoMuebleCatalogo datos) {
+    Mueble mueble = new Mueble();
+    mueble.setNombre(datos.getNombre());
+    mueble.setDescripcion(datos.getDescripcion());
+    mueble.setPrecio(datos.getPrecio() == null ? 0.0 : datos.getPrecio());
+    mueble.setEstilo(this.aEstilo(datos.getEstilo()));
+    mueble.setCategoriaDeMueble(this.aCategoria(datos.getCategoria()));
+    mueble.setAncho(datos.getAncho());
+    mueble.setLargo(datos.getLargo());
+    this.agregarTiposDeAmbienteElegidos(mueble, datos.getTiposDeAmbiente());
+    return mueble;
+  }
+
+  private Estilo aEstilo(String nombreDeEstilo) {
+    if (nombreDeEstilo == null || nombreDeEstilo.trim().isEmpty()) {
+      return null;
+    }
+    return Estilo.valueOf(nombreDeEstilo);
+  }
+
+  private CategoriaDeMueble aCategoria(Long categoriaId) {
+    if (categoriaId == null) {
+      return null;
+    }
+    return this.servicioCategoriaDeMueble.buscarPorId(categoriaId);
+  }
+
+  private void agregarTiposDeAmbienteElegidos(Mueble mueble, List<String> nombresDeTipo) {
+    for (String nombre : nombresDeTipo) {
+      TipoDeAmbiente tipoDeAmbiente = this.servicioCatalogo.buscarTipoDeAmbientePorNombre(nombre);
+      if (tipoDeAmbiente != null) {
+        mueble.agregarTipoDeAmbiente(tipoDeAmbiente);
+      }
+    }
   }
 }

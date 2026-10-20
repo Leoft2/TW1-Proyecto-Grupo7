@@ -13,6 +13,9 @@
         <h1>Catálogo de muebles</h1>
         <p>Todos los muebles disponibles. Filtrá por estilo, tipo de ambiente y precio, o ordená por precio.</p>
       </div>
+      <a th:if="${session.ROL == 'ADMIN'}" th:href="@{/muebles/crear}" class="btn btn-lg btn-primary">
+        <i class="bi bi-plus-lg"></i> Agregar mueble
+      </a>
     </header>
 
     <div class="card">

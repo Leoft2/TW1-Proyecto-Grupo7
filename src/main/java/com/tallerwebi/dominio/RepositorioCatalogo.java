@@ -7,4 +7,6 @@ public interface RepositorioCatalogo {
   List<Mueble> ObtenerTodosLosMuebles();
   Mueble ObtenerMueblePorId(int id);
   void eliminar(int id);
+  TipoDeAmbiente buscarTipoDeAmbientePorNombre(String nombre);
+  void guardarTipoDeAmbiente(TipoDeAmbiente tipoDeAmbiente);
 }

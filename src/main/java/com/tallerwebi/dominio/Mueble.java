@@ -27,6 +27,7 @@ public class Mueble {
   private double precio;
   private Double ancho;
   private Double largo;
+  private Boolean enCatalogo = false;
 
   @Enumerated(EnumType.STRING)
   private Estilo estilo;
@@ -108,12 +109,14 @@ public class Mueble {
     return descripcion;
   }
 
-  /**
-   * Compara por los datos editables del mueble, no por su identidad en la base.
-   * El id queda afuera a proposito: lo genera la base y para un mueble todavia no
-   * persistido vale 0, asi que incluirlo haria que dos muebles nuevos distintos
-   * fueran iguales entre si.
-   */
+  public Boolean getEnCatalogo() {
+    return enCatalogo;
+  }
+
+  public void setEnCatalogo(Boolean enCatalogo) {
+    this.enCatalogo = enCatalogo;
+  }
+
   @Override
   public boolean equals(Object otro) {
     if (this == otro) {

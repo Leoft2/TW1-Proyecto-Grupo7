@@ -6,7 +6,10 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -15,29 +18,45 @@ import com.tallerwebi.dominio.CategoriaDeMueble;
 import com.tallerwebi.dominio.Estilo;
 import com.tallerwebi.dominio.Mueble;
 import com.tallerwebi.dominio.ServicioCatalogo;
+import com.tallerwebi.dominio.ServicioCategoriaDeMueble;
 import com.tallerwebi.dominio.TipoDeAmbiente;
 import com.tallerwebi.dominio.excepcion.MuebleNoEncontrado;
 import com.tallerwebi.dominio.excepcion.PresupuestoNegativoException;
+import com.tallerwebi.dominio.excepcion.ValidacionException;
 import com.tallerwebi.presentacion.ControladorCatalogoDeMuebles;
+import com.tallerwebi.presentacion.DTONuevoMuebleCatalogo;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.web.servlet.ModelAndView;
 
 public class ControladorCatalogoDeMueblesTest {
 
   private static final String CATALOGO = "catalogo";
+  private static final String CREAR_MUEBLE = "crearMueble";
   private static final String REDIRECCION_AL_CATALOGO = "redirect:/catalogo";
+  private static final String ROL_ADMIN = "ADMIN";
+  private static final String ROL_USUARIO_COMUN = "USER";
 
   private ServicioCatalogo servicioCatalogo;
+  private ServicioCategoriaDeMueble servicioCategoriaDeMueble;
+  private HttpServletRequest requestMock;
+  private HttpSession sessionMock;
   private ControladorCatalogoDeMuebles controladorCatalogoDeMuebles;
 
   @BeforeEach
   public void init() {
     this.servicioCatalogo = mock(ServicioCatalogo.class);
-    this.controladorCatalogoDeMuebles = new ControladorCatalogoDeMuebles(this.servicioCatalogo);
+    this.servicioCategoriaDeMueble = mock(ServicioCategoriaDeMueble.class);
+    this.requestMock = mock(HttpServletRequest.class);
+    this.sessionMock = mock(HttpSession.class);
+    this.controladorCatalogoDeMuebles =
+      new ControladorCatalogoDeMuebles(this.servicioCatalogo, this.servicioCategoriaDeMueble);
   }
 
   @Test
@@ -213,10 +232,142 @@ public class ControladorCatalogoDeMueblesTest {
   }
 
   @Test
-  public void dadoQueNavegoACrearMueble_cuandoLoHago_entoncesVeoElFormularioDeCreacion()
+  public void dadoQueSoyAdmin_cuandoNavegoACrearMueble_entoncesVeoElFormularioDeCreacion()
     throws Exception {
-    ModelAndView modelAndView = this.controladorCatalogoDeMuebles.crearMueble();
-    assertThat(modelAndView.getViewName(), is("crearMueble"));
+    this.dadoQueLaSesionTieneElRol(ROL_ADMIN);
+
+    ModelAndView modelAndView = this.controladorCatalogoDeMuebles.crearMueble(this.requestMock);
+
+    assertThat(modelAndView.getViewName(), is(CREAR_MUEBLE));
+    assertThat(modelAndView.getModel().get("estilos"), is(Estilo.values()));
+    assertThat(
+      modelAndView.getModel().get("tiposDeAmbiente"),
+      is(TipoDeAmbiente.nombresConocidos())
+    );
+  }
+
+  @Test
+  public void dadoQueSoyAdmin_cuandoNavegoACrearMueble_entoncesVeoLasCategoriasParaElegir()
+    throws Exception {
+    this.dadoQueLaSesionTieneElRol(ROL_ADMIN);
+    List<CategoriaDeMueble> categorias = new ArrayList<>();
+    categorias.add(new CategoriaDeMueble("Sillón", 0.80, 0.85));
+    when(this.servicioCategoriaDeMueble.obtenerCategorias()).thenReturn(categorias);
+
+    ModelAndView modelAndView = this.controladorCatalogoDeMuebles.crearMueble(this.requestMock);
+
+    assertThat(modelAndView.getModel().get("categorias"), is(categorias));
+  }
+
+  @Test
+  public void dadoQueNoInicieSesion_cuandoNavegoACrearMueble_entoncesVuelvoAlCatalogo()
+    throws Exception {
+    when(this.requestMock.getSession()).thenReturn(this.sessionMock);
+    when(this.sessionMock.getAttribute("ROL")).thenReturn(null);
+
+    ModelAndView modelAndView = this.controladorCatalogoDeMuebles.crearMueble(this.requestMock);
+
+    assertThat(modelAndView.getViewName(), is(REDIRECCION_AL_CATALOGO));
+    verifyNoInteractions(this.servicioCatalogo, this.servicioCategoriaDeMueble);
+  }
+
+  @Test
+  public void dadoQueSoyUnUsuarioComun_cuandoNavegoACrearMueble_entoncesVuelvoAlCatalogo()
+    throws Exception {
+    this.dadoQueLaSesionTieneElRol(ROL_USUARIO_COMUN);
+
+    ModelAndView modelAndView = this.controladorCatalogoDeMuebles.crearMueble(this.requestMock);
+
+    assertThat(modelAndView.getViewName(), is(REDIRECCION_AL_CATALOGO));
+    verifyNoInteractions(this.servicioCatalogo, this.servicioCategoriaDeMueble);
+  }
+
+  @Test
+  public void dadoUnFormularioValido_cuandoCreoUnMuebleDelCatalogo_entoncesSeRegistraEnElCatalogo()
+    throws Exception {
+    CategoriaDeMueble sillones = new CategoriaDeMueble("Sillón", 0.80, 0.85);
+    TipoDeAmbiente living = new TipoDeAmbiente("Living");
+    TipoDeAmbiente comedor = new TipoDeAmbiente("Comedor");
+    this.dadoQueLaSesionTieneElRol(ROL_ADMIN);
+    when(this.servicioCategoriaDeMueble.buscarPorId(1L)).thenReturn(sillones);
+    when(this.servicioCatalogo.buscarTipoDeAmbientePorNombre("Living")).thenReturn(living);
+    when(this.servicioCatalogo.buscarTipoDeAmbientePorNombre("Comedor")).thenReturn(comedor);
+    DTONuevoMuebleCatalogo datos = this.dadoQueCompleteElFormularioDeMueble();
+
+    ModelAndView modelAndView =
+      this.controladorCatalogoDeMuebles.crearMuebleDelCatalogo(datos, this.requestMock);
+
+    assertThat(modelAndView.getViewName(), is(REDIRECCION_AL_CATALOGO));
+    Mueble muebleGuardado = this.cuandoCapturoElMuebleRegistrado();
+    assertThat(muebleGuardado.getNombre(), is("Sillón Retró"));
+    assertThat(muebleGuardado.getDescripcion(), is("Sillón de voluteadas."));
+    assertThat(muebleGuardado.getPrecio(), is(85000.0));
+    assertThat(muebleGuardado.getEstilo(), is(Estilo.Retro));
+    assertThat(muebleGuardado.getCategoriaDeMueble(), is(sillones));
+    assertThat(muebleGuardado.getAncho(), is(0.80));
+    assertThat(muebleGuardado.getLargo(), is(0.85));
+    assertThat(muebleGuardado.getTiposDeAmbiente(), containsInAnyOrder(living, comedor));
+  }
+
+  @Test
+  public void dadoUnFormularioConDatosInvalidos_cuandoCreoUnMuebleDelCatalogo_entoncesVeoElError()
+    throws Exception {
+    this.dadoQueLaSesionTieneElRol(ROL_ADMIN);
+    doThrow(new ValidacionException("El precio del mueble debe ser mayor a cero"))
+      .when(this.servicioCatalogo)
+      .RegistrarMuebleDelCatalogo(any(Mueble.class));
+    DTONuevoMuebleCatalogo datos = this.dadoQueCompleteElFormularioDeMueble();
+
+    ModelAndView modelAndView =
+      this.controladorCatalogoDeMuebles.crearMuebleDelCatalogo(datos, this.requestMock);
+
+    assertThat(modelAndView.getViewName(), is(CREAR_MUEBLE));
+    assertThat(
+      modelAndView.getModel().get("error"),
+      is("El precio del mueble debe ser mayor a cero")
+    );
+    verify(this.servicioCatalogo).RegistrarMuebleDelCatalogo(any(Mueble.class));
+  }
+
+  @Test
+  public void dadoQueNoInicieSesion_cuandoCreoUnMuebleDelCatalogo_entoncesNoSeRegistraNada()
+    throws Exception {
+    when(this.requestMock.getSession()).thenReturn(this.sessionMock);
+    when(this.sessionMock.getAttribute("ROL")).thenReturn(null);
+    DTONuevoMuebleCatalogo datos = this.dadoQueCompleteElFormularioDeMueble();
+
+    ModelAndView modelAndView =
+      this.controladorCatalogoDeMuebles.crearMuebleDelCatalogo(datos, this.requestMock);
+
+    assertThat(modelAndView.getViewName(), is(REDIRECCION_AL_CATALOGO));
+    verify(this.servicioCatalogo, never()).RegistrarMuebleDelCatalogo(any(Mueble.class));
+  }
+
+  private void dadoQueLaSesionTieneElRol(String rol) {
+    when(this.requestMock.getSession()).thenReturn(this.sessionMock);
+    when(this.sessionMock.getAttribute("ROL")).thenReturn(rol);
+  }
+
+  private DTONuevoMuebleCatalogo dadoQueCompleteElFormularioDeMueble() {
+    DTONuevoMuebleCatalogo datos = new DTONuevoMuebleCatalogo();
+    datos.setNombre("Sillón Retró");
+    datos.setDescripcion("Sillón de voluteadas.");
+    datos.setPrecio(85000.0);
+    datos.setEstilo("Retro");
+    datos.setCategoria(1L);
+    datos.setAncho(0.80);
+    datos.setLargo(0.85);
+    List<String> tiposDeAmbiente = new ArrayList<>();
+    tiposDeAmbiente.add("Living");
+    tiposDeAmbiente.add("Comedor");
+    datos.setTiposDeAmbiente(tiposDeAmbiente);
+    return datos;
+  }
+
+  private Mueble cuandoCapturoElMuebleRegistrado() {
+    ArgumentCaptor<Mueble> captor = ArgumentCaptor.forClass(Mueble.class);
+    verify(this.servicioCatalogo).RegistrarMuebleDelCatalogo(captor.capture());
+    return captor.getValue();
   }
 
   @Test

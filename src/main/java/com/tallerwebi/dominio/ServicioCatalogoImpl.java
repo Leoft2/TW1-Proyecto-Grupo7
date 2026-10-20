@@ -3,6 +3,7 @@ package com.tallerwebi.dominio;
 import com.tallerwebi.dominio.excepcion.MuebleNoEncontrado;
 import com.tallerwebi.dominio.excepcion.PresupuestoNegativoException;
 import com.tallerwebi.dominio.excepcion.PresupuestoNuloException;
+import com.tallerwebi.dominio.excepcion.ValidacionException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -88,6 +89,26 @@ public class ServicioCatalogoImpl implements ServicioCatalogo {
   }
 
   @Override
+  public void RegistrarMuebleDelCatalogo(Mueble mueble) throws ValidacionException {
+    this.validarMuebleDelCatalogo(mueble);
+    mueble.setEnCatalogo(true);
+    this.repositorioCatalogo.guardarMueble(mueble);
+  }
+
+  @Override
+  public TipoDeAmbiente buscarTipoDeAmbientePorNombre(String nombre) {
+    if (nombre == null || nombre.trim().isEmpty()) {
+      return null;
+    }
+    TipoDeAmbiente tipoDeAmbiente = this.repositorioCatalogo.buscarTipoDeAmbientePorNombre(nombre);
+    if (tipoDeAmbiente == null) {
+      tipoDeAmbiente = new TipoDeAmbiente(nombre);
+      this.repositorioCatalogo.guardarTipoDeAmbiente(tipoDeAmbiente);
+    }
+    return tipoDeAmbiente;
+  }
+
+  @Override
   public List<Mueble> ObtenerMueblesOrdenadosPorPrecioAsc() {
     List<Mueble> mueblesFiltradorPorPrecioAsc =
       this.filtrarYOrdenar(null, null, null, null, OrdenDeMuebles.PRECIO_ASC);
@@ -134,6 +155,45 @@ public class ServicioCatalogoImpl implements ServicioCatalogo {
       throw new MuebleNoEncontrado("Mueble no encontrado");
     }
     return mueble;
+  }
+
+  private void validarMuebleDelCatalogo(Mueble mueble) throws ValidacionException {
+    this.validarNombreDelCatalogo(mueble.getNombre());
+    this.validarPrecioDelCatalogo(mueble.getPrecio());
+    this.validarEstiloDelCatalogo(mueble.getEstilo());
+    this.validarMedidaDelCatalogo(mueble.getAncho(), "ancho");
+    this.validarMedidaDelCatalogo(mueble.getLargo(), "largo");
+    if (mueble.getCategoriaDeMueble() == null) {
+      throw new ValidacionException("El mueble debe tener una categoría");
+    }
+    if (mueble.getTiposDeAmbiente().isEmpty()) {
+      throw new ValidacionException("El mueble debe indicar al menos un tipo de ambiente");
+    }
+  }
+
+  private void validarMedidaDelCatalogo(Double medida, String nombreDeLaMedida)
+    throws ValidacionException {
+    if (medida == null || medida <= 0) {
+      throw new ValidacionException("El " + nombreDeLaMedida + " del mueble debe ser mayor a cero");
+    }
+  }
+
+  private void validarNombreDelCatalogo(String nombre) throws ValidacionException {
+    if (nombre == null || nombre.trim().isEmpty()) {
+      throw new ValidacionException("El nombre del mueble no puede estar vacío");
+    }
+  }
+
+  private void validarPrecioDelCatalogo(double precio) throws ValidacionException {
+    if (precio <= 0) {
+      throw new ValidacionException("El precio del mueble debe ser mayor a cero");
+    }
+  }
+
+  private void validarEstiloDelCatalogo(Estilo estilo) throws ValidacionException {
+    if (estilo == null) {
+      throw new ValidacionException("El mueble debe tener un estilo");
+    }
   }
 
   private void validarPresupuestos(Double precioMinimo, Double precioMaximo)

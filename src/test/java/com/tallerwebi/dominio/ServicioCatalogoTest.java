@@ -5,17 +5,21 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.tallerwebi.dominio.excepcion.MuebleNoEncontrado;
 import com.tallerwebi.dominio.excepcion.PresupuestoNegativoException;
 import com.tallerwebi.dominio.excepcion.PresupuestoNuloException;
+import com.tallerwebi.dominio.excepcion.ValidacionException;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -429,6 +433,165 @@ public class ServicioCatalogoTest {
     );
 
     assertNotNull(exception);
+  }
+
+  @Test
+  public void dadoUnMuebleValido_cuandoLoRegistroEnElCatalogo_entoncesSeGuardaMarcadoComoDeCatalogo() {
+    Mueble mueble = this.dadoQueTengoUnMuebleParaRegistrar();
+
+    this.servicioCatalogo.RegistrarMuebleDelCatalogo(mueble);
+
+    assertTrue(mueble.getEnCatalogo());
+    assertThat(mueble.getAncho(), is(0.80));
+    assertThat(mueble.getLargo(), is(0.85));
+    verify(this.repositorioCatalogoMock).guardarMueble(mueble);
+  }
+
+  @Test
+  public void dadoUnMuebleSinNombre_cuandoLoRegistroEnElCatalogo_entoncesLanzaValidacionException() {
+    Mueble mueble = this.dadoQueTengoUnMuebleParaRegistrar();
+    mueble.setNombre("   ");
+
+    assertThrows(
+      ValidacionException.class,
+      () -> {
+        this.servicioCatalogo.RegistrarMuebleDelCatalogo(mueble);
+      }
+    );
+
+    verifyNoInteractions(this.repositorioCatalogoMock);
+  }
+
+  @Test
+  public void dadoUnMuebleConPrecioCero_cuandoLoRegistroEnElCatalogo_entoncesLanzaValidacionException() {
+    Mueble mueble = this.dadoQueTengoUnMuebleParaRegistrar();
+    mueble.setPrecio(0.0);
+
+    assertThrows(
+      ValidacionException.class,
+      () -> {
+        this.servicioCatalogo.RegistrarMuebleDelCatalogo(mueble);
+      }
+    );
+
+    verifyNoInteractions(this.repositorioCatalogoMock);
+  }
+
+  @Test
+  public void dadoUnMuebleSinEstilo_cuandoLoRegistroEnElCatalogo_entoncesLanzaValidacionException() {
+    Mueble mueble = this.dadoQueTengoUnMuebleParaRegistrar();
+    mueble.setEstilo(null);
+
+    assertThrows(
+      ValidacionException.class,
+      () -> {
+        this.servicioCatalogo.RegistrarMuebleDelCatalogo(mueble);
+      }
+    );
+
+    verifyNoInteractions(this.repositorioCatalogoMock);
+  }
+
+  @Test
+  public void dadoUnMuebleSinCategoria_cuandoLoRegistroEnElCatalogo_entoncesLanzaValidacionException() {
+    Mueble mueble = this.dadoQueTengoUnMuebleParaRegistrar();
+    mueble.setCategoriaDeMueble(null);
+
+    assertThrows(
+      ValidacionException.class,
+      () -> {
+        this.servicioCatalogo.RegistrarMuebleDelCatalogo(mueble);
+      }
+    );
+
+    verifyNoInteractions(this.repositorioCatalogoMock);
+  }
+
+  @Test
+  public void dadoUnMuebleSinAncho_cuandoLoRegistroEnElCatalogo_entoncesLanzaValidacionException() {
+    Mueble mueble = this.dadoQueTengoUnMuebleParaRegistrar();
+    mueble.setAncho(null);
+
+    assertThrows(
+      ValidacionException.class,
+      () -> {
+        this.servicioCatalogo.RegistrarMuebleDelCatalogo(mueble);
+      }
+    );
+
+    verifyNoInteractions(this.repositorioCatalogoMock);
+  }
+
+  @Test
+  public void dadoUnMuebleSinLargo_cuandoLoRegistroEnElCatalogo_entoncesLanzaValidacionException() {
+    Mueble mueble = this.dadoQueTengoUnMuebleParaRegistrar();
+    mueble.setLargo(0.0);
+
+    assertThrows(
+      ValidacionException.class,
+      () -> {
+        this.servicioCatalogo.RegistrarMuebleDelCatalogo(mueble);
+      }
+    );
+
+    verifyNoInteractions(this.repositorioCatalogoMock);
+  }
+
+  @Test
+  public void dadoUnMuebleSinTiposDeAmbiente_cuandoLoRegistroEnElCatalogo_entoncesLanzaValidacionException() {
+    Mueble mueble = this.dadoQueTengoUnMuebleParaRegistrar();
+    mueble.setTiposDeAmbiente(new ArrayList<>());
+
+    assertThrows(
+      ValidacionException.class,
+      () -> {
+        this.servicioCatalogo.RegistrarMuebleDelCatalogo(mueble);
+      }
+    );
+
+    verifyNoInteractions(this.repositorioCatalogoMock);
+  }
+
+  @Test
+  public void dadoUnNombreDeTipoDeAmbiente_cuandoLoBusco_entoncesLoPidoAlRepositorio() {
+    TipoDeAmbiente living = new TipoDeAmbiente("Living");
+    when(this.repositorioCatalogoMock.buscarTipoDeAmbientePorNombre("Living")).thenReturn(living);
+
+    TipoDeAmbiente tipoObtenido = this.servicioCatalogo.buscarTipoDeAmbientePorNombre("Living");
+
+    assertThat(tipoObtenido, is(living));
+  }
+
+  @Test
+  public void dadoUnNombreDeTipoDeAmbienteInexistente_cuandoLoBusco_entoncesSeCreaEnElRepositorio() {
+    TipoDeAmbiente tipoObtenido = this.servicioCatalogo.buscarTipoDeAmbientePorNombre("Garaje");
+
+    assertThat(tipoObtenido, is(notNullValue()));
+    assertThat(tipoObtenido.getNombre(), is("Garaje"));
+    verify(this.repositorioCatalogoMock).guardarTipoDeAmbiente(tipoObtenido);
+  }
+
+  @Test
+  public void dadoUnNombreDeTipoDeAmbienteVacio_cuandoLoObtengo_entoncesNoPidoNadaAlRepositorio() {
+    TipoDeAmbiente tipoObtenido = this.servicioCatalogo.buscarTipoDeAmbientePorNombre("  ");
+
+    assertThat(tipoObtenido, is(nullValue()));
+    verifyNoInteractions(this.repositorioCatalogoMock);
+  }
+
+  private Mueble dadoQueTengoUnMuebleParaRegistrar() {
+    Mueble mueble = new Mueble();
+    mueble.setNombre("Sillón Retró");
+    mueble.setDescripcion("Sillón de voluteadas tapizado en terciopelo.");
+    mueble.setPrecio(85000.0);
+    mueble.setEstilo(Estilo.Retro);
+    mueble.setCategoriaDeMueble(new CategoriaDeMueble("Sillón", 0.80, 0.85));
+    mueble.setAncho(0.80);
+    mueble.setLargo(0.85);
+    List<TipoDeAmbiente> tiposDeAmbiente = new ArrayList<>();
+    tiposDeAmbiente.add(new TipoDeAmbiente("Living"));
+    mueble.setTiposDeAmbiente(tiposDeAmbiente);
+    return mueble;
   }
 
   private Mueble dadoQueElCatalogoTieneUnMueble(String nombre, double precio, Estilo estilo) {

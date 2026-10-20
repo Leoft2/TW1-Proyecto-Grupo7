@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import com.tallerwebi.dominio.Estilo;
 import com.tallerwebi.dominio.Mueble;
 import com.tallerwebi.dominio.RepositorioCatalogo;
+import com.tallerwebi.dominio.TipoDeAmbiente;
 import com.tallerwebi.infraestructura.config.HibernateInfraestructuraTestConfig;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -71,6 +72,24 @@ public class RepositorioCatalogoTest {
   @Test
   @Transactional
   @Rollback
+  public void DadoUnMuebleDeInventarioCuandoPidoTodosLosDelCatalogoEntoncesNoAparece() {
+    Mueble muebleDeCatalogo = this.dadoQueTengoUnMueble("Mueble del catálogo", 150.0, Estilo.Retro);
+    Mueble muebleDeInventario = new Mueble();
+    muebleDeInventario.setNombre("Mueble del inventario");
+    muebleDeInventario.setPrecio(250.0);
+    muebleDeInventario.setEstilo(Estilo.Japandi);
+    this.cuandoGuardoUnMueble(muebleDeCatalogo);
+    this.cuandoGuardoUnMueble(muebleDeInventario);
+
+    List<Mueble> mueblesObtenidos = this.repositorioCatalogo.ObtenerTodosLosMuebles();
+
+    assertThat(mueblesObtenidos.size(), is(equalTo(1)));
+    assertThat(mueblesObtenidos.get(0).getNombre(), is(equalTo("Mueble del catálogo")));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
   public void DadoUnMuebleGuardadoCuandoLoBuscoPorIdEntoncesObtengoEseMueble() {
     Mueble mueble = this.dadoQueTengoUnMueble("Sillón Retró", 85000.0, Estilo.Retro);
     mueble.setDescripcion("Sillón de voluteadas tapizado en terciopelo.");
@@ -98,11 +117,39 @@ public class RepositorioCatalogoTest {
     assertThat(muebleObtenido, is(nullValue()));
   }
 
+  @Test
+  @Transactional
+  @Rollback
+  public void DadoUnTipoDeAmbienteGuardadoCuandoLoBuscoPorNombreEntoncesObtengoEseTipo() {
+    this.dadoQueTengoUnTipoDeAmbienteGuardado("Living");
+
+    TipoDeAmbiente tipoObtenido = this.repositorioCatalogo.buscarTipoDeAmbientePorNombre("Living");
+
+    assertThat(tipoObtenido, is(notNullValue()));
+    assertThat(tipoObtenido.getNombre(), is(equalTo("Living")));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void DadoUnTipoDeAmbienteQueNoExisteCuandoLoBuscoPorNombreEntoncesObtengoNull() {
+    TipoDeAmbiente tipoObtenido = this.repositorioCatalogo.buscarTipoDeAmbientePorNombre("Garaje");
+
+    assertThat(tipoObtenido, is(nullValue()));
+  }
+
+  private TipoDeAmbiente dadoQueTengoUnTipoDeAmbienteGuardado(String nombre) {
+    TipoDeAmbiente tipoDeAmbiente = new TipoDeAmbiente(nombre);
+    this.sessionFactory.getCurrentSession().persist(tipoDeAmbiente);
+    return tipoDeAmbiente;
+  }
+
   private Mueble dadoQueTengoUnMueble(String nombre, double precio, Estilo estilo) {
     Mueble mueble = new Mueble();
     mueble.setNombre(nombre);
     mueble.setPrecio(precio);
     mueble.setEstilo(estilo);
+    mueble.setEnCatalogo(true);
     return mueble;
   }
 

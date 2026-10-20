@@ -50,6 +50,21 @@ public class RepositorioInventarioMueblesTest {
     thenElMuebleTieneLasMedidas(mesa.getId(), "Mesa", 1.2, 0.8);
   }
 
+  @Test
+  @Transactional
+  @Rollback
+  public void noDeberiaListarLosMueblesDelCatalogoCuandoListoElInventario() {
+    Mueble muebleDeCatalogo = givenMuebleNuevo("Sillón del catálogo", 0.8, 0.85);
+    muebleDeCatalogo.setEnCatalogo(true);
+    whenGuardoElMueble(muebleDeCatalogo);
+    whenGuardoElMueble(givenMuebleNuevo("Mesa", 1.2, 0.8));
+
+    List<Mueble> inventario = whenListoElInventario();
+
+    assertThat(inventario, hasSize(1));
+    assertThat(inventario.get(0).getNombre(), is("Mesa"));
+  }
+
   // -------------------------------------------------------------------------
   // Tests repositorio para HU-23
   // -------------------------------------------------------------------------

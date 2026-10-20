@@ -2,6 +2,7 @@ package com.tallerwebi.infraestructura;
 
 import com.tallerwebi.dominio.Mueble;
 import com.tallerwebi.dominio.RepositorioCatalogo;
+import com.tallerwebi.dominio.TipoDeAmbiente;
 import java.util.List;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
@@ -25,12 +26,8 @@ public class RepositorioCatalogoImpl implements RepositorioCatalogo {
 
   @Override
   public List<Mueble> ObtenerTodosLosMuebles() {
-    String query = "FROM Mueble m LEFT JOIN FETCH m.categoriaDeMueble";
-    List<Mueble> muebles = sessionFactory
-      .getCurrentSession()
-      .createQuery(query, Mueble.class)
-      .getResultList();
-    return muebles;
+    String query = "FROM Mueble m LEFT JOIN FETCH m.categoriaDeMueble WHERE m.enCatalogo = true";
+    return sessionFactory.getCurrentSession().createQuery(query, Mueble.class).getResultList();
   }
 
   @Override
@@ -51,5 +48,20 @@ public class RepositorioCatalogoImpl implements RepositorioCatalogo {
       .createQuery(query, Mueble.class)
       .setParameter("id", id);
     return hibernateQuery.uniqueResult();
+  }
+
+  @Override
+  public TipoDeAmbiente buscarTipoDeAmbientePorNombre(String nombre) {
+    String query = "FROM TipoDeAmbiente t WHERE t.nombre = :nombre";
+    return sessionFactory
+      .getCurrentSession()
+      .createQuery(query, TipoDeAmbiente.class)
+      .setParameter("nombre", nombre)
+      .uniqueResult();
+  }
+
+  @Override
+  public void guardarTipoDeAmbiente(TipoDeAmbiente tipoDeAmbiente) {
+    sessionFactory.getCurrentSession().persist(tipoDeAmbiente);
   }
 }

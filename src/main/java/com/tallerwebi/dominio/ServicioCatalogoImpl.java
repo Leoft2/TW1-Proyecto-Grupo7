@@ -181,6 +181,7 @@ public class ServicioCatalogoImpl implements ServicioCatalogo {
     mueble.setAncho(datos.getAncho());
     mueble.setLargo(datos.getLargo());
     mueble.setTiposDeAmbiente(datos.getTiposDeAmbiente());
+    mueble.setMaterial(datos.getMaterial());
   }
 
   private void validarMuebleDelCatalogo(Mueble mueble) throws ValidacionException {

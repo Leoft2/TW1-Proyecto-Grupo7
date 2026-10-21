@@ -595,6 +595,27 @@ public class RepositorioCatalogoTest {
     assertThat(masBarato, is(nullValue()));
   }
 
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoUnMuebleDelCatalogo_cuandoCambioSuMaterial_entoncesQuedaGuardadoElMaterialNuevo() {
+    Mueble mueble =
+      this.cuandoGuardoUnMuebleDeMaterial("Mueble con material", 100.0, "Madera certificada");
+    this.sessionFactory.getCurrentSession().flush();
+    int idDelMueble = mueble.getId();
+
+    Mueble guardado = this.repositorioCatalogo.ObtenerMueblePorId(idDelMueble);
+    guardado.setMaterial(this.dadoQueTengoUnMaterialGuardado("Bambú"));
+    this.repositorioCatalogo.guardarMueble(guardado);
+    this.sessionFactory.getCurrentSession().flush();
+    this.sessionFactory.getCurrentSession().clear();
+
+    Mueble releido = this.repositorioCatalogo.ObtenerMueblePorId(idDelMueble);
+
+    assertThat(releido.getMaterial(), is(notNullValue()));
+    assertThat(releido.getMaterial().getNombre(), is(equalTo("Bambú")));
+  }
+
   private List<String> nombresDe(List<Mueble> muebles) {
     return muebles.stream().map(Mueble::getNombre).toList();
   }

@@ -485,6 +485,36 @@ public class ServicioCatalogoTest {
   }
 
   @Test
+  public void dadoUnMuebleExistente_cuandoLoModificoEnElCatalogo_conOtroMaterial_entoncesSeGuardaElMaterialNuevo()
+    throws MuebleNoEncontrado {
+    Mueble existente = new Mueble();
+    existente.setId(7);
+    existente.setMaterial(new Material("Madera", true));
+    when(this.repositorioCatalogoMock.ObtenerMueblePorId(7)).thenReturn(existente);
+    Mueble datos = this.dadoQueTengoUnMuebleParaRegistrar();
+    datos.setMaterial(new Material("Bambú", true));
+
+    this.servicioCatalogo.modificarMuebleDelCatalogo(7, datos);
+
+    assertThat(existente.getMaterial(), is(new Material("Bambú", true)));
+  }
+
+  @Test
+  public void dadoUnMuebleExistente_cuandoLoModificoEnElCatalogo_sinMaterial_entoncesSeQuitaElMaterial()
+    throws MuebleNoEncontrado {
+    Mueble existente = new Mueble();
+    existente.setId(7);
+    existente.setMaterial(new Material("Madera", true));
+    when(this.repositorioCatalogoMock.ObtenerMueblePorId(7)).thenReturn(existente);
+    Mueble datos = this.dadoQueTengoUnMuebleParaRegistrar();
+    datos.setMaterial(null);
+
+    this.servicioCatalogo.modificarMuebleDelCatalogo(7, datos);
+
+    assertThat(existente.getMaterial(), is(nullValue()));
+  }
+
+  @Test
   public void dadoUnMuebleInexistente_cuandoLoModificoEnElCatalogo_entoncesLanzaMuebleNoEncontrado() {
     Mueble datos = this.dadoQueTengoUnMuebleParaRegistrar();
 

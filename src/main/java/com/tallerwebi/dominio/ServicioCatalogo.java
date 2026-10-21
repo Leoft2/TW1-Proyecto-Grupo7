@@ -23,14 +23,18 @@ public interface ServicioCatalogo {
   List<Mueble> ObtenerMueblesQueCumplan(
     TipoDeAmbiente tipoDeAmbiente,
     Estilo estilo,
-    Double precioMaximo
+    Double precioMaximo,
+    Boolean soloSostenibles,
+    Long materialId
   ) throws PresupuestoNegativoException;
   List<Mueble> ObtenerMueblesFiltrados(
     Double precioMinimo,
     Double precioMaximo,
     Estilo estilo,
     TipoDeAmbiente tipoDeAmbiente,
-    OrdenDeMuebles orden
+    OrdenDeMuebles orden,
+    Boolean soloSostenibles,
+    Long materialId
   ) throws PresupuestoNegativoException;
   Mueble ObtenerMueblePorId(int id) throws MuebleNoEncontrado;
 }

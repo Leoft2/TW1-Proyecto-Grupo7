@@ -111,14 +111,14 @@ public class ServicioCatalogoImpl implements ServicioCatalogo {
   @Override
   public List<Mueble> ObtenerMueblesOrdenadosPorPrecioAsc() {
     List<Mueble> mueblesFiltradorPorPrecioAsc =
-      this.filtrarYOrdenar(null, null, null, null, OrdenDeMuebles.PRECIO_ASC);
+      this.filtrarYOrdenar(null, null, null, null, OrdenDeMuebles.PRECIO_ASC, null, null);
     return mueblesFiltradorPorPrecioAsc;
   }
 
   @Override
   public List<Mueble> ObtenerMueblesOrdenadosPorPrecioDesc() {
     List<Mueble> mueblesFiltradorPorPrecioDesc =
-      this.filtrarYOrdenar(null, null, null, null, OrdenDeMuebles.PRECIO_DESC);
+      this.filtrarYOrdenar(null, null, null, null, OrdenDeMuebles.PRECIO_DESC, null, null);
     return mueblesFiltradorPorPrecioDesc;
   }
 
@@ -126,11 +126,21 @@ public class ServicioCatalogoImpl implements ServicioCatalogo {
   public List<Mueble> ObtenerMueblesQueCumplan(
     TipoDeAmbiente tipoDeAmbiente,
     Estilo estilo,
-    Double precioMaximo
+    Double precioMaximo,
+    Boolean soloSostenibles,
+    Long materialId
   ) throws PresupuestoNegativoException {
     this.validarPresupuestos(null, precioMaximo);
     List<Mueble> mueblesFiltrados =
-      this.filtrarYOrdenar(null, precioMaximo, estilo, tipoDeAmbiente, null);
+      this.filtrarYOrdenar(
+          null,
+          precioMaximo,
+          estilo,
+          tipoDeAmbiente,
+          null,
+          soloSostenibles,
+          materialId
+        );
     return mueblesFiltrados;
   }
 
@@ -140,11 +150,21 @@ public class ServicioCatalogoImpl implements ServicioCatalogo {
     Double precioMaximo,
     Estilo estilo,
     TipoDeAmbiente tipoDeAmbiente,
-    OrdenDeMuebles orden
+    OrdenDeMuebles orden,
+    Boolean soloSostenibles,
+    Long materialId
   ) throws PresupuestoNegativoException {
     this.validarPresupuestos(precioMinimo, precioMaximo);
     List<Mueble> mueblesFiltrados =
-      this.filtrarYOrdenar(precioMinimo, precioMaximo, estilo, tipoDeAmbiente, orden);
+      this.filtrarYOrdenar(
+          precioMinimo,
+          precioMaximo,
+          estilo,
+          tipoDeAmbiente,
+          orden,
+          soloSostenibles,
+          materialId
+        );
     return mueblesFiltrados;
   }
 
@@ -234,22 +254,50 @@ public class ServicioCatalogoImpl implements ServicioCatalogo {
     Double precioMaximo,
     Estilo estilo,
     TipoDeAmbiente tipoDeAmbiente,
-    OrdenDeMuebles orden
+    OrdenDeMuebles orden,
+    Boolean soloSostenibles,
+    Long materialId
   ) {
+    CriteriosDeMueble criterios = new CriteriosDeMueble(
+      precioMinimo,
+      precioMaximo,
+      estilo,
+      tipoDeAmbiente,
+      materialId
+    );
     List<Mueble> mueblesFiltrados = new ArrayList<>();
-    for (Mueble mueble : repositorioCatalogo.ObtenerTodosLosMuebles()) {
-      if (
-        cumpleElFiltroDeTipoDeAmbiente(mueble, tipoDeAmbiente) &&
-        cumpleElFiltroDeEstilo(mueble, estilo) &&
-        cumpleElFiltroDePrecioMinimo(mueble, precioMinimo) &&
-        cumpleElFiltroDePrecioMaximo(mueble, precioMaximo)
-      ) {
+    for (Mueble mueble : this.mueblesCandidatos(
+        precioMinimo,
+        precioMaximo,
+        estilo,
+        soloSostenibles,
+        materialId
+      )) {
+      if (criterios.cumple(mueble)) {
         mueblesFiltrados.add(mueble);
       }
     }
 
-    mueblesFiltrados = ordenarPorPrecio(mueblesFiltrados, orden);
-    return mueblesFiltrados;
+    return ordenarPorPrecio(mueblesFiltrados, orden);
+  }
+
+  private List<Mueble> mueblesCandidatos(
+    Double precioMinimo,
+    Double precioMaximo,
+    Estilo estilo,
+    Boolean soloSostenibles,
+    Long materialId
+  ) {
+    if (Boolean.TRUE.equals(soloSostenibles)) {
+      return this.repositorioCatalogo.ObtenerMueblesDelCatalogo(
+          estilo,
+          precioMinimo,
+          precioMaximo,
+          true,
+          materialId
+        );
+    }
+    return this.repositorioCatalogo.ObtenerTodosLosMuebles();
   }
 
   private List<Mueble> ordenarPorPrecio(List<Mueble> muebles, OrdenDeMuebles orden) {
@@ -260,29 +308,5 @@ public class ServicioCatalogoImpl implements ServicioCatalogo {
       return muebles.stream().sorted(Comparator.comparing(Mueble::getPrecio).reversed()).toList();
     }
     return muebles;
-  }
-
-  private boolean cumpleElFiltroDeEstilo(Mueble mueble, Estilo estilo) {
-    return estilo == null || mueble.getEstilo() == estilo;
-  }
-
-  private boolean cumpleElFiltroDePrecioMinimo(Mueble mueble, Double precioMinimo) {
-    return precioMinimo == null || mueble.getPrecio() >= precioMinimo;
-  }
-
-  private boolean cumpleElFiltroDePrecioMaximo(Mueble mueble, Double precioMaximo) {
-    return precioMaximo == null || mueble.getPrecio() <= precioMaximo;
-  }
-
-  private boolean cumpleElFiltroDeTipoDeAmbiente(Mueble mueble, TipoDeAmbiente tipoDeAmbiente) {
-    if (tipoDeAmbiente == null || tipoDeAmbiente.getNombre() == null) {
-      return true;
-    }
-    for (TipoDeAmbiente tipoDelMueble : mueble.getTiposDeAmbiente()) {
-      if (tipoDeAmbiente.getNombre().equals(tipoDelMueble.getNombre())) {
-        return true;
-      }
-    }
-    return false;
   }
 }

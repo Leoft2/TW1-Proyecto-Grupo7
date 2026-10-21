@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.tallerwebi.dominio.Estilo;
+import com.tallerwebi.dominio.Material;
 import com.tallerwebi.dominio.Mueble;
 import com.tallerwebi.integracion.config.HibernateTestConfig;
 import com.tallerwebi.integracion.config.SpringWebTestConfig;
@@ -50,6 +51,52 @@ public class DetalleMuebleTest {
     String html = this.cuandoAbroElDetalleDelMueble(mueble.getId());
 
     assertThat(html, containsString(">Sin categoría</dd>"));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaMostrarElMaterialYQueEsSostenibleCuandoElMuebleLoEs() throws Exception {
+    Mueble mueble = this.dadoUnMuebleSinCategoria();
+    mueble.setMaterial(this.dadoUnMaterial("Bambú", true));
+    this.sessionFactory.getCurrentSession().flush();
+
+    String html = this.cuandoAbroElDetalleDelMueble(mueble.getId());
+
+    assertThat(html, containsString(">Bambú</dd>"));
+    assertThat(html, containsString(">Sí</span>"));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaMostrarQueElMaterialNoEsSostenibleCuandoElMuebleNoLoEs() throws Exception {
+    Mueble mueble = this.dadoUnMuebleSinCategoria();
+    mueble.setMaterial(this.dadoUnMaterial("Melamina", false));
+    this.sessionFactory.getCurrentSession().flush();
+
+    String html = this.cuandoAbroElDetalleDelMueble(mueble.getId());
+
+    assertThat(html, containsString(">Melamina</dd>"));
+    assertThat(html, containsString(">No</span>"));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaMostrarSinMaterialCuandoElMuebleNoTieneMaterial() throws Exception {
+    Mueble mueble = this.dadoUnMuebleSinCategoria();
+
+    String html = this.cuandoAbroElDetalleDelMueble(mueble.getId());
+
+    assertThat(html, containsString(">Sin material</dd>"));
+    assertThat(html, containsString(">No</span>"));
+  }
+
+  private Material dadoUnMaterial(String nombre, boolean sostenible) {
+    Material material = new Material(nombre, sostenible);
+    this.sessionFactory.getCurrentSession().persist(material);
+    return material;
   }
 
   private Mueble dadoUnMuebleSinCategoria() {

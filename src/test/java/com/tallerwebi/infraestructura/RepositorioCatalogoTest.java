@@ -8,6 +8,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.tallerwebi.dominio.Estilo;
+import com.tallerwebi.dominio.Material;
 import com.tallerwebi.dominio.Mueble;
 import com.tallerwebi.dominio.RepositorioCatalogo;
 import com.tallerwebi.dominio.TipoDeAmbiente;
@@ -247,5 +248,175 @@ public class RepositorioCatalogoTest {
         .setParameter("estilo", muebleEsperado.getEstilo())
         .uniqueResult();
     assertNull(muebleObtenido);
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoQueElFiltroDeSostenibilidadEstaApagado_cuandoBuscoMueblesDelCatalogo_entoncesDevuelveSosteniblesYNoSostenibles() {
+    this.cuandoGuardoUnMuebleDeMaterial("Silla de bambú", 30000.0, "Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Mesa de metal", 40000.0, "Metal");
+
+    List<Mueble> obtenidos =
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, false, null);
+
+    assertThat(obtenidos.size(), is(equalTo(2)));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoQueElFiltroDeSostenibilidadEsNulo_cuandoBuscoMueblesDelCatalogo_entoncesNoFiltraPorMaterial() {
+    this.cuandoGuardoUnMuebleDeMaterial("Silla de bambú", 30000.0, "Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Mesa de metal", 40000.0, "Metal");
+
+    List<Mueble> obtenidos =
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, null, null);
+
+    assertThat(obtenidos.size(), is(equalTo(2)));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoQueElFiltroDeSostenibilidadEstaEncendido_cuandoBuscoMueblesDelCatalogo_entoncesSoloDevuelveLosSostenibles() {
+    this.cuandoGuardoUnMuebleDeMaterial("Silla de bambú", 30000.0, "Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Mesa de metal", 40000.0, "Metal");
+    this.cuandoGuardoUnMuebleDeMaterial("Biblioteca reciclada", 50000.0, "Madera reciclada");
+
+    List<Mueble> obtenidos =
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, true, null);
+
+    assertThat(obtenidos.size(), is(equalTo(2)));
+    for (Mueble mueble : obtenidos) {
+      assertThat(mueble.getMaterial().isSostenible(), is(true));
+    }
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoUnMuebleSinMaterial_cuandoElFiltroDeSostenibilidadEstaEncendido_entoncesElMuebleNoSeExcluye() {
+    this.cuandoGuardoUnMuebleDeMaterial("Silla de bambú", 30000.0, "Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Mueble sin material", 45000.0, null);
+    this.cuandoGuardoUnMuebleDeMaterial("Mesa de metal", 40000.0, "Metal");
+
+    List<Mueble> obtenidos =
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, true, null);
+
+    assertThat(obtenidos.size(), is(equalTo(2)));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoElFiltroDeSostenibilidadConEstiloYPrecio_cuandoBuscoMueblesDelCatalogo_entoncesDevuelveSoloLosQueCumplenTodo() {
+    Mueble cumple = this.cuandoGuardoUnMuebleDeMaterial("Sillón de bambú", 80000.0, "Bambú");
+    cumple.setEstilo(Estilo.Japandi);
+    this.sessionFactory.getCurrentSession().flush();
+    this.cuandoGuardoUnMuebleDeMaterial("Sillón de metal", 80000.0, "Metal")
+      .setEstilo(Estilo.Japandi);
+    this.cuandoGuardoUnMuebleDeMaterial("Sillón carísimo de bambú", 200000.0, "Bambú")
+      .setEstilo(Estilo.Japandi);
+    this.cuandoGuardoUnMuebleDeMaterial("Mesa de bambú", 80000.0, "Bambú").setEstilo(Estilo.Retro);
+
+    List<Mueble> obtenidos =
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(
+          Estilo.Japandi,
+          null,
+          100000.0,
+          true,
+          null
+        );
+
+    assertThat(obtenidos.size(), is(equalTo(1)));
+    assertThat(obtenidos.get(0).getNombre(), is(equalTo("Sillón de bambú")));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoUnMuebleQueNoEstaEnElCatalogo_cuandoBuscoMueblesDelCatalogo_entoncesNoAparece() {
+    Mueble enCatalogo = this.dadoQueTengoUnMueble("Mueble del catálogo", 150.0, Estilo.Retro);
+    enCatalogo.setMaterial(this.dadoQueTengoUnMaterialGuardado("Bambú"));
+    Mueble fueraDelCatalogo = new Mueble();
+    fueraDelCatalogo.setNombre("Mueble fuera del catálogo");
+    fueraDelCatalogo.setPrecio(150.0);
+    fueraDelCatalogo.setEstilo(Estilo.Retro);
+    fueraDelCatalogo.setMaterial(this.dadoQueTengoUnMaterialGuardado("Bambú"));
+    this.cuandoGuardoUnMueble(enCatalogo);
+    this.cuandoGuardoUnMueble(fueraDelCatalogo);
+
+    List<Mueble> obtenidos =
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, true, null);
+
+    assertThat(obtenidos.size(), is(equalTo(1)));
+    assertThat(obtenidos.get(0).getNombre(), is(equalTo("Mueble del catálogo")));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoUnIdDeMaterial_cuandoBuscoMueblesDelCatalogo_entoncesSoloDevuelveLosDeEseMaterial() {
+    Material bambu = this.dadoQueTengoUnMaterialGuardado("Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Silla de bambú", 30000.0, "Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Mesa de metal", 40000.0, "Metal");
+
+    List<Mueble> obtenidos =
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, false, bambu.getId());
+
+    assertThat(obtenidos.size(), is(equalTo(1)));
+    assertThat(obtenidos.get(0).getNombre(), is(equalTo("Silla de bambú")));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoUnIdDeMaterialYSoloSostenibles_cuandoBuscoMueblesDelCatalogo_entoncesDevuelveSoloLosQueCumplenAmbos() {
+    Material bambu = this.dadoQueTengoUnMaterialGuardado("Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Silla de bambú", 30000.0, "Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Mesa de metal", 40000.0, "Metal");
+
+    List<Mueble> obtenidos =
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, true, bambu.getId());
+
+    assertThat(obtenidos.size(), is(equalTo(1)));
+    assertThat(obtenidos.get(0).getNombre(), is(equalTo("Silla de bambú")));
+  }
+
+  private Material dadoQueTengoUnMaterialGuardado(String nombre) {
+    String query = "FROM Material WHERE nombre = :nombre";
+    Material existente =
+      this.sessionFactory.getCurrentSession()
+        .createQuery(query, Material.class)
+        .setParameter("nombre", nombre)
+        .uniqueResult();
+    if (existente != null) {
+      return existente;
+    }
+    Material material = new Material(nombre, this.esSostenible(nombre));
+    this.sessionFactory.getCurrentSession().persist(material);
+    return material;
+  }
+
+  private boolean esSostenible(String nombreDelMaterial) {
+    return (
+      "Madera certificada".equals(nombreDelMaterial) ||
+      "Madera reciclada".equals(nombreDelMaterial) ||
+      "Bambú".equals(nombreDelMaterial)
+    );
+  }
+
+  private Mueble cuandoGuardoUnMuebleDeMaterial(String nombre, double precio, String material) {
+    Mueble mueble = new Mueble();
+    mueble.setNombre(nombre);
+    mueble.setPrecio(precio);
+    mueble.setEstilo(Estilo.Retro);
+    if (material != null) {
+      mueble.setMaterial(this.dadoQueTengoUnMaterialGuardado(material));
+    }
+    mueble.setEnCatalogo(true);
+    this.cuandoGuardoUnMueble(mueble);
+    return mueble;
   }
 }

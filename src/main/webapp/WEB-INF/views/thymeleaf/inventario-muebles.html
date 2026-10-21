@@ -57,6 +57,14 @@
                 th:value="${e}" th:text="${e}"></option>
             </select>
           </div>
+          <div class="mb-3">
+            <label for="agregar-material" class="form-label">Material</label>
+            <select class="form-select" id="agregar-material" name="materialId">
+              <option value="">Sin material</option>
+              <option th:each="material : ${materiales}" th:value="${material.id}"
+                th:text="${material.nombre}">Madera</option>
+            </select>
+          </div>
           <button type="submit" class="btn btn-dark w-100">Agregar mueble</button>
         </form>
       </div>
@@ -139,6 +147,15 @@
                 <select class="form-select" name="estilo">
                   <option th:each="e : ${T(com.tallerwebi.dominio.Estilo).values()}"
                     th:value="${e}" th:text="${e}" th:selected="${e == mueble.estilo}"></option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Material</label>
+                <select class="form-select" name="materialId">
+                  <option value="">Sin material</option>
+                  <option th:each="material : ${materiales}" th:value="${material.id}"
+                    th:text="${material.nombre}"
+                    th:selected="${material.id == mueble.material?.id}">Madera</option>
                 </select>
               </div>
             </div>

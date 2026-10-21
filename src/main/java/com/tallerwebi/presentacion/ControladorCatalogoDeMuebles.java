@@ -2,9 +2,11 @@ package com.tallerwebi.presentacion;
 
 import com.tallerwebi.dominio.CategoriaDeMueble;
 import com.tallerwebi.dominio.Estilo;
+import com.tallerwebi.dominio.Material;
 import com.tallerwebi.dominio.Mueble;
 import com.tallerwebi.dominio.ServicioCatalogo;
 import com.tallerwebi.dominio.ServicioCategoriaDeMueble;
+import com.tallerwebi.dominio.ServicioMaterial;
 import com.tallerwebi.dominio.TipoDeAmbiente;
 import com.tallerwebi.dominio.excepcion.MuebleNoEncontrado;
 import com.tallerwebi.dominio.excepcion.PresupuestoNegativoException;
@@ -37,14 +39,17 @@ public class ControladorCatalogoDeMuebles {
 
   private final ServicioCatalogo servicioCatalogo;
   private final ServicioCategoriaDeMueble servicioCategoriaDeMueble;
+  private final ServicioMaterial servicioMaterial;
 
   @Autowired
   public ControladorCatalogoDeMuebles(
     ServicioCatalogo servicioCatalogo,
-    ServicioCategoriaDeMueble servicioCategoriaDeMueble
+    ServicioCategoriaDeMueble servicioCategoriaDeMueble,
+    ServicioMaterial servicioMaterial
   ) {
     this.servicioCatalogo = servicioCatalogo;
     this.servicioCategoriaDeMueble = servicioCategoriaDeMueble;
+    this.servicioMaterial = servicioMaterial;
   }
 
   @RequestMapping(path = "/catalogo", method = RequestMethod.GET)
@@ -53,13 +58,23 @@ public class ControladorCatalogoDeMuebles {
     @RequestParam(name = "precioMax", required = false) String precioMaximo,
     @RequestParam(name = "precioMin", required = false) String precioMinimo,
     @RequestParam(name = "tipoDeAmbiente", required = false) String tipoDeAmbiente,
-    @RequestParam(name = "orden", required = false) String orden
+    @RequestParam(name = "orden", required = false) String orden,
+    @RequestParam(name = "soloSostenibles", required = false) String soloSostenibles,
+    @RequestParam(name = "material", required = false) String material
   ) {
     FiltroDeMuebles filtro;
 
     try {
       filtro =
-        FiltroDeMuebles.delCatalogo(estilo, precioMaximo, precioMinimo, tipoDeAmbiente, orden);
+        FiltroDeMuebles.delCatalogo(
+          estilo,
+          precioMaximo,
+          precioMinimo,
+          tipoDeAmbiente,
+          orden,
+          soloSostenibles,
+          material
+        );
     } catch (FiltroDeMueblesInvalidoException e) {
       return new ModelAndView(REDIRECCION_AL_CATALOGO);
     }
@@ -180,6 +195,9 @@ public class ControladorCatalogoDeMuebles {
     modelo.put("precioMinimo", filtro.getPrecioMinimo());
     modelo.put("tipoDeAmbiente", filtro.getTipoDeAmbiente());
     modelo.put("orden", filtro.getOrden());
+    modelo.put("soloSostenibles", filtro.getSoloSostenibles());
+    modelo.put("materiales", this.servicioMaterial.obtenerMateriales());
+    modelo.put("materialSeleccionado", filtro.getMaterialId());
     List<Mueble> muebles = null;
     TipoDeAmbiente tipoDeAmbiente = this.aTipoDeAmbiente(filtro.getTipoDeAmbiente());
 
@@ -190,7 +208,9 @@ public class ControladorCatalogoDeMuebles {
             filtro.getPrecioMaximo(),
             filtro.getEstilo(),
             tipoDeAmbiente,
-            filtro.getOrden()
+            filtro.getOrden(),
+            filtro.getSoloSostenibles(),
+            filtro.getMaterialId()
           );
     } catch (PresupuestoNegativoException e) {
       modelo.put("error", "El presupuesto no puede ser negativo");
@@ -217,6 +237,7 @@ public class ControladorCatalogoDeMuebles {
     Map<String, Object> modelo = new ModelMap();
     modelo.put("estilos", Estilo.values());
     modelo.put("categorias", this.servicioCategoriaDeMueble.obtenerCategorias());
+    modelo.put("materiales", this.servicioMaterial.obtenerMateriales());
     modelo.put("tiposDeAmbiente", TipoDeAmbiente.nombresConocidos());
     return modelo;
   }
@@ -242,6 +263,12 @@ public class ControladorCatalogoDeMuebles {
     } else {
       datos.setCategoria(categoria.getId());
     }
+    Material material = mueble.getMaterial();
+    if (material == null) {
+      datos.setMaterial(null);
+    } else {
+      datos.setMaterial(material.getId());
+    }
     datos.setAncho(mueble.getAncho());
     datos.setLargo(mueble.getLargo());
     List<String> nombresDeTipo = new ArrayList<>();
@@ -259,6 +286,7 @@ public class ControladorCatalogoDeMuebles {
     mueble.setPrecio(datos.getPrecio() == null ? 0.0 : datos.getPrecio());
     mueble.setEstilo(this.aEstilo(datos.getEstilo()));
     mueble.setCategoriaDeMueble(this.aCategoria(datos.getCategoria()));
+    mueble.setMaterial(this.servicioMaterial.buscarPorId(datos.getMaterial()));
     mueble.setAncho(datos.getAncho());
     mueble.setLargo(datos.getLargo());
     this.agregarTiposDeAmbienteElegidos(mueble, datos.getTiposDeAmbiente());

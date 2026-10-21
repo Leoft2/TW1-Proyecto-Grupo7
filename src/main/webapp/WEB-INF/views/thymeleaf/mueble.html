@@ -24,6 +24,13 @@
           <dd th:text="${mueble.estilo}">Retro</dd>
           <dt>Categoría</dt>
           <dd th:text="${categoriaDeMueble?.nombre ?: 'Sin categoría'}">Sillón</dd>
+          <dt>Material</dt>
+          <dd th:text="${mueble.material?.nombre ?: 'Sin material'}">Madera</dd>
+          <dt>Sostenible</dt>
+          <dd>
+            <span th:if="${mueble.material?.sostenible}" class="badge text-bg-success">Sí</span>
+            <span th:unless="${mueble.material?.sostenible}" class="badge text-bg-secondary">No</span>
+          </dd>
           <dt>Ancho</dt>
           <dd th:text="${mueble.ancho} + ' cm'">80cm</dd>
           <dt>Largo</dt>

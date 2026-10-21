@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import com.tallerwebi.dominio.*;
 import com.tallerwebi.dominio.excepcion.ValidacionException;
+import jakarta.servlet.http.HttpSession;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -217,6 +218,27 @@ public class ControladorRenderizadoPlano2DTest {
     thenElMapeoEs(Arrays.asList("/plano/generar", RequestMethod.POST), mapeo);
   }
 
+  // -------------------------------------------------------------------------
+  // Test HU-04:Aberturas
+  // -------------------------------------------------------------------------
+
+  @Test
+  public void deberiaLeerDatosPlanoDeSesionCuandoFormularioVieneNulo() {
+    // given
+    DatosPlano datosPlano = givenDatosPlanoConAberturaPuerta();
+    HttpSession sesion = mock(HttpSession.class);
+    givenSesionContieneDatosPlano(sesion, datosPlano);
+    givenServicioGeneroPlanoSinExcepciones();
+    ArgumentCaptor<Ambiente> ambienteCaptor = ArgumentCaptor.forClass(Ambiente.class);
+
+    // when
+    whenGeneroPlanoDesdeFormularioConSesion(null, sesion);
+
+    // then
+    thenSeCapturaElAmbiente(ambienteCaptor);
+    thenElAmbienteContieneCantidadDeAberturas(ambienteCaptor.getValue(), 1);
+  }
+
   /**
    * Arma el Plano que devolvería el servicio para una colocación exitosa: un MuebleUbicado por
    * cada mueble recibido y ninguna exclusión. Se usa en vez de un mock porque un mock de Plano
@@ -303,6 +325,46 @@ public class ControladorRenderizadoPlano2DTest {
    * Ambiente no define equals(), asi que comparar contra un Ambiente armado en el test solo
    * compararia referencias y pasaria aunque el mapeo deliverse cualquier valor.
    */
+  private DatosPlano givenDatosPlanoConAberturaPuerta() {
+    DatosPlano datosPlano = new DatosPlano();
+    datosPlano.setAncho(4.0);
+    datosPlano.setLargo(5.0);
+    DatosAbertura datosAbertura = new DatosAbertura();
+    datosAbertura.setTipo(TipoAbertura.PUERTA);
+    datosAbertura.setMuro(Muro.SUPERIOR);
+    datosAbertura.setPosicion(1.0);
+    datosAbertura.setAncho(0.9);
+    datosAbertura.setRadioDeGiro(0.9);
+    List<DatosAbertura> aberturas = new ArrayList<>();
+    aberturas.add(datosAbertura);
+    datosPlano.setAberturas(aberturas);
+    return datosPlano;
+  }
+
+  private void givenSesionContieneDatosPlano(
+    jakarta.servlet.http.HttpSession sesion,
+    DatosPlano datosPlano
+  ) {
+    when(sesion.getAttribute("datosPlano")).thenReturn(datosPlano);
+  }
+
+  private void givenServicioGeneroPlanoSinExcepciones() {
+    when(servicioPlano2D.generarPlano(any(Ambiente.class), any(List.class)))
+      .thenReturn(new Plano());
+  }
+
+  private void whenGeneroPlanoDesdeFormularioConSesion(DatosPlano datosPlano, HttpSession sesion) {
+    controladorPlano2D.generarPlanoDesdeFormulario(datosPlano, sesion);
+  }
+
+  private void thenSeCapturaElAmbiente(ArgumentCaptor<Ambiente> ambienteCaptor) {
+    verify(servicioPlano2D).generarPlano(ambienteCaptor.capture(), anyList());
+  }
+
+  private void thenElAmbienteContieneCantidadDeAberturas(Ambiente ambiente, int cantidadEsperada) {
+    assertEquals(cantidadEsperada, ambiente.getAberturas().size());
+  }
+
   private void thenElServicioRecibeLasDimensiones(Double anchoEsperado, Double largoEsperado) {
     ArgumentCaptor<Ambiente> ambienteCapturado = ArgumentCaptor.forClass(Ambiente.class);
     verify(servicioPlano2D).generarPlano(ambienteCapturado.capture(), anyList());

@@ -15,6 +15,7 @@ public class DatosPlano {
   private Double largo;
   private List<DatosMueble> muebles = new ArrayList<>();
   private List<DatosObstaculo> obstaculos = new ArrayList<>();
+  private List<DatosAbertura> aberturas = new ArrayList<>();
 
   public DatosPlano() {}
 
@@ -24,6 +25,26 @@ public class DatosPlano {
     for (DatosObstaculo datosObstaculo : obstaculos) {
       if (!datosObstaculo.estaVacio()) {
         ambiente.agregarObstaculo(datosObstaculo.aObstaculo());
+      }
+    }
+    if (aberturas != null) {
+      for (DatosAbertura datosAbertura : aberturas) {
+        if (
+          datosAbertura.getTipo() != null &&
+          datosAbertura.getMuro() != null &&
+          datosAbertura.getPosicion() != null &&
+          datosAbertura.getAncho() != null
+        ) {
+          ambiente.agregarAbertura(
+            new com.tallerwebi.dominio.Abertura(
+              datosAbertura.getTipo(),
+              datosAbertura.getMuro(),
+              datosAbertura.getPosicion(),
+              datosAbertura.getAncho(),
+              datosAbertura.getRadioDeGiro()
+            )
+          );
+        }
       }
     }
     return ambiente;
@@ -46,6 +67,9 @@ public class DatosPlano {
   }
 
   public List<DatosMueble> getMuebles() {
+    if (muebles == null) {
+      muebles = new ArrayList<>();
+    }
     return muebles;
   }
 
@@ -54,10 +78,24 @@ public class DatosPlano {
   }
 
   public List<DatosObstaculo> getObstaculos() {
+    if (obstaculos == null) {
+      obstaculos = new ArrayList<>();
+    }
     return obstaculos;
   }
 
   public void setObstaculos(List<DatosObstaculo> obstaculos) {
     this.obstaculos = obstaculos;
+  }
+
+  public List<DatosAbertura> getAberturas() {
+    if (aberturas == null) {
+      aberturas = new ArrayList<>();
+    }
+    return aberturas;
+  }
+
+  public void setAberturas(List<DatosAbertura> aberturas) {
+    this.aberturas = aberturas;
   }
 }

@@ -47,7 +47,6 @@ public class ControladorPlano2D {
     this.servicioPersistenciaPlano = servicioPersistenciaPlano;
   }
 
-  //Review 2 : Usar model Map que vinimos haciendo en clase.
   @RequestMapping(path = "/plano/ambiente", method = RequestMethod.GET)
   public ModelAndView irAConfigurarAmbiente() {
     return new ModelAndView(
@@ -80,18 +79,37 @@ public class ControladorPlano2D {
    */
   @RequestMapping(path = "/plano/generar", method = RequestMethod.POST)
   public ModelAndView generarPlanoDesdeFormulario(DatosPlano datosDelFormulario) {
-    Ambiente ambiente = datosDelFormulario.aAmbiente();
+    return generarPlanoDesdeFormulario(datosDelFormulario, null);
+  }
+
+  public ModelAndView generarPlanoDesdeFormulario(
+    DatosPlano datosDelFormulario,
+    HttpSession sesion
+  ) {
+    DatosPlano datos = datosDelFormulario;
+    if (datos == null && sesion != null) {
+      datos = (DatosPlano) sesion.getAttribute("datosPlano");
+    }
+    if (datos == null) {
+      datos = new DatosPlano();
+    }
+    if (sesion != null) {
+      sesion.setAttribute("datosPlano", datos);
+    }
+    Ambiente ambiente = datos.aAmbiente();
     List<Mueble> muebles = new ArrayList<>();
     try {
-      for (DatosMueble datosMueble : datosDelFormulario.getMuebles()) {
-        muebles.add(
-          servicioCategoriaDeMueble.crearMueble(
-            datosMueble.getNombre(),
-            datosMueble.getCategoria(),
-            datosMueble.getAncho(),
-            datosMueble.getProfundidad()
-          )
-        );
+      if (datos.getMuebles() != null) {
+        for (DatosMueble datosMueble : datos.getMuebles()) {
+          muebles.add(
+            servicioCategoriaDeMueble.crearMueble(
+              datosMueble.getNombre(),
+              datosMueble.getCategoria(),
+              datosMueble.getAncho(),
+              datosMueble.getProfundidad()
+            )
+          );
+        }
       }
     } catch (ValidacionException e) {
       return planoConError(e);

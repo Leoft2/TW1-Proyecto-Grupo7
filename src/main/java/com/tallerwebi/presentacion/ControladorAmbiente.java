@@ -1,5 +1,6 @@
 package com.tallerwebi.presentacion;
 
+import com.tallerwebi.dominio.Ambiente;
 import com.tallerwebi.dominio.ServicioAmbiente;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
@@ -39,5 +40,17 @@ public class ControladorAmbiente {
     Map<String, Object> modelo = new ModelMap();
     modelo.put("ambiente", servicioAmbiente.buscarAmbiente(id));
     return new ModelAndView("ambiente", modelo);
+  }
+
+  @RequestMapping(path = "/ambientes/{id}/muebles", method = RequestMethod.GET)
+  public ModelAndView mueblesDelAmbiente(@PathVariable("id") Long id) {
+    Ambiente ambiente = servicioAmbiente.buscarAmbiente(id);
+    if (ambiente == null) {
+      return new ModelAndView("redirect:/ambientes");
+    }
+    Map<String, Object> modelo = new ModelMap();
+    modelo.put("ambiente", ambiente);
+    modelo.put("muebles", ambiente.getMuebles());
+    return new ModelAndView("muebles", modelo);
   }
 }

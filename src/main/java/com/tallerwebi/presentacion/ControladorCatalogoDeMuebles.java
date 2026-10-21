@@ -82,11 +82,6 @@ public class ControladorCatalogoDeMuebles {
     return new ModelAndView("catalogo", this.modeloDelCatalogo(filtro));
   }
 
-  @RequestMapping(path = "/muebles", method = RequestMethod.GET)
-  public ModelAndView muebles() {
-    return new ModelAndView("muebles");
-  }
-
   @RequestMapping(path = "/muebles/crear", method = RequestMethod.GET)
   public ModelAndView crearMueble(HttpServletRequest request) {
     if (!this.esAdministrador(request)) {

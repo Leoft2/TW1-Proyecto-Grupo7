@@ -11,6 +11,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import com.tallerwebi.dominio.Ambiente;
 import com.tallerwebi.dominio.Estilo;
 import com.tallerwebi.dominio.Material;
 import com.tallerwebi.dominio.Mueble;
@@ -616,6 +617,22 @@ public class RepositorioCatalogoTest {
     assertThat(releido.getMaterial().getNombre(), is(equalTo("Bambú")));
   }
 
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoUnMuebleEnElInventarioDeUnAmbiente_cuandoLoElimino_delCatalogo_entoncesSeEliminaYSaleDelAmbiente() {
+    Mueble mueble = this.cuandoGuardoUnMuebleDeMaterial("Mueble del inventario", 100.0, "Bambú");
+    this.sessionFactory.getCurrentSession().flush();
+    Ambiente ambiente = this.dadoQueTengoUnAmbienteConElMueble(mueble);
+
+    this.repositorioCatalogo.eliminar(mueble.getId());
+    this.sessionFactory.getCurrentSession().flush();
+    this.sessionFactory.getCurrentSession().clear();
+
+    assertThat(this.repositorioCatalogo.ObtenerMueblePorId(mueble.getId()), is(nullValue()));
+    assertThat(this.cuantosMueblesTieneElAmbiente(ambiente.getId()), is(0L));
+  }
+
   private List<String> nombresDe(List<Mueble> muebles) {
     return muebles.stream().map(Mueble::getNombre).toList();
   }
@@ -641,6 +658,22 @@ public class RepositorioCatalogoTest {
       "Madera reciclada".equals(nombreDelMaterial) ||
       "Bambú".equals(nombreDelMaterial)
     );
+  }
+
+  private Ambiente dadoQueTengoUnAmbienteConElMueble(Mueble mueble) {
+    TipoDeAmbiente tipoDeAmbiente = this.dadoQueTengoUnTipoDeAmbienteGuardado("Living");
+    Ambiente ambiente = new Ambiente(4.0, 3.0, tipoDeAmbiente);
+    ambiente.agregarMueble(mueble);
+    this.sessionFactory.getCurrentSession().persist(ambiente);
+    this.sessionFactory.getCurrentSession().flush();
+    return ambiente;
+  }
+
+  private long cuantosMueblesTieneElAmbiente(Long idDelAmbiente) {
+    return this.sessionFactory.getCurrentSession()
+      .createQuery("SELECT COUNT(m) FROM Ambiente a JOIN a.muebles m WHERE a.id = :id", Long.class)
+      .setParameter("id", idDelAmbiente)
+      .getSingleResult();
   }
 
   private Mueble cuandoGuardoUnMuebleDeMaterial(String nombre, double precio, String material) {

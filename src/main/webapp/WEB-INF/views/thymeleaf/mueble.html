@@ -24,6 +24,10 @@
           <dd th:text="${mueble.estilo}">Retro</dd>
           <dt>Categoría</dt>
           <dd th:text="${categoriaDeMueble?.nombre ?: 'Sin categoría'}">Sillón</dd>
+          <dt>Ancho</dt>
+          <dd th:text="${mueble.ancho} + ' cm'">80cm</dd>
+          <dt>Largo</dt>
+          <dd th:text="${mueble.largo} + ' cm'">80cm</dd>
         </dl>
       </div>
     </div>

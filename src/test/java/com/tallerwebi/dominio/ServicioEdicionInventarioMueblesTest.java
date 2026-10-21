@@ -124,6 +124,18 @@ public class ServicioEdicionInventarioMueblesTest {
   }
 
   @Test
+  public void deberiaActualizarElMaterialCuandoElMuebleExisteYNuevoMaterialEsValido()
+    throws MuebleNoEncontrado {
+    Mueble mueble = givenMuebleExistenteEnElInventario();
+    Mueble datosNuevos = new Mueble(mueble.getNombre(), mueble.getAncho(), mueble.getLargo());
+    datosNuevos.setMaterial(new Material("Bambú", true));
+
+    whenActualizoElMueble(datosNuevos);
+
+    thenElMaterialSeActualiza(mueble, new Material("Bambú", true));
+  }
+
+  @Test
   public void deberiaGuardarElMuebleCuandoLoActualizo() throws MuebleNoEncontrado {
     Mueble mueble = givenMuebleExistenteEnElInventario();
     Mueble datosNuevos = new Mueble("Mesa ratona", mueble.getAncho(), mueble.getLargo());
@@ -267,6 +279,10 @@ public class ServicioEdicionInventarioMueblesTest {
 
   private void thenLaCategoriaSeActualiza(Mueble mueble, CategoriaDeMueble esperada) {
     assertThat(mueble.getCategoriaDeMueble(), is(esperada));
+  }
+
+  private void thenElMaterialSeActualiza(Mueble mueble, Material esperado) {
+    assertThat(mueble.getMaterial(), is(esperado));
   }
 
   private void thenElInventarioTieneLosMuebles(List<Mueble> muebles) {

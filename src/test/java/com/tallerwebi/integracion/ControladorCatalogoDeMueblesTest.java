@@ -650,6 +650,25 @@ public class ControladorCatalogoDeMueblesTest {
   }
 
   @Test
+  public void dadoUnFormularioConMaterial_cuandoEditoUnMuebleDelCatalogo_entoncesSeGuardaConEseMaterial()
+    throws Exception {
+    CategoriaDeMueble sillones = new CategoriaDeMueble("Sillón", 0.80, 0.85);
+    TipoDeAmbiente living = new TipoDeAmbiente("Living");
+    Material bambu = new Material("Bambú", true);
+    this.dadoQueLaSesionTieneElRol(ROL_ADMIN);
+    when(this.servicioCategoriaDeMueble.buscarPorId(1L)).thenReturn(sillones);
+    when(this.servicioCatalogo.buscarTipoDeAmbientePorNombre("Living")).thenReturn(living);
+    when(this.servicioMaterial.buscarPorId(2L)).thenReturn(bambu);
+    DTONuevoMuebleCatalogo datos = this.dadoQueCompleteElFormularioDeMueble();
+
+    this.controladorCatalogoDeMuebles.modificarMuebleDelCatalogo(7, datos, this.requestMock);
+
+    ArgumentCaptor<Mueble> captor = ArgumentCaptor.forClass(Mueble.class);
+    verify(this.servicioCatalogo).modificarMuebleDelCatalogo(eq(7), captor.capture());
+    assertThat(captor.getValue().getMaterial(), is(bambu));
+  }
+
+  @Test
   public void dadoUnFormularioConDatosInvalidos_cuandoEditoUnMuebleDelCatalogo_entoncesVeoElError()
     throws Exception {
     this.dadoQueLaSesionTieneElRol(ROL_ADMIN);

@@ -1,0 +1,93 @@
+<!DOCTYPE HTML>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/layout :: head('Aberturas del ambiente')}"></head>
+
+<body>
+<nav th:replace="~{fragments/layout :: navbar('ambientes')}"></nav>
+
+<main class="container">
+    <header class="hb-page-header">
+        <div>
+            <span class="hb-eyebrow">Configuración del ambiente</span>
+            <h1>Aberturas</h1>
+            <p>Indicá puertas y ventanas para calcular las zonas de exclusión.</p>
+        </div>
+        <div class="hb-page-actions">
+            <a th:href="@{/ambientes/{id}(id=${ambiente.id})}" class="btn btn-outline-secondary">Volver al ambiente</a>
+        </div>
+    </header>
+
+    <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}">
+        Error
+    </div>
+
+    <section class="mb-4">
+        <h2 class="h5">Aberturas cargadas</h2>
+        <div class="table-responsive" th:if="${ambiente.aberturas != null && !ambiente.aberturas.isEmpty()}">
+            <table class="table align-middle">
+                <thead>
+                <tr>
+                    <th scope="col">Tipo</th>
+                    <th scope="col">Muro</th>
+                    <th scope="col">Posición (m)</th>
+                    <th scope="col">Ancho (m)</th>
+                    <th scope="col">Radio de giro (m)</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="abertura : ${ambiente.aberturas}">
+                    <td th:text="${abertura.tipo}">PUERTA</td>
+                    <td th:text="${abertura.muro}">SUPERIOR</td>
+                    <td th:text="${abertura.posicion}">1.0</td>
+                    <td th:text="${abertura.ancho}">0.9</td>
+                    <td th:text="${abertura.radioDeGiro}">0.9</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="text-muted" th:if="${ambiente.aberturas == null || ambiente.aberturas.isEmpty()}">
+            Aún no hay aberturas cargadas.
+        </p>
+    </section>
+
+    <section>
+        <h2 class="h5">Agregar abertura</h2>
+        <form th:action="@{/ambientes/{id}/aberturas(id=${ambiente.id})}" method="post" th:object="${datosAbertura}">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Tipo</label>
+                    <select class="form-select" th:field="*{tipo}">
+                        <option th:each="tipo : ${tiposAbertura}" th:value="${tipo}" th:text="${tipo}">PUERTA</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Muro</label>
+                    <select class="form-select" th:field="*{muro}">
+                        <option th:each="muro : ${muros}" th:value="${muro}" th:text="${muro}">SUPERIOR</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Posición (m)</label>
+                    <input type="number" step="0.01" min="0" class="form-control" th:field="*{posicion}" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Ancho (m)</label>
+                    <input type="number" step="0.01" min="0" class="form-control" th:field="*{ancho}" required>
+                </div>
+                <div class="col-md-2" id="radioDeGiroGroup">
+                    <label class="form-label">Radio de giro (m)</label>
+                    <input type="number" step="0.01" min="0" class="form-control" th:field="*{radioDeGiro}">
+                </div>
+            </div>
+            <div class="mt-3">
+                <button type="submit" class="btn btn-primary">Agregar abertura</button>
+            </div>
+        </form>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

@@ -33,4 +33,13 @@ public class ServicioAmbienteImpl implements ServicioAmbiente {
     }
     return repositorioAmbiente.buscarPorId(id);
   }
+
+  @Override
+  public void agregarAbertura(Long ambienteId, Abertura abertura) {
+    Ambiente ambiente = repositorioAmbiente.buscarPorId(ambienteId);
+    if (ambiente == null) {
+      throw new RuntimeException("Ambiente no encontrado");
+    }
+    ambiente.agregarAbertura(abertura);
+  }
 }

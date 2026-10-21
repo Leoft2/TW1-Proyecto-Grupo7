@@ -28,7 +28,6 @@ public class RepositorioCatalogoImpl implements RepositorioCatalogo {
     "AND (:nombreTipoDeAmbiente IS NULL OR EXISTS (SELECT mta FROM MuebleTipoDeAmbiente mta " +
     "WHERE mta.mueble = m AND mta.tipoDeAmbiente.nombre = :nombreTipoDeAmbiente)) ";
 
-
   @Autowired
   public RepositorioCatalogoImpl(SessionFactory sessionFactory, BorradorDeMueble borradorDeMueble) {
     this.sessionFactory = sessionFactory;
@@ -84,7 +83,8 @@ public class RepositorioCatalogoImpl implements RepositorioCatalogo {
 
   @Override
   public List<Mueble> ObtenerMueblesConPrecioMenorAl(Double precioMaximo) {
-    String query = "FROM Mueble m LEFT JOIN FETCH m.categoriaDeMueble WHERE m.enCatalogo = true AND m.precio <= :precioMaximo";
+    String query =
+      "FROM Mueble m LEFT JOIN FETCH m.categoriaDeMueble WHERE m.enCatalogo = true AND m.precio <= :precioMaximo";
     return sessionFactory
       .getCurrentSession()
       .createQuery(query, Mueble.class)
@@ -94,7 +94,8 @@ public class RepositorioCatalogoImpl implements RepositorioCatalogo {
 
   @Override
   public List<Mueble> ObtenerMueblesDeEstilo(Estilo estilo) {
-    String query = "FROM Mueble m LEFT JOIN FETCH m.categoriaDeMueble WHERE m.enCatalogo = true AND m.estilo = :estilo";
+    String query =
+      "FROM Mueble m LEFT JOIN FETCH m.categoriaDeMueble WHERE m.enCatalogo = true AND m.estilo = :estilo";
     return sessionFactory
       .getCurrentSession()
       .createQuery(query, Mueble.class)
@@ -104,7 +105,8 @@ public class RepositorioCatalogoImpl implements RepositorioCatalogo {
 
   @Override
   public List<Mueble> ObtenerMueblesDeEstilos(List<Estilo> estilos) {
-    String query = "FROM Mueble m LEFT JOIN FETCH m.categoriaDeMueble WHERE m.enCatalogo = true AND m.estilo IN (:estilos)";
+    String query =
+      "FROM Mueble m LEFT JOIN FETCH m.categoriaDeMueble WHERE m.enCatalogo = true AND m.estilo IN (:estilos)";
     return sessionFactory
       .getCurrentSession()
       .createQuery(query, Mueble.class)
@@ -114,7 +116,8 @@ public class RepositorioCatalogoImpl implements RepositorioCatalogo {
 
   @Override
   public Mueble ObtenerMuebleMasBaratoDeEstilo(Estilo estilo) {
-    String query = "FROM Mueble m LEFT JOIN FETCH m.categoriaDeMueble WHERE m.enCatalogo = true AND m.estilo = :estilo ORDER BY m.precio ASC";
+    String query =
+      "FROM Mueble m LEFT JOIN FETCH m.categoriaDeMueble WHERE m.enCatalogo = true AND m.estilo = :estilo ORDER BY m.precio ASC";
     Query<Mueble> hibernateQuery = sessionFactory
       .getCurrentSession()
       .createQuery(query, Mueble.class)

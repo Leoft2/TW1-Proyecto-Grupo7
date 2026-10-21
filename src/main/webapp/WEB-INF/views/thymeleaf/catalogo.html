@@ -11,53 +11,91 @@
       <div>
         <span class="hb-eyebrow">Catálogo</span>
         <h1>Catálogo de muebles</h1>
-        <p>Todos los muebles disponibles. Filtrá por estilo, tipo de ambiente y precio, o ordená por precio.</p>
+        <p>Todos los muebles disponibles. Filtrá por estilo, ambiente, material y precio: los
+          resultados se actualizan solos.</p>
       </div>
       <a th:if="${session.ROL == 'ADMIN'}" th:href="@{/muebles/crear}" class="btn btn-lg btn-primary">
         <i class="bi bi-plus-lg"></i> Agregar mueble
       </a>
     </header>
 
-    <div class="card">
-      <div class="card-body p-4">
-        <form th:action="@{/catalogo}" method="get">
-          <div class="row g-3 align-items-end">
-            <div class="col-md-3">
+    <div class="row g-4 hb-catalogo">
+
+      <!-- Resultados: se reemplazan con ajax cuando cambia un filtro -->
+      <div class="col-lg-8 order-2 order-lg-1">
+        <div data-resultados-catalogo>
+          <div th:replace="~{catalogo-resultados :: resultados}"></div>
+        </div>
+      </div>
+
+      <!-- Panel de filtros -->
+      <div class="col-lg-4 order-1 order-lg-2">
+        <aside class="hb-panel-filtros" aria-label="Filtros del catálogo">
+          <div class="hb-panel-filtros-cabecera">
+            <div>
+              <h2 class="hb-panel-filtros-titulo"><i class="bi bi-funnel"></i> Filtros</h2>
+              <p class="hb-panel-filtros-bajada">No hace falta que apliques los filtros.</p>
+            </div>
+            <span class="hb-filtros-cargando" data-filtros-cargando hidden>
+              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span class="visually-hidden">Buscando muebles</span>
+            </span>
+          </div>
+
+          <form th:action="@{/catalogo}" method="get" data-filtros-catalogo class="hb-panel-filtros-cuerpo">
+
+            <div class="hb-filtro">
               <label for="estilo" class="form-label">Estilo</label>
-              <select id="estilo" name="estilo" class="form-select">
+              <select id="estilo" name="estilo" class="form-select" data-etiqueta="Estilo">
                 <option value="">Todos los estilos</option>
                 <option th:each="estilo : ${estilos}" th:value="${estilo.name()}" th:text="${estilo}"
                   th:selected="${estilo == estiloSeleccionado}">Retro</option>
               </select>
             </div>
-            <div class="col-md-3">
+
+            <div class="hb-filtro">
               <label for="tipoDeAmbiente" class="form-label">Tipo de ambiente</label>
-              <select id="tipoDeAmbiente" name="tipoDeAmbiente" class="form-select">
+              <select id="tipoDeAmbiente" name="tipoDeAmbiente" class="form-select"
+                data-etiqueta="Tipo de ambiente">
                 <option value="">Todos los ambientes</option>
-                <option value="Living" th:selected="${tipoDeAmbiente == 'Living'}">Living</option>
-                <option value="Habitación" th:selected="${tipoDeAmbiente == 'Habitación'}">Habitación</option>
-                <option value="Pasillo" th:selected="${tipoDeAmbiente == 'Pasillo'}">Pasillo</option>
-                <option value="Cocina" th:selected="${tipoDeAmbiente == 'Cocina'}">Cocina</option>
-                <option value="Comedor" th:selected="${tipoDeAmbiente == 'Comedor'}">Comedor</option>
+                <option th:each="nombre : ${tiposDeAmbiente}" th:value="${nombre}" th:text="${nombre}"
+                  th:selected="${nombre == tipoDeAmbiente}">Living</option>
               </select>
             </div>
-            <div class="col-md-3">
-              <label for="precioMin" class="form-label">Precio mínimo</label>
-              <div class="input-group">
-                <span class="input-group-text">$</span>
-                <input type="number" id="precioMin" name="precioMin" class="form-control" min="0"
-                  placeholder="Sin mínimo" th:value="${precioMinimo}">
+
+            <div class="hb-filtro">
+              <span class="form-label d-block">Precio</span>
+              <div class="row g-2">
+                <div class="col-6">
+                  <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" id="precioMin" name="precioMin" class="form-control" min="0"
+                      placeholder="Mínimo" th:value="${precioMinimo}" data-etiqueta="Precio mínimo"
+                      data-formato="precio">
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" id="precioMax" name="precioMax" class="form-control" min="0"
+                      placeholder="Máximo" th:value="${precioMaximo}" data-etiqueta="Precio máximo"
+                      data-formato="precio">
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="col-md-3">
-              <label for="precioMax" class="form-label">Precio máximo</label>
-              <div class="input-group">
-                <span class="input-group-text">$</span>
-                <input type="number" id="precioMax" name="precioMax" class="form-control" min="0"
-                  placeholder="Sin límite" th:value="${precioMaximo}">
-              </div>
+
+            <div class="hb-filtro">
+              <label for="material" class="form-label">Material</label>
+              <select id="material" name="material" class="form-select" data-etiqueta="Material">
+                <option value="">Todos los materiales</option>
+                <option th:each="material : ${materiales}" th:value="${material.id}"
+                  th:text="${material.nombre}"
+                  th:selected="${material.id == materialSeleccionado}">Madera</option>
+              </select>
             </div>
-            <div class="col-md-3">
+
+            <div class="hb-filtro">
               <label for="orden" class="form-label">Ordenar por precio</label>
               <select id="orden" name="orden" class="form-select">
                 <option value="">Sin ordenar</option>
@@ -65,64 +103,29 @@
                 <option value="PRECIO_DESC" th:selected="${orden == T(com.tallerwebi.dominio.OrdenDeMuebles).PRECIO_DESC}">Mayor a menor</option>
               </select>
             </div>
-            <div class="col-md-3">
-              <label for="material" class="form-label">Material</label>
-              <select id="material" name="material" class="form-select">
-                <option value="">Todos los materiales</option>
-                <option th:each="material : ${materiales}" th:value="${material.id}"
-                  th:text="${material.nombre}"
-                  th:selected="${material.id == materialSeleccionado}">Madera</option>
-              </select>
-            </div>
-            <div class="col-md-3 d-flex align-items-end">
-              <div class="form-check">
-                <input type="checkbox" id="soloSostenibles" name="soloSostenibles" value="true"
-                  class="form-check-input" th:checked="${soloSostenibles}">
+
+            <div class="hb-filtro hb-filtro-interruptor">
+              <div class="form-check form-switch">
+                <input type="checkbox" role="switch" id="soloSostenibles" name="soloSostenibles"
+                  value="true" class="form-check-input" th:checked="${soloSostenibles}"
+                  data-etiqueta="Solo sostenibles">
                 <label for="soloSostenibles" class="form-check-label">Solo sostenibles</label>
               </div>
+              <p class="hb-filtro-ayuda">Muebles hechos con materiales sostenibles.</p>
             </div>
-            <div class="col-md-12 d-flex gap-2">
-              <button type="submit" class="btn btn-primary"><i class="bi bi-funnel"></i> Filtrar</button>
-              <a th:href="@{/catalogo}" class="btn btn-secondary">Limpiar filtros</a>
+
+            <div class="hb-panel-filtros-pie">
+              <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-funnel"></i> Filtrar
+              </button>
+              <a th:href="@{/catalogo}" class="btn btn-link w-100 hb-limpiar-filtros"
+                data-limpiar-filtros>Limpiar filtros</a>
             </div>
-          </div>
-        </form>
+
+          </form>
+        </aside>
       </div>
-    </div>
 
-    <h2 class="hb-section-title">Muebles encontrados</h2>
-
-    <div th:if="${#lists.isEmpty(muebles)}" class="alert alert-info">
-      <i class="bi bi-search"></i> No encontramos muebles con esos filtros.
-    </div>
-
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-      <div th:each="mueble : ${muebles}" class="col">
-        <div class="card h-100 hb-card-hover" th:id="${'mueble-' + mueble.id}">
-          <div class="card-body d-flex flex-column">
-            <h3 class="h5" th:text="${mueble.nombre}">Sillón Retró</h3>
-            <p class="text-secondary" th:text="${mueble.descripcion}">
-              Sillón de voluteadas tapizado en terciopelo color mostaza.
-            </p>
-            <span class="hb-chip hb-chip-salvia mb-3 align-self-start" th:text="${mueble.estilo}">Retro</span>
-            <span class="hb-chip hb-chip-green mb-3 align-self-start"
-                  th:text="${mueble.categoriaDeMueble?.nombre ?: 'Sin categoría'}">Sillón</span>
-            <div class="d-flex justify-content-between align-items-center mt-auto">
-              <strong class="fs-5" th:text="${'$ ' + #numbers.formatDecimal(mueble.precio, 1, 'COMMA', 0, 'POINT')}">$ 85.000</strong>
-              <a th:href="@{/mueble/{id}(id=${mueble.id})}" class="btn btn-primary">Detalle</a>
-            </div>
-            <div th:if="${session.ROL == 'ADMIN'}" class="d-flex gap-2 mt-2">
-              <a th:href="@{/muebles/editar/{id}(id=${mueble.id})}" class="btn btn-sm btn-secondary w-50">
-                <i class="bi bi-pencil"></i> Editar
-              </a>
-              <form th:action="@{/muebles/eliminar/{id}(id=${mueble.id})}" method="post" class="w-50"
-                data-confirmar-eliminacion>
-                <button type="submit" class="btn btn-sm btn-danger w-100"><i class="bi bi-trash"></i> Eliminar</button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <a th:href="@{/home}" class="btn btn-secondary mt-4"><i class="bi bi-arrow-left"></i> Volver</a>

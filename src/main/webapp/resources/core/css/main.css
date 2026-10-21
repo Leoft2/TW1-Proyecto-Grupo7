@@ -3,6 +3,7 @@
  *
  * Requiere tokens.css cargado antes. Acá no van colores sueltos: siempre var(--hb-*).
  * 1. Base   2. Componentes de Bootstrap con la marca   3. Componentes propios (hb-*)
+ * 4. Catálogo: panel de filtros y resultados
  */
 
 /* 1. Base ------------------------------------------------------------------ */
@@ -637,5 +638,220 @@ h1, h2, h3, h4, h5, h6,
   display: flex;
   justify-content: center;
   gap: 0.75rem;
+}
+
+/* 4. Catálogo ---------------------------------------------------------------- */
+
+/* Fila del catálogo: los resultados y el panel de filtros */
+.hb-catalogo {
+  align-items: flex-start;
+}
+
+/* Panel de filtros (columna derecha) */
+.hb-panel-filtros {
+  position: sticky;
+  top: 5rem;
+  background: var(--hb-superficie);
+  border: 1px solid var(--hb-borde);
+  border-radius: var(--hb-radio-lg);
+  box-shadow: var(--hb-sombra);
+  overflow: hidden;
+}
+
+.hb-panel-filtros-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: var(--hb-crema);
+  border-bottom: 1px solid var(--hb-borde);
+}
+
+.hb-panel-filtros-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.hb-panel-filtros-bajada {
+  color: var(--hb-texto-suave);
+  font-size: 0.8rem;
+  margin: 0.2rem 0 0;
+}
+
+.hb-filtros-cargando {
+  color: var(--hb-terracota);
+}
+
+.hb-panel-filtros-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 1.25rem;
+}
+
+.hb-filtro-ayuda {
+  color: var(--hb-texto-suave);
+  font-size: 0.78rem;
+  margin: 0.35rem 0 0;
+}
+
+.hb-filtro-interruptor .form-check-label {
+  font-weight: 500;
+}
+
+.hb-panel-filtros-pie {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--hb-borde);
+}
+
+.hb-limpiar-filtros {
+  color: var(--hb-texto-suave);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.hb-limpiar-filtros:hover {
+  color: var(--hb-terracota);
+}
+
+/* Barra de resultados: título y cantidad de muebles */
+.hb-catalogo-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.hb-catalogo-titulo {
+  font-size: 1.35rem;
+  margin: 0;
+}
+
+.hb-contador {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: var(--hb-arena);
+  color: var(--hb-texto);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Chips con los filtros que están aplicados */
+.hb-filtros-activos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.hb-filtros-activos[hidden] {
+  display: none;
+}
+
+.hb-chip-filtro {
+  gap: 0.45rem;
+  padding-right: 0.3rem;
+  background: var(--hb-terracota-suave);
+  color: var(--hb-terracota-oscuro);
+}
+
+.hb-chip-filtro-etiqueta {
+  font-weight: 600;
+}
+
+.hb-chip-filtro-valor {
+  opacity: 0.75;
+}
+
+.hb-chip-filtro-quitar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.hb-chip-filtro-quitar:hover {
+  background: var(--hb-terracota);
+  color: var(--hb-superficie);
+}
+
+/* Estado vacío: ningún mueble coincide con los filtros */
+.hb-catalogo-vacio {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  border: 1px dashed var(--hb-borde);
+  border-radius: var(--hb-radio-lg);
+  background: var(--hb-superficie);
+}
+
+.hb-catalogo-vacio .bi {
+  font-size: 2rem;
+  color: var(--hb-terracota);
+}
+
+.hb-catalogo-vacio h3 {
+  font-size: 1.1rem;
+  margin: 0.75rem 0 0.25rem;
+}
+
+.hb-catalogo-vacio p {
+  color: var(--hb-texto-suave);
+  margin: 0;
+}
+
+/* Tarjetas de muebles */
+.hb-card-mueble {
+  border-radius: var(--hb-radio-lg);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hb-card-mueble .card-body {
+  padding: 1.25rem;
+}
+
+.hb-card-mueble-descripcion {
+  font-size: 0.9rem;
+  margin-bottom: 0;
+}
+
+.hb-precio {
+  font-family: var(--hb-fuente-titulos);
+  font-size: 1.2rem;
+  color: var(--hb-terracota-oscuro);
+}
+
+/* Los resultados se están actualizando */
+.hb-cargando {
+  opacity: 0.55;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+@media (max-width: 991.98px) {
+  .hb-panel-filtros {
+    position: static;
+  }
 }
 

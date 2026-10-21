@@ -32,6 +32,8 @@ public class ControladorCatalogoDeMuebles {
 
   private static final String ROL_ADMIN = "ADMIN";
   private static final String REDIRECCION_AL_CATALOGO = "redirect:/catalogo";
+  private static final String VISTA_CATALOGO = "catalogo";
+  private static final String VISTA_RESULTADOS_DEL_CATALOGO = "catalogo-resultados";
   private static final String VISTA_CREAR_MUEBLE = "crearMueble";
   private static final String VISTA_EDITAR_MUEBLE = "editarMueble";
   private static final String ATTR_DATOS_MUEBLE = "datosMuebleCatalogo";
@@ -79,7 +81,34 @@ public class ControladorCatalogoDeMuebles {
       return new ModelAndView(REDIRECCION_AL_CATALOGO);
     }
 
-    return new ModelAndView("catalogo", this.modeloDelCatalogo(filtro));
+    return new ModelAndView(VISTA_CATALOGO, this.modeloDelCatalogo(filtro));
+  }
+
+  /**
+   * Devuelve solo el fragmento con los resultados del catálogo. El javascript de la
+   * vista lo usa para reemplazar los muebles en el lugar cuando cambia un filtro,
+   * sin recargar la página entera.
+   */
+  @RequestMapping(path = "/catalogo/resultados", method = RequestMethod.GET)
+  public ModelAndView resultadosDelCatalogo(HttpServletRequest request) {
+    FiltroDeMuebles filtro;
+
+    try {
+      filtro =
+        FiltroDeMuebles.delCatalogo(
+          request.getParameter("estilo"),
+          request.getParameter("precioMax"),
+          request.getParameter("precioMin"),
+          request.getParameter("tipoDeAmbiente"),
+          request.getParameter("orden"),
+          request.getParameter("soloSostenibles"),
+          request.getParameter("material")
+        );
+    } catch (FiltroDeMueblesInvalidoException e) {
+      return new ModelAndView(REDIRECCION_AL_CATALOGO);
+    }
+
+    return new ModelAndView(VISTA_RESULTADOS_DEL_CATALOGO, this.modeloDelCatalogo(filtro));
   }
 
   @RequestMapping(path = "/muebles/crear", method = RequestMethod.GET)
@@ -193,6 +222,7 @@ public class ControladorCatalogoDeMuebles {
     modelo.put("soloSostenibles", filtro.getSoloSostenibles());
     modelo.put("materiales", this.servicioMaterial.obtenerMateriales());
     modelo.put("materialSeleccionado", filtro.getMaterialId());
+    modelo.put("tiposDeAmbiente", TipoDeAmbiente.nombresConocidos());
     List<Mueble> muebles = null;
     TipoDeAmbiente tipoDeAmbiente = this.aTipoDeAmbiente(filtro.getTipoDeAmbiente());
 
@@ -211,6 +241,7 @@ public class ControladorCatalogoDeMuebles {
       modelo.put("error", "El presupuesto no puede ser negativo");
     }
     modelo.put("muebles", muebles);
+    modelo.put("totalMuebles", muebles == null ? 0 : muebles.size());
 
     return modelo;
   }

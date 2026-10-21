@@ -503,6 +503,7 @@ h1, h2, h3, h4, h5, h6,
 }
 
 .hb-legend-no-disponible,
+.hb-legend-zona-apertura,
 .hb-legend-conflicto {
   display: inline-block;
   width: 0.8rem;
@@ -513,6 +514,11 @@ h1, h2, h3, h4, h5, h6,
 .hb-legend-no-disponible {
   border: 1px solid #8a817a;
   background: repeating-linear-gradient(45deg, #e6e1dc 0 2px, #8a817a 2px 3px);
+}
+
+.hb-legend-zona-apertura {
+  border: 1px solid #7f8c85;
+  background: repeating-linear-gradient(-45deg, #e3e8e4 0 2px, #7f8c85 2px 3px);
 }
 
 .hb-legend-conflicto {

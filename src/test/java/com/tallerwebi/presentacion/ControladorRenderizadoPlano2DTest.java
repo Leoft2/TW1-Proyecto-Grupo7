@@ -38,15 +38,19 @@ public class ControladorRenderizadoPlano2DTest {
   );
 
   private ServicioPlano2D servicioPlano2D;
+  private ServicioZonaExclusion servicioZonaExclusion;
   private ControladorPlano2D controladorPlano2D;
 
   @BeforeEach
   public void init() {
     servicioPlano2D = mock(ServicioPlano2D.class);
+    servicioZonaExclusion = mock(ServicioZonaExclusion.class);
     controladorPlano2D =
       new ControladorPlano2D(
         servicioPlano2D,
-        new ServicioCategoriaDeMuebleImpl(mock(RepositorioCategoriaDeMueble.class))
+        new ServicioCategoriaDeMuebleImpl(mock(RepositorioCategoriaDeMueble.class)),
+        null,
+        servicioZonaExclusion
       );
   }
 
@@ -363,6 +367,48 @@ public class ControladorRenderizadoPlano2DTest {
 
   private void thenElAmbienteContieneCantidadDeAberturas(Ambiente ambiente, int cantidadEsperada) {
     assertEquals(cantidadEsperada, ambiente.getAberturas().size());
+  }
+
+  // falta given/when
+
+  @Test
+  public void deberiaPasarLasZonasDeExclusionAlModeloCuandoGeneroElPlano() {
+    // given
+    List<ZonaExclusion> zonas = new ArrayList<>();
+    zonas.add(new ZonaExclusion(1.0, 0.0, 0.9, 0.9, TipoAbertura.PUERTA));
+    when(servicioZonaExclusion.calcularZonas(any(Ambiente.class))).thenReturn(zonas);
+    when(servicioPlano2D.generarPlano(ambiente, muebles))
+      .thenReturn(planoConLosMueblesUbicados(muebles));
+
+    // when
+    ModelAndView mav = whenGeneroElPlanoCon(ambiente, muebles);
+
+    // then
+    thenElModeloTieneLasZonasDeExclusion(zonas, mav);
+  }
+
+  @Test
+  public void deberiaPasarLasZonasDeExclusionAlModeloCuandoRecargoElPlano() {
+    // given
+    HttpSession sesion = mock(HttpSession.class);
+    Plano plano = planoConLosMueblesUbicados(muebles);
+    when(sesion.getAttribute("plano")).thenReturn(plano);
+    List<ZonaExclusion> zonas = new ArrayList<>();
+    zonas.add(new ZonaExclusion(1.0, 0.0, 0.9, 0.9, TipoAbertura.PUERTA));
+    when(servicioZonaExclusion.calcularZonas(any(Ambiente.class))).thenReturn(zonas);
+
+    // when
+    ModelAndView mav = controladorPlano2D.planoActual(sesion);
+
+    // then
+    thenElModeloTieneLasZonasDeExclusion(zonas, mav);
+  }
+
+  private void thenElModeloTieneLasZonasDeExclusion(
+    List<ZonaExclusion> zonasEsperadas,
+    ModelAndView mav
+  ) {
+    assertEquals(zonasEsperadas, mav.getModel().get("zonasDeExclusion"));
   }
 
   private void thenElServicioRecibeLasDimensiones(Double anchoEsperado, Double largoEsperado) {

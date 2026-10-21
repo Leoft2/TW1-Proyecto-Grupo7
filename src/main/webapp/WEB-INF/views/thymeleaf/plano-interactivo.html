@@ -120,7 +120,7 @@
 
                     <g th:each="ubicado, i : ${plano.muebles}" class="plano-mueble plano-mueble-arrastrable"
                        th:attr="data-indice=${i.index},data-posicion-x=${ubicado.posicionX},
-                                data-posicion-y=${ubicado.posicionY}"
+                                data-posicion-y=${ubicado.posicionY},data-anclado=${ubicado.anclado}"
                        th:classappend="${ubicado.enConflicto} ? 'plano-mueble-conflicto'">
                         <title th:if="${ubicado.enConflicto}"
                                th:text="${plano.descripcionDelConflicto(ubicado)}">Sofa choca con Radiador (muro derecho)</title>
@@ -130,6 +130,10 @@
                         <rect class="plano-mueble-borde" fill="none"
                               th:attr="x=${ubicado.posicionX + 0.04}, y=${ubicado.posicionY + 0.04},
                            width=${ubicado.mueble.ancho - 0.08}, height=${ubicado.mueble.largo - 0.08}"></rect>
+                        
+                        <rect th:if="${ubicado.anclado}" class="plano-mueble-ancla" fill="none"
+                              th:attr="x=${ubicado.posicionX}, y=${ubicado.posicionY},
+                           width=${ubicado.mueble.ancho}, height=${ubicado.mueble.largo}"></rect>
                         
                         <!-- Thymeleaf bloquea el acceso estático a Math; el tamaño fijo mantiene la etiqueta legible. -->
                         <text text-anchor="middle" dominant-baseline="central" class="plano-mueble-nombre"
@@ -180,6 +184,7 @@
                         <th scope="col">X (m)</th>
                         <th scope="col">Y (m)</th>
                         <th scope="col">Estado</th>
+                        <th scope="col">Anclaje</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -193,10 +198,24 @@
                             <span th:if="${ubicado.enConflicto}" class="badge text-bg-danger">En conflicto</span>
                             <span th:unless="${ubicado.enConflicto}" class="badge text-bg-success">OK</span>
                         </td>
+                        <td>
+                            <form th:unless="${ubicado.anclado}" th:action="@{/plano/anclar-mueble}" method="post">
+                                <input type="hidden" name="indice" th:value="${i.index}">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">Anclar</button>
+                            </form>
+                            <form th:if="${ubicado.anclado}" th:action="@{/plano/desanclar-mueble}" method="post">
+                                <input type="hidden" name="indice" th:value="${i.index}">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Desanclar</button>
+                            </form>
+                        </td>
                     </tr>
                     </tbody>
                 </table>
             </div>
+
+            <form th:action="@{/plano/recalcular}" method="post">
+                <button type="submit" class="btn btn-primary">Recalcular distribucion</button>
+            </form>
         </section>
 
         <section th:if="${not #lists.isEmpty(plano.mueblesExcluidos)}" class="mb-4">

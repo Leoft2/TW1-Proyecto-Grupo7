@@ -5,6 +5,8 @@ import java.util.List;
 public interface ServicioPlano2D {
   Plano generarPlano(Ambiente ambiente, List<Mueble> muebles);
 
+  Plano recalcularPlano(Plano plano);
+
   boolean estaDentroDelPerimetro(MuebleUbicado muebleUbicado, Ambiente ambiente);
 
   ValidacionMovimiento validarMovimiento(

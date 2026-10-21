@@ -24,7 +24,8 @@ public interface ServicioCatalogo {
     TipoDeAmbiente tipoDeAmbiente,
     Estilo estilo,
     Double precioMaximo,
-    Boolean soloSostenibles
+    Boolean soloSostenibles,
+    Long materialId
   ) throws PresupuestoNegativoException;
   List<Mueble> ObtenerMueblesFiltrados(
     Double precioMinimo,
@@ -32,7 +33,8 @@ public interface ServicioCatalogo {
     Estilo estilo,
     TipoDeAmbiente tipoDeAmbiente,
     OrdenDeMuebles orden,
-    Boolean soloSostenibles
+    Boolean soloSostenibles,
+    Long materialId
   ) throws PresupuestoNegativoException;
   Mueble ObtenerMueblePorId(int id) throws MuebleNoEncontrado;
 }

@@ -90,7 +90,7 @@ public class ControladorRedisenoTest {
 
     this.cuandoEnvioElFormulario(ESTILO, PRESUPUESTO);
 
-    verify(this.servicioCatalogo).ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO, false);
+    verify(this.servicioCatalogo).ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO, false, null);
     verify(this.servicioRediseño).recomendar(ESTILO);
   }
 
@@ -99,7 +99,7 @@ public class ControladorRedisenoTest {
     throws Exception {
     this.dadoQueElAmbienteNoTieneTipo();
     List<Mueble> muebles = new ArrayList<>();
-    when(this.servicioCatalogo.ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO, true))
+    when(this.servicioCatalogo.ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO, true, null))
       .thenReturn(muebles);
 
     this.controladorRediseno.generarPropuesta(
@@ -109,7 +109,7 @@ public class ControladorRedisenoTest {
         "true"
       );
 
-    verify(this.servicioCatalogo).ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO, true);
+    verify(this.servicioCatalogo).ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO, true, null);
   }
 
   @Test
@@ -201,7 +201,7 @@ public class ControladorRedisenoTest {
     throws Exception {
     this.dadoQueElAmbienteNoTieneTipo();
     when(this.servicioRediseño.recomendar(ESTILO)).thenReturn(this.unaRecomendacion(ESTILO));
-    when(this.servicioCatalogo.ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO, false))
+    when(this.servicioCatalogo.ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO, false, null))
       .thenThrow(new PresupuestoNegativoException("El presupuesto no puede ser negativo"));
 
     ModelAndView modelAndView = this.cuandoEnvioElFormulario(ESTILO, PRESUPUESTO);
@@ -217,7 +217,7 @@ public class ControladorRedisenoTest {
     TipoDeAmbiente living = new TipoDeAmbiente("Living");
     this.dadoQueExisteElAmbiente(living);
     List<Mueble> muebles = new ArrayList<>();
-    when(this.servicioCatalogo.ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO, false))
+    when(this.servicioCatalogo.ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO, false, null))
       .thenReturn(muebles);
 
     ModelAndView modelAndView =
@@ -228,7 +228,7 @@ public class ControladorRedisenoTest {
           null
         );
 
-    verify(this.servicioCatalogo).ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO, false);
+    verify(this.servicioCatalogo).ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO, false, null);
     assertThat(modelAndView.getViewName(), is(RESULTADOS));
   }
 
@@ -288,7 +288,7 @@ public class ControladorRedisenoTest {
 
   private void dadoQueElCatalogoCumpleCon(Estilo estilo, Double presupuesto, List<Mueble> muebles)
     throws Exception {
-    when(this.servicioCatalogo.ObtenerMueblesQueCumplan(null, estilo, presupuesto, false))
+    when(this.servicioCatalogo.ObtenerMueblesQueCumplan(null, estilo, presupuesto, false, null))
       .thenReturn(muebles);
   }
 

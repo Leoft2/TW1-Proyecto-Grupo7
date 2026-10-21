@@ -17,9 +17,11 @@ import static org.mockito.Mockito.when;
 
 import com.tallerwebi.dominio.CategoriaDeMueble;
 import com.tallerwebi.dominio.Estilo;
+import com.tallerwebi.dominio.Material;
 import com.tallerwebi.dominio.Mueble;
 import com.tallerwebi.dominio.ServicioCatalogo;
 import com.tallerwebi.dominio.ServicioCategoriaDeMueble;
+import com.tallerwebi.dominio.ServicioMaterial;
 import com.tallerwebi.dominio.TipoDeAmbiente;
 import com.tallerwebi.dominio.excepcion.MuebleNoEncontrado;
 import com.tallerwebi.dominio.excepcion.PresupuestoNegativoException;
@@ -47,6 +49,7 @@ public class ControladorCatalogoDeMueblesTest {
 
   private ServicioCatalogo servicioCatalogo;
   private ServicioCategoriaDeMueble servicioCategoriaDeMueble;
+  private ServicioMaterial servicioMaterial;
   private HttpServletRequest requestMock;
   private HttpSession sessionMock;
   private ControladorCatalogoDeMuebles controladorCatalogoDeMuebles;
@@ -55,10 +58,15 @@ public class ControladorCatalogoDeMueblesTest {
   public void init() {
     this.servicioCatalogo = mock(ServicioCatalogo.class);
     this.servicioCategoriaDeMueble = mock(ServicioCategoriaDeMueble.class);
+    this.servicioMaterial = mock(ServicioMaterial.class);
     this.requestMock = mock(HttpServletRequest.class);
     this.sessionMock = mock(HttpSession.class);
     this.controladorCatalogoDeMuebles =
-      new ControladorCatalogoDeMuebles(this.servicioCatalogo, this.servicioCategoriaDeMueble);
+      new ControladorCatalogoDeMuebles(
+        this.servicioCatalogo,
+        this.servicioCategoriaDeMueble,
+        this.servicioMaterial
+      );
   }
 
   @Test
@@ -105,7 +113,7 @@ public class ControladorCatalogoDeMueblesTest {
     assertThat(this.obtenerMueblesDelModel(modelAndView), contains(retro));
     assertThat(modelAndView.getModel().get("estiloSeleccionado"), is(Estilo.Retro));
     verify(this.servicioCatalogo)
-      .ObtenerMueblesFiltrados(null, null, Estilo.Retro, null, null, false);
+      .ObtenerMueblesFiltrados(null, null, Estilo.Retro, null, null, false, null);
   }
 
   @Test
@@ -120,7 +128,8 @@ public class ControladorCatalogoDeMueblesTest {
 
     assertThat(this.obtenerMueblesDelModel(modelAndView), contains(barato));
     assertThat(modelAndView.getModel().get("precioMaximo"), is(50000.0));
-    verify(this.servicioCatalogo).ObtenerMueblesFiltrados(null, 50000.0, null, null, null, false);
+    verify(this.servicioCatalogo)
+      .ObtenerMueblesFiltrados(null, 50000.0, null, null, null, false, null);
   }
 
   @Test
@@ -132,7 +141,7 @@ public class ControladorCatalogoDeMueblesTest {
     this.cuandoNavegoAlCatalogo("Retro", "50000");
 
     verify(this.servicioCatalogo)
-      .ObtenerMueblesFiltrados(null, 50000.0, Estilo.Retro, null, null, false);
+      .ObtenerMueblesFiltrados(null, 50000.0, Estilo.Retro, null, null, false, null);
   }
 
   @Test
@@ -143,7 +152,8 @@ public class ControladorCatalogoDeMueblesTest {
 
     this.cuandoNavegoAlCatalogo("", "50000");
 
-    verify(this.servicioCatalogo).ObtenerMueblesFiltrados(null, 50000.0, null, null, null, false);
+    verify(this.servicioCatalogo)
+      .ObtenerMueblesFiltrados(null, 50000.0, null, null, null, false, null);
   }
 
   @Test
@@ -161,7 +171,15 @@ public class ControladorCatalogoDeMueblesTest {
   public void dadoQueElCatalogoRechazaElPrecioMaximo_cuandoNavegoAlCatalogo_entoncesVeoElErrorYNoLosMuebles()
     throws Exception {
     when(
-      this.servicioCatalogo.ObtenerMueblesFiltrados(null, 50000.0, Estilo.Retro, null, null, false)
+      this.servicioCatalogo.ObtenerMueblesFiltrados(
+          null,
+          50000.0,
+          Estilo.Retro,
+          null,
+          null,
+          false,
+          null
+        )
     )
       .thenThrow(new PresupuestoNegativoException("El presupuesto no puede ser negativo"));
 
@@ -202,15 +220,18 @@ public class ControladorCatalogoDeMueblesTest {
     Mueble caro = unMueble("Sillón Retró", 85000.0, Estilo.Retro);
     ArrayList<Mueble> muebles = new ArrayList<>();
     muebles.add(caro);
-    when(this.servicioCatalogo.ObtenerMueblesFiltrados(50000.0, null, null, null, null, false))
+    when(
+      this.servicioCatalogo.ObtenerMueblesFiltrados(50000.0, null, null, null, null, false, null)
+    )
       .thenReturn(muebles);
 
     ModelAndView modelAndView =
-      this.controladorCatalogoDeMuebles.catalogo(null, null, "50000", null, null, null);
+      this.controladorCatalogoDeMuebles.catalogo(null, null, "50000", null, null, null, null);
 
     assertThat(this.obtenerMueblesDelModel(modelAndView), contains(caro));
     assertThat(modelAndView.getModel().get("precioMinimo"), is(50000.0));
-    verify(this.servicioCatalogo).ObtenerMueblesFiltrados(50000.0, null, null, null, null, false);
+    verify(this.servicioCatalogo)
+      .ObtenerMueblesFiltrados(50000.0, null, null, null, null, false, null);
   }
 
   @Test
@@ -220,13 +241,14 @@ public class ControladorCatalogoDeMueblesTest {
     Mueble paraLiving = unMueble("Sillón Retró", 85000.0, Estilo.Retro);
     ArrayList<Mueble> muebles = new ArrayList<>();
     muebles.add(paraLiving);
-    when(this.servicioCatalogo.ObtenerMueblesFiltrados(null, null, null, living, null, false))
+    when(this.servicioCatalogo.ObtenerMueblesFiltrados(null, null, null, living, null, false, null))
       .thenReturn(muebles);
 
     ModelAndView modelAndView =
-      this.controladorCatalogoDeMuebles.catalogo(null, null, null, "Living", null, null);
+      this.controladorCatalogoDeMuebles.catalogo(null, null, null, "Living", null, null, null);
 
-    verify(this.servicioCatalogo).ObtenerMueblesFiltrados(null, null, null, living, null, false);
+    verify(this.servicioCatalogo)
+      .ObtenerMueblesFiltrados(null, null, null, living, null, false, null);
     assertThat(modelAndView.getModel().get("tipoDeAmbiente"), is("Living"));
     assertThat(this.obtenerMueblesDelModel(modelAndView), contains(paraLiving));
   }
@@ -237,25 +259,79 @@ public class ControladorCatalogoDeMueblesTest {
     Mueble sostenible = unMueble("Sillón de bambú", 85000.0, Estilo.Retro);
     ArrayList<Mueble> muebles = new ArrayList<>();
     muebles.add(sostenible);
-    when(this.servicioCatalogo.ObtenerMueblesFiltrados(null, null, null, null, null, true))
+    when(this.servicioCatalogo.ObtenerMueblesFiltrados(null, null, null, null, null, true, null))
       .thenReturn(muebles);
 
     ModelAndView modelAndView =
-      this.controladorCatalogoDeMuebles.catalogo(null, null, null, null, null, "true");
+      this.controladorCatalogoDeMuebles.catalogo(null, null, null, null, null, "true", null);
 
-    verify(this.servicioCatalogo).ObtenerMueblesFiltrados(null, null, null, null, null, true);
+    verify(this.servicioCatalogo).ObtenerMueblesFiltrados(null, null, null, null, null, true, null);
     assertThat(modelAndView.getModel().get("soloSostenibles"), is(true));
     assertThat(this.obtenerMueblesDelModel(modelAndView), contains(sostenible));
+  }
+
+  @Test
+  public void dadoQueFiltroPorSoloSostenibles_cuandoNavegoAlCatalogo_entoncesVeoElCheckboxMarcado()
+    throws Exception {
+    when(this.servicioCatalogo.ObtenerMueblesFiltrados(null, null, null, null, null, true, null))
+      .thenReturn(new ArrayList<>());
+
+    ModelAndView modelAndView =
+      this.controladorCatalogoDeMuebles.catalogo(null, null, null, null, null, "true", null);
+
+    assertThat(modelAndView.getModel().get("soloSostenibles"), is(true));
   }
 
   @Test
   public void dadoQueNoFiltroPorSoloSostenibles_cuandoNavegoAlCatalogo_entoncesElModeloNoLoIndica()
     throws Exception {
     ModelAndView modelAndView =
-      this.controladorCatalogoDeMuebles.catalogo(null, null, null, null, null, null);
+      this.controladorCatalogoDeMuebles.catalogo(null, null, null, null, null, null, null);
 
     assertThat(modelAndView.getModel().get("soloSostenibles"), is(false));
-    verify(this.servicioCatalogo).ObtenerMueblesFiltrados(null, null, null, null, null, false);
+    verify(this.servicioCatalogo)
+      .ObtenerMueblesFiltrados(null, null, null, null, null, false, null);
+  }
+
+  @Test
+  public void dadoQueNavegoAlCatalogo_cuandoLoHago_entoncesVeoLosMaterialesParaFiltrar()
+    throws Exception {
+    Material bambu = new Material("Bambú", true);
+    List<Material> materiales = new ArrayList<>();
+    materiales.add(bambu);
+    when(this.servicioMaterial.obtenerMateriales()).thenReturn(materiales);
+
+    ModelAndView modelAndView = this.cuandoNavegoAlCatalogo(null, null);
+
+    assertThat(modelAndView.getModel().get("materiales"), is(materiales));
+  }
+
+  @Test
+  public void dadoQueFiltroPorMaterial_cuandoNavegoAlCatalogo_entoncesLePidoSoloEseMaterial()
+    throws Exception {
+    Material bambu = new Material("Bambú", true);
+    bambu.setId(3L);
+    Mueble deBambu = unMueble("Silla de bambú", 30000.0, Estilo.Retro);
+    ArrayList<Mueble> muebles = new ArrayList<>();
+    muebles.add(deBambu);
+    when(this.servicioCatalogo.ObtenerMueblesFiltrados(null, null, null, null, null, false, 3L))
+      .thenReturn(muebles);
+
+    ModelAndView modelAndView =
+      this.controladorCatalogoDeMuebles.catalogo(null, null, null, null, null, null, "3");
+
+    verify(this.servicioCatalogo).ObtenerMueblesFiltrados(null, null, null, null, null, false, 3L);
+    assertThat(modelAndView.getModel().get("materialSeleccionado"), is(3L));
+    assertThat(this.obtenerMueblesDelModel(modelAndView), contains(deBambu));
+  }
+
+  @Test
+  public void dadoQueNavegoAlCatalogo_conUnIdDeMaterialQueNoEsNumero_entoncesVuelvoAlCatalogoSinFiltros()
+    throws Exception {
+    ModelAndView modelAndView =
+      this.controladorCatalogoDeMuebles.catalogo(null, null, null, null, null, null, "madera");
+
+    this.entoncesVuelvoAlCatalogoSinConsultarElServicio(modelAndView);
   }
 
   @Test
@@ -343,6 +419,40 @@ public class ControladorCatalogoDeMueblesTest {
   }
 
   @Test
+  public void dadoUnFormularioConMaterial_cuandoCreoUnMuebleDelCatalogo_entoncesSeGuardaConEseMaterial()
+    throws Exception {
+    TipoDeAmbiente living = new TipoDeAmbiente("Living");
+    TipoDeAmbiente comedor = new TipoDeAmbiente("Comedor");
+    Material bambu = new Material("Bambú", true);
+    bambu.setId(2L);
+    this.dadoQueLaSesionTieneElRol(ROL_ADMIN);
+    when(this.servicioCatalogo.buscarTipoDeAmbientePorNombre("Living")).thenReturn(living);
+    when(this.servicioCatalogo.buscarTipoDeAmbientePorNombre("Comedor")).thenReturn(comedor);
+    when(this.servicioMaterial.buscarPorId(2L)).thenReturn(bambu);
+    DTONuevoMuebleCatalogo datos = this.dadoQueCompleteElFormularioDeMueble();
+
+    this.controladorCatalogoDeMuebles.crearMuebleDelCatalogo(datos, this.requestMock);
+
+    assertThat(this.cuandoCapturoElMuebleRegistrado().getMaterial(), is(bambu));
+  }
+
+  @Test
+  public void dadoUnFormularioSinMaterial_cuandoCreoUnMuebleDelCatalogo_entoncesSeGuardaSinMaterial()
+    throws Exception {
+    TipoDeAmbiente living = new TipoDeAmbiente("Living");
+    TipoDeAmbiente comedor = new TipoDeAmbiente("Comedor");
+    this.dadoQueLaSesionTieneElRol(ROL_ADMIN);
+    when(this.servicioCatalogo.buscarTipoDeAmbientePorNombre("Living")).thenReturn(living);
+    when(this.servicioCatalogo.buscarTipoDeAmbientePorNombre("Comedor")).thenReturn(comedor);
+    DTONuevoMuebleCatalogo datos = this.dadoQueCompleteElFormularioDeMueble();
+    datos.setMaterial(null);
+
+    this.controladorCatalogoDeMuebles.crearMuebleDelCatalogo(datos, this.requestMock);
+
+    assertThat(this.cuandoCapturoElMuebleRegistrado().getMaterial(), is(nullValue()));
+  }
+
+  @Test
   public void dadoUnFormularioConDatosInvalidos_cuandoCreoUnMuebleDelCatalogo_entoncesVeoElError()
     throws Exception {
     this.dadoQueLaSesionTieneElRol(ROL_ADMIN);
@@ -388,6 +498,7 @@ public class ControladorCatalogoDeMueblesTest {
     datos.setPrecio(85000.0);
     datos.setEstilo("Retro");
     datos.setCategoria(1L);
+    datos.setMaterial(2L);
     datos.setAncho(0.80);
     datos.setLargo(0.85);
     List<String> tiposDeAmbiente = new ArrayList<>();
@@ -553,13 +664,29 @@ public class ControladorCatalogoDeMueblesTest {
   }
 
   private ModelAndView cuandoNavegoAlCatalogo(String estilo, String precioMaximo) {
-    return this.controladorCatalogoDeMuebles.catalogo(estilo, precioMaximo, null, null, null, null);
+    return this.controladorCatalogoDeMuebles.catalogo(
+        estilo,
+        precioMaximo,
+        null,
+        null,
+        null,
+        null,
+        null
+      );
   }
 
   private void dadoQueElCatalogoCumpleCon(Estilo estilo, Double precioMaximo, List<Mueble> muebles)
     throws Exception {
     when(
-      this.servicioCatalogo.ObtenerMueblesFiltrados(null, precioMaximo, estilo, null, null, false)
+      this.servicioCatalogo.ObtenerMueblesFiltrados(
+          null,
+          precioMaximo,
+          estilo,
+          null,
+          null,
+          false,
+          null
+        )
     )
       .thenReturn(muebles);
   }

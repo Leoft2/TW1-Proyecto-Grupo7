@@ -13,6 +13,7 @@ public final class FiltroDeMuebles {
   private final String tipoDeAmbiente;
   private final OrdenDeMuebles orden;
   private final boolean soloSostenibles;
+  private final Long materialId;
 
   private FiltroDeMuebles(
     Estilo estilo,
@@ -20,7 +21,8 @@ public final class FiltroDeMuebles {
     Double precioMinimo,
     String tipoDeAmbiente,
     OrdenDeMuebles orden,
-    boolean soloSostenibles
+    boolean soloSostenibles,
+    Long materialId
   ) {
     this.estilo = estilo;
     this.precioMaximo = precioMaximo;
@@ -28,6 +30,7 @@ public final class FiltroDeMuebles {
     this.tipoDeAmbiente = tipoDeAmbiente;
     this.orden = orden;
     this.soloSostenibles = soloSostenibles;
+    this.materialId = materialId;
   }
 
   public static FiltroDeMuebles delCatalogo(
@@ -36,13 +39,15 @@ public final class FiltroDeMuebles {
     String precioMinimo,
     String tipoDeAmbiente,
     String orden,
-    String soloSostenibles
+    String soloSostenibles,
+    String materialId
   ) throws FiltroDeMueblesInvalidoException {
     if (
       esUnEstiloDesconocido(estilo) ||
       esUnPrecioInvalido(precioMaximo) ||
       esUnPrecioInvalido(precioMinimo) ||
-      esUnOrdenDesconocido(orden)
+      esUnOrdenDesconocido(orden) ||
+      esUnMaterialInvalido(materialId)
     ) {
       throw new FiltroDeMueblesInvalidoException(
         "El filtro del catalogo tiene criterios invalidos"
@@ -55,20 +60,23 @@ public final class FiltroDeMuebles {
       aPrecio(precioMinimo),
       aTipoDeAmbiente(tipoDeAmbiente),
       aOrden(orden),
-      aSoloSostenibles(soloSostenibles)
+      aSoloSostenibles(soloSostenibles),
+      aMaterial(materialId)
     );
   }
 
   public static FiltroDeMuebles deUnaPropuesta(
     String estilo,
     String presupuesto,
-    String soloSostenibles
+    String soloSostenibles,
+    String materialId
   ) throws FiltroDeMueblesInvalidoException {
     if (
       estaVacio(estilo) ||
       estaVacio(presupuesto) ||
       esUnEstiloDesconocido(estilo) ||
-      esUnPrecioInvalido(presupuesto)
+      esUnPrecioInvalido(presupuesto) ||
+      esUnMaterialInvalido(materialId)
     ) {
       throw new FiltroDeMueblesInvalidoException(
         "La propuesta necesita un estilo y un presupuesto validos"
@@ -81,7 +89,8 @@ public final class FiltroDeMuebles {
       null,
       null,
       null,
-      aSoloSostenibles(soloSostenibles)
+      aSoloSostenibles(soloSostenibles),
+      aMaterial(materialId)
     );
   }
 
@@ -107,6 +116,10 @@ public final class FiltroDeMuebles {
 
   public boolean getSoloSostenibles() {
     return this.soloSostenibles;
+  }
+
+  public Long getMaterialId() {
+    return this.materialId;
   }
 
   private static boolean estaVacio(String valor) {
@@ -142,8 +155,24 @@ public final class FiltroDeMuebles {
     }
   }
 
+  private static boolean esUnMaterialInvalido(String materialId) {
+    if (estaVacio(materialId)) {
+      return false;
+    }
+    try {
+      Long.parseLong(materialId);
+      return false;
+    } catch (NumberFormatException e) {
+      return true;
+    }
+  }
+
   private static Estilo aEstilo(String estilo) {
     return estaVacio(estilo) ? null : Estilo.valueOf(estilo);
+  }
+
+  private static Long aMaterial(String materialId) {
+    return estaVacio(materialId) ? null : Long.valueOf(materialId);
   }
 
   private static Double aPrecio(String precio) {

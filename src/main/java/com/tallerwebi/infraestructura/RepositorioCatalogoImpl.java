@@ -38,13 +38,15 @@ public class RepositorioCatalogoImpl implements RepositorioCatalogo {
     Estilo estilo,
     Double precioMinimo,
     Double precioMaximo,
-    Boolean soloSostenibles
+    Boolean soloSostenibles,
+    Long materialId
   ) {
     String query =
       "FROM Mueble m LEFT JOIN m.material mat WHERE m.enCatalogo = true " +
       "AND (:estilo IS NULL OR m.estilo = :estilo) " +
       "AND (:precioMinimo IS NULL OR m.precio >= :precioMinimo) " +
       "AND (:precioMaximo IS NULL OR m.precio <= :precioMaximo) " +
+      "AND (:materialId IS NULL OR mat.id = :materialId) " +
       "AND (:soloSostenibles = false OR mat IS NULL OR mat.sostenible = true)";
 
     return sessionFactory
@@ -53,6 +55,7 @@ public class RepositorioCatalogoImpl implements RepositorioCatalogo {
       .setParameter("estilo", estilo)
       .setParameter("precioMinimo", precioMinimo)
       .setParameter("precioMaximo", precioMaximo)
+      .setParameter("materialId", materialId)
       .setParameter("soloSostenibles", Boolean.TRUE.equals(soloSostenibles))
       .getResultList();
   }

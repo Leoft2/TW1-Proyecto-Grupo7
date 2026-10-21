@@ -61,7 +61,7 @@ public class ControladorRediseno {
     FiltroDeMuebles propuesta;
 
     try {
-      propuesta = FiltroDeMuebles.deUnaPropuesta(estilo, presupuesto, soloSostenibles);
+      propuesta = FiltroDeMuebles.deUnaPropuesta(estilo, presupuesto, soloSostenibles, null);
     } catch (FiltroDeMueblesInvalidoException e) {
       return this.redirectAlFormulario(id);
     }
@@ -92,7 +92,8 @@ public class ControladorRediseno {
             null,
             propuesta.getEstilo(),
             propuesta.getPrecioMaximo(),
-            propuesta.getSoloSostenibles()
+            propuesta.getSoloSostenibles(),
+            propuesta.getMaterialId()
           );
     } catch (PresupuestoNegativoException e) {
       modelo.put("error", "El presupuesto no puede ser negativo");

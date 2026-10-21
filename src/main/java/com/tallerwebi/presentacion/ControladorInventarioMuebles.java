@@ -21,7 +21,9 @@ public class ControladorInventarioMuebles {
   private static final String PARAM_ANCHO = "ancho";
   private static final String PARAM_LARGO = "largo";
   private static final String PARAM_CATEGORIA = "categoria";
+  private static final String PARAM_MATERIAL = "materialId";
   private static final String ATTR_CATEGORIAS = "categorias";
+  private static final String ATTR_MATERIALES = "materiales";
   private static final String ATRIBUTO_AMBIENTE = "ambiente";
   private static final String ATRIBUTO_PLANO = "plano";
 
@@ -29,13 +31,14 @@ public class ControladorInventarioMuebles {
   private final ServicioPlano2D servicioPlano2D;
   private final ServicioCategoriaDeMueble servicioCategoriaDeMueble;
   private final ServicioPersistenciaPlano servicioPersistenciaPlano;
+  private final ServicioMaterial servicioMaterial;
 
   public ControladorInventarioMuebles(
     ServicioEdicionInventarioMuebles servicioEdicionInventarioMuebles,
     ServicioPlano2D servicioPlano2D,
     ServicioCategoriaDeMueble servicioCategoriaDeMueble
   ) {
-    this(servicioEdicionInventarioMuebles, servicioPlano2D, servicioCategoriaDeMueble, null);
+    this(servicioEdicionInventarioMuebles, servicioPlano2D, servicioCategoriaDeMueble, null, null);
   }
 
   @Autowired
@@ -43,12 +46,14 @@ public class ControladorInventarioMuebles {
     ServicioEdicionInventarioMuebles servicioEdicionInventarioMuebles,
     ServicioPlano2D servicioPlano2D,
     ServicioCategoriaDeMueble servicioCategoriaDeMueble,
-    ServicioPersistenciaPlano servicioPersistenciaPlano
+    ServicioPersistenciaPlano servicioPersistenciaPlano,
+    ServicioMaterial servicioMaterial
   ) {
     this.servicioEdicionInventarioMuebles = servicioEdicionInventarioMuebles;
     this.servicioPlano2D = servicioPlano2D;
     this.servicioCategoriaDeMueble = servicioCategoriaDeMueble;
     this.servicioPersistenciaPlano = servicioPersistenciaPlano;
+    this.servicioMaterial = servicioMaterial;
   }
 
   @GetMapping("/inventario-muebles")
@@ -60,7 +65,7 @@ public class ControladorInventarioMuebles {
     model.put("muebles", servicioEdicionInventarioMuebles.listar());
     model.put(PARAM_ANCHO, ancho);
     model.put(PARAM_LARGO, largo);
-    model.put(ATTR_CATEGORIAS, servicioCategoriaDeMueble.obtenerCategorias());
+    poblarOpciones(model);
     return new ModelAndView("inventario-muebles", model);
   }
 
@@ -74,13 +79,13 @@ public class ControladorInventarioMuebles {
     model.put("muebles", servicioEdicionInventarioMuebles.listar());
     model.put(PARAM_ANCHO, ancho);
     model.put(PARAM_LARGO, largo);
-    model.put(ATTR_CATEGORIAS, servicioCategoriaDeMueble.obtenerCategorias());
+    poblarOpciones(model);
     model.put("mueble", servicioEdicionInventarioMuebles.buscarPorId(id));
     return new ModelAndView(VISTA_INVENTARIO, model);
   }
 
   public ModelAndView editar(int id, Mueble datos) throws MuebleNoEncontrado {
-    return editar(id, datos, null, null, null);
+    return editar(id, datos, null, null, null, null);
   }
 
   @PostMapping("/inventario-muebles/editar/{id}")
@@ -89,9 +94,11 @@ public class ControladorInventarioMuebles {
     Mueble datos,
     @RequestParam(name = PARAM_ANCHO, required = false) Double ancho,
     @RequestParam(name = PARAM_LARGO, required = false) Double largo,
-    @RequestParam(name = PARAM_CATEGORIA, required = false) Long categoriaId
+    @RequestParam(name = PARAM_CATEGORIA, required = false) Long categoriaId,
+    @RequestParam(name = PARAM_MATERIAL, required = false) Long materialId
   ) throws MuebleNoEncontrado {
     asignarCategoria(datos, categoriaId);
+    asignarMaterial(datos, materialId);
     try {
       servicioEdicionInventarioMuebles.actualizar(id, datos);
       return new ModelAndView(
@@ -109,7 +116,7 @@ public class ControladorInventarioMuebles {
       model.put("error", e.getMessage());
       model.put(PARAM_ANCHO, ancho);
       model.put(PARAM_LARGO, largo);
-      model.put(ATTR_CATEGORIAS, servicioCategoriaDeMueble.obtenerCategorias());
+      poblarOpciones(model);
       return new ModelAndView(VISTA_INVENTARIO, model);
     }
   }
@@ -124,7 +131,7 @@ public class ControladorInventarioMuebles {
     model.put("muebles", servicioEdicionInventarioMuebles.listar());
     model.put(PARAM_ANCHO, ancho);
     model.put(PARAM_LARGO, largo);
-    model.put(ATTR_CATEGORIAS, servicioCategoriaDeMueble.obtenerCategorias());
+    poblarOpciones(model);
     model.put("muebleAEliminar", servicioEdicionInventarioMuebles.buscarPorId(id));
     return new ModelAndView(VISTA_INVENTARIO, model);
   }
@@ -137,7 +144,7 @@ public class ControladorInventarioMuebles {
     } catch (MuebleNoEncontrado e) {
       Map<String, Object> model = new ModelMap();
       model.put("error", e.getMessage());
-      model.put(ATTR_CATEGORIAS, servicioCategoriaDeMueble.obtenerCategorias());
+      poblarOpciones(model);
       return new ModelAndView(VISTA_INVENTARIO, model);
     }
   }
@@ -179,22 +186,37 @@ public class ControladorInventarioMuebles {
   }
 
   public ModelAndView agregar(Mueble datos) {
-    return agregar(datos, null);
+    return agregar(datos, null, null);
   }
 
   @PostMapping("/inventario-muebles/agregar")
   public ModelAndView agregar(
     Mueble datos,
-    @RequestParam(name = PARAM_CATEGORIA, required = false) Long categoriaId
+    @RequestParam(name = PARAM_CATEGORIA, required = false) Long categoriaId,
+    @RequestParam(name = PARAM_MATERIAL, required = false) Long materialId
   ) {
     asignarCategoria(datos, categoriaId);
+    asignarMaterial(datos, materialId);
     servicioEdicionInventarioMuebles.crear(datos);
     return new ModelAndView("redirect:/inventario-muebles");
+  }
+
+  private void poblarOpciones(Map<String, Object> model) {
+    model.put(ATTR_CATEGORIAS, servicioCategoriaDeMueble.obtenerCategorias());
+    if (servicioMaterial != null) {
+      model.put(ATTR_MATERIALES, servicioMaterial.obtenerMateriales());
+    }
   }
 
   private void asignarCategoria(Mueble datos, Long categoriaId) {
     if (categoriaId != null) {
       datos.setCategoriaDeMueble(servicioCategoriaDeMueble.buscarPorId(categoriaId));
+    }
+  }
+
+  private void asignarMaterial(Mueble datos, Long materialId) {
+    if (materialId != null && servicioMaterial != null) {
+      datos.setMaterial(servicioMaterial.buscarPorId(materialId));
     }
   }
 }

@@ -258,7 +258,7 @@ public class RepositorioCatalogoTest {
     this.cuandoGuardoUnMuebleDeMaterial("Mesa de metal", 40000.0, "Metal");
 
     List<Mueble> obtenidos =
-      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, false);
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, false, null);
 
     assertThat(obtenidos.size(), is(equalTo(2)));
   }
@@ -271,7 +271,7 @@ public class RepositorioCatalogoTest {
     this.cuandoGuardoUnMuebleDeMaterial("Mesa de metal", 40000.0, "Metal");
 
     List<Mueble> obtenidos =
-      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, null);
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, null, null);
 
     assertThat(obtenidos.size(), is(equalTo(2)));
   }
@@ -285,7 +285,7 @@ public class RepositorioCatalogoTest {
     this.cuandoGuardoUnMuebleDeMaterial("Biblioteca reciclada", 50000.0, "Madera reciclada");
 
     List<Mueble> obtenidos =
-      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, true);
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, true, null);
 
     assertThat(obtenidos.size(), is(equalTo(2)));
     for (Mueble mueble : obtenidos) {
@@ -302,7 +302,7 @@ public class RepositorioCatalogoTest {
     this.cuandoGuardoUnMuebleDeMaterial("Mesa de metal", 40000.0, "Metal");
 
     List<Mueble> obtenidos =
-      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, true);
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, true, null);
 
     assertThat(obtenidos.size(), is(equalTo(2)));
   }
@@ -321,7 +321,13 @@ public class RepositorioCatalogoTest {
     this.cuandoGuardoUnMuebleDeMaterial("Mesa de bambú", 80000.0, "Bambú").setEstilo(Estilo.Retro);
 
     List<Mueble> obtenidos =
-      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(Estilo.Japandi, null, 100000.0, true);
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(
+          Estilo.Japandi,
+          null,
+          100000.0,
+          true,
+          null
+        );
 
     assertThat(obtenidos.size(), is(equalTo(1)));
     assertThat(obtenidos.get(0).getNombre(), is(equalTo("Sillón de bambú")));
@@ -342,10 +348,40 @@ public class RepositorioCatalogoTest {
     this.cuandoGuardoUnMueble(fueraDelCatalogo);
 
     List<Mueble> obtenidos =
-      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, true);
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, true, null);
 
     assertThat(obtenidos.size(), is(equalTo(1)));
     assertThat(obtenidos.get(0).getNombre(), is(equalTo("Mueble del catálogo")));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoUnIdDeMaterial_cuandoBuscoMueblesDelCatalogo_entoncesSoloDevuelveLosDeEseMaterial() {
+    Material bambu = this.dadoQueTengoUnMaterialGuardado("Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Silla de bambú", 30000.0, "Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Mesa de metal", 40000.0, "Metal");
+
+    List<Mueble> obtenidos =
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, false, bambu.getId());
+
+    assertThat(obtenidos.size(), is(equalTo(1)));
+    assertThat(obtenidos.get(0).getNombre(), is(equalTo("Silla de bambú")));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoUnIdDeMaterialYSoloSostenibles_cuandoBuscoMueblesDelCatalogo_entoncesDevuelveSoloLosQueCumplenAmbos() {
+    Material bambu = this.dadoQueTengoUnMaterialGuardado("Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Silla de bambú", 30000.0, "Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Mesa de metal", 40000.0, "Metal");
+
+    List<Mueble> obtenidos =
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, true, bambu.getId());
+
+    assertThat(obtenidos.size(), is(equalTo(1)));
+    assertThat(obtenidos.get(0).getNombre(), is(equalTo("Silla de bambú")));
   }
 
   private Material dadoQueTengoUnMaterialGuardado(String nombre) {

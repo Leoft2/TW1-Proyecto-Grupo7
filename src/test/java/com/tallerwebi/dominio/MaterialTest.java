@@ -22,4 +22,22 @@ public class MaterialTest {
     assertThat(melamina.isSostenible(), is(false));
     assertThat(melamina.getNombre(), is("Melamina"));
   }
+
+  @Test
+  public void dadoUnMaterial_cuandoLeAsignoUnId_entoncesLoConserva() {
+    Material bambu = new Material("Bambú", true);
+
+    bambu.setId(3L);
+
+    assertThat(bambu.getId(), is(3L));
+  }
+
+  @Test
+  public void dadosDosMaterialesConElMismoNombre_cuandoLosComparo_entoncesSonIguales() {
+    Material uno = new Material("Bambú", true);
+    Material otro = new Material("Bambú", false);
+
+    assertThat(uno.equals(otro), is(true));
+    assertThat(uno.hashCode(), is(otro.hashCode()));
+  }
 }

@@ -35,7 +35,8 @@ INSERT INTO Material(id, nombre, sostenible) VALUES
   (4, 'Madera común', false),
   (5, 'Metal', false),
   (6, 'Melamina', false),
-  (7, 'Plástico', false);
+  (7, 'Plástico', false),
+  (8, 'Otro', false);
 
 -- Hacer datos mas realistas... Scraping de muebles
 INSERT INTO Mueble(id, nombre, descripcion, precio, ancho, largo, estilo, material_id, categoria_de_mueble_id, enCatalogo) VALUES

@@ -9,7 +9,8 @@ public interface RepositorioCatalogo {
     Estilo estilo,
     Double precioMinimo,
     Double precioMaximo,
-    Boolean soloSostenibles
+    Boolean soloSostenibles,
+    Long materialId
   );
   Mueble ObtenerMueblePorId(int id);
   void eliminar(int id);

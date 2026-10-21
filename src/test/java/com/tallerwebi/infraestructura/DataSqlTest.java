@@ -136,7 +136,7 @@ public class DataSqlTest {
     );
 
     List<String> nombresDeHabitacion = servicioCatalogo
-      .ObtenerMueblesFiltrados(null, null, null, new TipoDeAmbiente("Habitación"), null, null)
+      .ObtenerMueblesFiltrados(null, null, null, new TipoDeAmbiente("Habitación"), null, null, null)
       .stream()
       .map(Mueble::getNombre)
       .toList();
@@ -156,6 +156,7 @@ public class DataSqlTest {
     List<Mueble> rango = servicioCatalogo.ObtenerMueblesFiltrados(
       20000.0,
       50000.0,
+      null,
       null,
       null,
       null,
@@ -232,7 +233,8 @@ public class DataSqlTest {
         "Madera común",
         "Metal",
         "Melamina",
-        "Plástico"
+        "Plástico",
+        "Otro"
       )
     );
   }
@@ -264,7 +266,8 @@ public class DataSqlTest {
       null,
       null,
       null,
-      true
+      true,
+      null
     );
 
     assertThat(sostenibles, is(not(empty())));

@@ -425,6 +425,14 @@ h1, h2, h3, h4, h5, h6,
   pointer-events: none;
 }
 
+.plano-mueble-ancla {
+  stroke: #3b332e;
+  stroke-width: 0.05;
+  stroke-dasharray: 0.12 0.08;
+  rx: 0.08;
+  pointer-events: none;
+}
+
 .plano-dimension {
   fill: #6b625a;
   font-family: var(--hb-fuente-texto);

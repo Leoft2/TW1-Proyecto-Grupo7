@@ -18,6 +18,7 @@ public class MuebleUbicado {
   private Double coordenadaX;
   private Double coordenadaY;
   private boolean enConflicto;
+  private boolean anclado;
 
   public MuebleUbicado(Mueble mueble, Double coordenadaX, Double coordenadaY) {
     this(mueble, coordenadaX, coordenadaY, false);
@@ -51,5 +52,17 @@ public class MuebleUbicado {
 
   public boolean isEnConflicto() {
     return enConflicto;
+  }
+
+  public boolean isAnclado() {
+    return anclado;
+  }
+
+  public void anclar() {
+    this.anclado = true;
+  }
+
+  public void desanclar() {
+    this.anclado = false;
   }
 }

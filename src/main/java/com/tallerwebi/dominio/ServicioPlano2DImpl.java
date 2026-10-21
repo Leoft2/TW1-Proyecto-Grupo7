@@ -54,6 +54,59 @@ public class ServicioPlano2DImpl implements ServicioPlano2D {
   }
 
   /**
+   * Los muebles anclados conservan su posicion y se tratan como zonas ocupadas. El resto de los
+   * muebles, incluidos los que habian quedado excluidos, se vuelve a distribuir.
+   */
+  @Override
+  public Plano recalcularPlano(Plano plano) {
+    Ambiente ambiente = plano.getAmbiente();
+    List<MuebleUbicado> mueblesUbicados = new ArrayList<>();
+    List<Mueble> mueblesExcluidos = new ArrayList<>();
+    List<String> motivosDeExclusion = new ArrayList<>();
+    List<Mueble> mueblesARedistribuir = new ArrayList<>();
+    List<ZonaExclusion> zonas = new ArrayList<>(servicioZonaExclusion.calcularZonas(ambiente));
+
+    for (MuebleUbicado muebleUbicado : plano.getMuebles()) {
+      if (muebleUbicado.isAnclado()) {
+        mueblesUbicados.add(muebleUbicado);
+        zonas.add(
+          new ZonaExclusion(
+            muebleUbicado.getPosicionX(),
+            muebleUbicado.getPosicionY(),
+            muebleUbicado.getMueble().getAncho(),
+            muebleUbicado.getMueble().getLargo(),
+            null
+          )
+        );
+      } else {
+        mueblesARedistribuir.add(muebleUbicado.getMueble());
+      }
+    }
+    for (Mueble excluido : plano.getMueblesExcluidos()) {
+      mueblesARedistribuir.add(excluido);
+    }
+
+    RecorridoPerimetral recorrido = new RecorridoPerimetral(ambiente, zonas);
+    for (Mueble mueble : ordenarPorAreaDescendente(mueblesARedistribuir)) {
+      MuebleUbicado muebleUbicado = recorrido.ubicar(mueble);
+      if (muebleUbicado != null) {
+        mueblesUbicados.add(muebleUbicado);
+      } else {
+        mueblesExcluidos.add(mueble);
+        motivosDeExclusion.add("El mueble " + mueble.getNombre() + " no entra en el ambiente");
+      }
+    }
+
+    plano.getMuebles().clear();
+    plano.getMuebles().addAll(mueblesUbicados);
+    plano.getMueblesExcluidos().clear();
+    plano.getMueblesExcluidos().addAll(mueblesExcluidos);
+    plano.getMotivosDeExclusion().clear();
+    plano.getMotivosDeExclusion().addAll(motivosDeExclusion);
+    return plano;
+  }
+
+  /**
    * El criterio de orden de colocacion es mayor area primero. Con el sort a igual
    * area se respeta el orden en que el usuario cargo los muebles. Se ordena sobre una copia porque
    * la lista que recibe el servicio puede ser inmutable.
@@ -104,12 +157,11 @@ public class ServicioPlano2DImpl implements ServicioPlano2D {
       .calcularZonas(ambiente)
       .stream()
       .anyMatch(zona -> zona.seSolapaCon(candidato));
-    hayInterferencia =
-      hayInterferencia ||
-      ambiente
-        .getObstaculos()
-        .stream()
-        .anyMatch(obstaculo -> obstaculo.colisionaCon(candidato, ambiente));
+    for (Obstaculo obstaculo : ambiente.getObstaculos()) {
+      if (obstaculo.colisionaCon(candidato, ambiente)) {
+        hayInterferencia = true;
+      }
+    }
     return new ValidacionMovimiento(hayInterferencia);
   }
 

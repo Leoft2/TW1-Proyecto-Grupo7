@@ -83,6 +83,10 @@ if (plano && alerta) {
 
   plano.querySelectorAll(".plano-mueble-arrastrable").forEach((mueble) => {
     mueble.addEventListener("pointerdown", (evento) => {
+      if (mueble.dataset.anclado === "true") {
+        mostrarAdvertencia("El mueble está anclado. Desanclalo antes de moverlo.");
+        return;
+      }
       if (muebleEnMovimiento || evento.button !== 0) {
         return;
       }

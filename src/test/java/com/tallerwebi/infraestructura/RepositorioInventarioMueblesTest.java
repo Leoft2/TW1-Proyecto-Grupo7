@@ -30,7 +30,11 @@ public class RepositorioInventarioMueblesTest {
 
   @BeforeEach
   public void init() {
-    this.repositorioInventarioMueble = new RepositorioInventarioMuebleImpl(this.sessionFactory);
+    this.repositorioInventarioMueble =
+      new RepositorioInventarioMuebleImpl(
+        this.sessionFactory,
+        new BorradorDeMueble(this.sessionFactory)
+      );
   }
 
   // -------------------------------------------------------------------------
@@ -48,6 +52,21 @@ public class RepositorioInventarioMueblesTest {
     whenGuardoElMueble(mesa);
 
     thenElMuebleTieneLasMedidas(mesa.getId(), "Mesa", 1.2, 0.8);
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void noDeberiaListarLosMueblesDelCatalogoCuandoListoElInventario() {
+    Mueble muebleDeCatalogo = givenMuebleNuevo("Sillón del catálogo", 0.8, 0.85);
+    muebleDeCatalogo.setEnCatalogo(true);
+    whenGuardoElMueble(muebleDeCatalogo);
+    whenGuardoElMueble(givenMuebleNuevo("Mesa", 1.2, 0.8));
+
+    List<Mueble> inventario = whenListoElInventario();
+
+    assertThat(inventario, hasSize(1));
+    assertThat(inventario.get(0).getNombre(), is("Mesa"));
   }
 
   // -------------------------------------------------------------------------

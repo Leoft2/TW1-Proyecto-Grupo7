@@ -1,7 +1,11 @@
 package com.tallerwebi.infraestructura;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -14,6 +18,7 @@ import com.tallerwebi.dominio.RepositorioCatalogo;
 import com.tallerwebi.dominio.TipoDeAmbiente;
 import com.tallerwebi.infraestructura.config.HibernateInfraestructuraTestConfig;
 import jakarta.transaction.Transactional;
+import java.util.Arrays;
 import java.util.List;
 import org.hibernate.SessionFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,7 +71,8 @@ public class RepositorioCatalogoTest {
     this.cuandoGuardoUnMueble(mueble1);
     this.cuandoGuardoUnMueble(mueble2);
 
-    List<Mueble> mueblesObtenidos = this.repositorioCatalogo.ObtenerTodosLosMuebles();
+    List<Mueble> mueblesObtenidos =
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, null, null, null);
 
     assertThat(mueblesObtenidos.size(), is(equalTo(2)));
   }
@@ -83,7 +89,8 @@ public class RepositorioCatalogoTest {
     this.cuandoGuardoUnMueble(muebleDeCatalogo);
     this.cuandoGuardoUnMueble(muebleDeInventario);
 
-    List<Mueble> mueblesObtenidos = this.repositorioCatalogo.ObtenerTodosLosMuebles();
+    List<Mueble> mueblesObtenidos =
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, null, null, null);
 
     assertThat(mueblesObtenidos.size(), is(equalTo(1)));
     assertThat(mueblesObtenidos.get(0).getNombre(), is(equalTo("Mueble del catálogo")));
@@ -195,6 +202,18 @@ public class RepositorioCatalogoTest {
     assertThat(tipoObtenido, is(nullValue()));
   }
 
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoUnTipoDeAmbienteNuevo_cuandoLoGuardoEnElRepositorio_entoncesSePuedeBuscarPorNombre() {
+    this.repositorioCatalogo.guardarTipoDeAmbiente(new TipoDeAmbiente("Balcon"));
+
+    TipoDeAmbiente tipoObtenido = this.repositorioCatalogo.buscarTipoDeAmbientePorNombre("Balcon");
+
+    assertThat(tipoObtenido, is(notNullValue()));
+    assertThat(tipoObtenido.getNombre(), is(equalTo("Balcon")));
+  }
+
   private TipoDeAmbiente dadoQueTengoUnTipoDeAmbienteGuardado(String nombre) {
     TipoDeAmbiente tipoDeAmbiente = new TipoDeAmbiente(nombre);
     this.sessionFactory.getCurrentSession().persist(tipoDeAmbiente);
@@ -258,7 +277,7 @@ public class RepositorioCatalogoTest {
     this.cuandoGuardoUnMuebleDeMaterial("Mesa de metal", 40000.0, "Metal");
 
     List<Mueble> obtenidos =
-      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, false, null);
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, null, false, null);
 
     assertThat(obtenidos.size(), is(equalTo(2)));
   }
@@ -271,7 +290,7 @@ public class RepositorioCatalogoTest {
     this.cuandoGuardoUnMuebleDeMaterial("Mesa de metal", 40000.0, "Metal");
 
     List<Mueble> obtenidos =
-      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, null, null);
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, null, null, null);
 
     assertThat(obtenidos.size(), is(equalTo(2)));
   }
@@ -285,7 +304,7 @@ public class RepositorioCatalogoTest {
     this.cuandoGuardoUnMuebleDeMaterial("Biblioteca reciclada", 50000.0, "Madera reciclada");
 
     List<Mueble> obtenidos =
-      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, true, null);
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, null, true, null);
 
     assertThat(obtenidos.size(), is(equalTo(2)));
     for (Mueble mueble : obtenidos) {
@@ -302,7 +321,7 @@ public class RepositorioCatalogoTest {
     this.cuandoGuardoUnMuebleDeMaterial("Mesa de metal", 40000.0, "Metal");
 
     List<Mueble> obtenidos =
-      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, true, null);
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, null, true, null);
 
     assertThat(obtenidos.size(), is(equalTo(2)));
   }
@@ -322,9 +341,10 @@ public class RepositorioCatalogoTest {
 
     List<Mueble> obtenidos =
       this.repositorioCatalogo.ObtenerMueblesDelCatalogo(
-          Estilo.Japandi,
           null,
           100000.0,
+          Estilo.Japandi,
+          null,
           true,
           null
         );
@@ -348,7 +368,7 @@ public class RepositorioCatalogoTest {
     this.cuandoGuardoUnMueble(fueraDelCatalogo);
 
     List<Mueble> obtenidos =
-      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, true, null);
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, null, true, null);
 
     assertThat(obtenidos.size(), is(equalTo(1)));
     assertThat(obtenidos.get(0).getNombre(), is(equalTo("Mueble del catálogo")));
@@ -363,7 +383,14 @@ public class RepositorioCatalogoTest {
     this.cuandoGuardoUnMuebleDeMaterial("Mesa de metal", 40000.0, "Metal");
 
     List<Mueble> obtenidos =
-      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, false, bambu.getId());
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(
+          null,
+          null,
+          null,
+          null,
+          false,
+          bambu.getId()
+        );
 
     assertThat(obtenidos.size(), is(equalTo(1)));
     assertThat(obtenidos.get(0).getNombre(), is(equalTo("Silla de bambú")));
@@ -378,10 +405,198 @@ public class RepositorioCatalogoTest {
     this.cuandoGuardoUnMuebleDeMaterial("Mesa de metal", 40000.0, "Metal");
 
     List<Mueble> obtenidos =
-      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, true, bambu.getId());
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(
+          null,
+          null,
+          null,
+          null,
+          true,
+          bambu.getId()
+        );
 
     assertThat(obtenidos.size(), is(equalTo(1)));
     assertThat(obtenidos.get(0).getNombre(), is(equalTo("Silla de bambú")));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoUnPrecioMinimo_cuandoBuscoMueblesDelCatalogo_entoncesExcluyeLosQueNoLoAlcanzan() {
+    this.cuandoGuardoUnMuebleDeMaterial("Lámpara", 25000.0, "Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Sillón Retró", 85000.0, "Metal");
+
+    List<Mueble> obtenidos =
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(50000.0, null, null, null, null, null);
+
+    assertThat(obtenidos, hasSize(1));
+    assertThat(obtenidos.get(0).getNombre(), is(equalTo("Sillón Retró")));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoUnNombreDeTipoDeAmbiente_cuandoBuscoMueblesDelCatalogo_entoncesSoloDevuelveLosDeEseTipo() {
+    this.cuandoGuardoUnMuebleConTipoDeAmbiente("Cama Boho", 120000.0, "Habitación");
+    this.cuandoGuardoUnMuebleConTipoDeAmbiente("Mesa de Comedor", 60000.0, "Comedor");
+
+    List<Mueble> obtenidos =
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(
+          null,
+          null,
+          null,
+          "Habitación",
+          null,
+          null
+        );
+
+    assertThat(obtenidos, hasSize(1));
+    assertThat(obtenidos.get(0).getNombre(), is(equalTo("Cama Boho")));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoUnMuebleQueSirveParaVariosTipos_cuandoBuscoPorUnoDeEllos_entoncesElMuebleSeIncluye() {
+    this.cuandoGuardoUnMuebleConTipoDeAmbiente("Escritorio", 40000.0, "Pasillo");
+    this.cuandoGuardoUnMuebleConTipoDeAmbiente("Cama Boho", 120000.0, "Habitación");
+
+    List<Mueble> obtenidos =
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(
+          null,
+          null,
+          null,
+          "Habitación",
+          null,
+          null
+        );
+
+    assertThat(obtenidos, hasSize(1));
+    assertThat(obtenidos.get(0).getNombre(), is(equalTo("Cama Boho")));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoMueblesConDistintosPrecios_cuandoBuscoMueblesDelCatalogo_entoncesVienenOrdenadosDeMenorAMayor() {
+    this.cuandoGuardoUnMuebleDeMaterial("Mueble caro", 40000.0, "Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Mueble barato", 20000.0, "Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Mueble medio", 30000.0, "Bambú");
+
+    List<Mueble> obtenidos =
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogo(null, null, null, null, null, null);
+
+    assertThat(this.nombresDe(obtenidos), contains("Mueble barato", "Mueble medio", "Mueble caro"));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoMueblesConDistintosPrecios_cuandoBuscoMueblesDelCatalogoOrdenadosPorPrecioDescendente_entoncesVienenOrdenadosDeMayorAMenor() {
+    this.cuandoGuardoUnMuebleDeMaterial("Mueble caro", 40000.0, "Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Mueble barato", 20000.0, "Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Mueble medio", 30000.0, "Bambú");
+
+    List<Mueble> obtenidos =
+      this.repositorioCatalogo.ObtenerMueblesDelCatalogoOrdenadosPorPrecioDesc(
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        );
+
+    assertThat(this.nombresDe(obtenidos), contains("Mueble caro", "Mueble medio", "Mueble barato"));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoUnPrecioMaximo_cuandoBuscoMueblesConPrecioMenorAl_entoncesSoloDevuelveLosQueLoCumplen() {
+    this.cuandoGuardoUnMuebleDeMaterial("Mueble barato", 20000.0, "Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Mueble caro", 40000.0, "Bambú");
+
+    List<Mueble> obtenidos = this.repositorioCatalogo.ObtenerMueblesConPrecioMenorAl(30000.0);
+
+    assertThat(this.nombresDe(obtenidos), contains("Mueble barato"));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoQueElPrecioEsIgualAlMaximo_cuandoBuscoMueblesConPrecioMenorAl_entoncesElMuebleSeIncluye() {
+    this.cuandoGuardoUnMuebleDeMaterial("Mueble del limite", 30000.0, "Bambú");
+
+    List<Mueble> obtenidos = this.repositorioCatalogo.ObtenerMueblesConPrecioMenorAl(30000.0);
+
+    assertThat(this.nombresDe(obtenidos), contains("Mueble del limite"));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoUnEstilo_cuandoBuscoMueblesDeEstilo_entoncesSoloDevuelveLosDeEseEstilo() {
+    this.cuandoGuardoUnMuebleDeMaterial("Sillón Retró", 85000.0, "Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Mesa Japandi", 150000.0, "Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Cama Boho", 120000.0, "Bambú").setEstilo(Estilo.Boho);
+
+    List<Mueble> obtenidos = this.repositorioCatalogo.ObtenerMueblesDeEstilo(Estilo.Retro);
+
+    assertThat(this.nombresDe(obtenidos), containsInAnyOrder("Sillón Retró", "Mesa Japandi"));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoVariosEstilos_cuandoBuscoMueblesDeEstilos_entoncesSoloDevuelveLosDeEsosEstilos() {
+    this.cuandoGuardoUnMuebleDeMaterial("Sillón Retró", 85000.0, "Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Mesa Japandi", 150000.0, "Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Cama Boho", 120000.0, "Bambú").setEstilo(Estilo.Boho);
+
+    List<Mueble> obtenidos =
+      this.repositorioCatalogo.ObtenerMueblesDeEstilos(Arrays.asList(Estilo.Retro, Estilo.Japandi));
+
+    assertThat(this.nombresDe(obtenidos), containsInAnyOrder("Sillón Retró", "Mesa Japandi"));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoQueNoHayEstilos_cuandoBuscoMueblesDeEstilos_entoncesDevuelveUnaListaVacia() {
+    this.cuandoGuardoUnMuebleDeMaterial("Sillón Retró", 85000.0, "Bambú");
+
+    List<Mueble> obtenidos = this.repositorioCatalogo.ObtenerMueblesDeEstilos(Arrays.asList());
+
+    assertThat(obtenidos, is(empty()));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoVariosMueblesDeUnEstilo_cuandoBuscoElMasBaratoDeEseEstilo_entoncesDevuelveElDeMenorPrecio() {
+    this.cuandoGuardoUnMuebleDeMaterial("Sillón Retró", 85000.0, "Bambú");
+    this.cuandoGuardoUnMuebleDeMaterial("Lámpara Retró", 25000.0, "Bambú");
+
+    Mueble masBarato = this.repositorioCatalogo.ObtenerMuebleMasBaratoDeEstilo(Estilo.Retro);
+
+    assertThat(masBarato, is(notNullValue()));
+    assertThat(masBarato.getNombre(), is(equalTo("Lámpara Retró")));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void dadoQueNoHayMueblesDeUnEstilo_cuandoBuscoElMasBaratoDeEseEstilo_entoncesObtengoNull() {
+    this.cuandoGuardoUnMuebleDeMaterial("Mesa Japandi", 150000.0, "Bambú")
+      .setEstilo(Estilo.Japandi);
+
+    Mueble masBarato = this.repositorioCatalogo.ObtenerMuebleMasBaratoDeEstilo(Estilo.Retro);
+
+    assertThat(masBarato, is(nullValue()));
+  }
+
+  private List<String> nombresDe(List<Mueble> muebles) {
+    return muebles.stream().map(Mueble::getNombre).toList();
   }
 
   private Material dadoQueTengoUnMaterialGuardado(String nombre) {
@@ -416,6 +631,17 @@ public class RepositorioCatalogoTest {
       mueble.setMaterial(this.dadoQueTengoUnMaterialGuardado(material));
     }
     mueble.setEnCatalogo(true);
+    this.cuandoGuardoUnMueble(mueble);
+    return mueble;
+  }
+
+  private Mueble cuandoGuardoUnMuebleConTipoDeAmbiente(
+    String nombre,
+    double precio,
+    String nombreDelTipo
+  ) {
+    Mueble mueble = this.dadoQueTengoUnMueble(nombre, precio, Estilo.Retro);
+    mueble.agregarTipoDeAmbiente(this.dadoQueTengoUnTipoDeAmbienteGuardado(nombreDelTipo));
     this.cuandoGuardoUnMueble(mueble);
     return mueble;
   }

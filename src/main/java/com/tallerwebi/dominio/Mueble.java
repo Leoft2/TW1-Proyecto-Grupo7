@@ -15,7 +15,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/*
+  Duda: Como le doy la vuelta al TooManyFields?...
+*/
 @Entity
+@SuppressWarnings("PMD.TooManyFields")
 public class Mueble {
 
   @Id
@@ -31,6 +35,10 @@ public class Mueble {
 
   @Enumerated(EnumType.STRING)
   private Estilo estilo;
+
+  @ManyToOne
+  @JoinColumn(name = "material_id")
+  private Material material;
 
   @OneToMany(mappedBy = "mueble", cascade = CascadeType.ALL, orphanRemoval = true)
   @OrderBy("id ASC")
@@ -91,6 +99,14 @@ public class Mueble {
 
   public Estilo getEstilo() {
     return this.estilo;
+  }
+
+  public void setMaterial(Material material) {
+    this.material = material;
+  }
+
+  public Material getMaterial() {
+    return this.material;
   }
 
   public void setNombre(String nombre) {

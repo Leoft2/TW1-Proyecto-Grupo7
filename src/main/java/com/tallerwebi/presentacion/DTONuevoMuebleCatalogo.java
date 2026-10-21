@@ -10,6 +10,7 @@ public class DTONuevoMuebleCatalogo {
   private Double precio;
   private String estilo;
   private Long categoria;
+  private Long material;
   private Double ancho;
   private Double largo;
   private List<String> tiposDeAmbiente = new ArrayList<>();
@@ -54,6 +55,14 @@ public class DTONuevoMuebleCatalogo {
 
   public void setCategoria(Long categoria) {
     this.categoria = categoria;
+  }
+
+  public Long getMaterial() {
+    return material;
+  }
+
+  public void setMaterial(Long material) {
+    this.material = material;
   }
 
   public Double getAncho() {

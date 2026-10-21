@@ -66,6 +66,55 @@ public class ControladorAmbienteTest {
     assertThat(modelAndView.getModel().get("ambiente"), is(ambiente));
   }
 
+  @Test
+  public void dadoQueEntroAMueblesDeUnAmbiente_entoncesVeoLosMueblesDeEseAmbiente() {
+    Mueble cama = new Mueble("Cama", 2.0, 1.6);
+    Ambiente dormitorio = this.unAmbienteConMuebles(new TipoDeAmbiente("Habitación"), cama);
+    when(this.servicioAmbiente.buscarAmbiente(1L)).thenReturn(dormitorio);
+
+    ModelAndView modelAndView = this.controladorAmbiente.mueblesDelAmbiente(1L);
+
+    assertThat(modelAndView.getViewName(), is("muebles"));
+    assertThat(modelAndView.getModel().get("ambiente"), is(dormitorio));
+    assertThat(this.obtenerMueblesDelModel(modelAndView), contains(cama));
+    verify(this.servicioAmbiente).buscarAmbiente(1L);
+  }
+
+  @Test
+  public void dadoQueHayVariosAmbientes_cuandoEntroAMueblesDeUno_entoncesSoloVeoLosMueblesDeEseAmbiente() {
+    Mueble cama = new Mueble("Cama", 2.0, 1.6);
+    Mueble sofa = new Mueble("Sofa", 2.1, 0.9);
+    when(this.servicioAmbiente.buscarAmbiente(1L))
+      .thenReturn(this.unAmbienteConMuebles(new TipoDeAmbiente("Habitación"), cama));
+    when(this.servicioAmbiente.buscarAmbiente(2L))
+      .thenReturn(this.unAmbienteConMuebles(new TipoDeAmbiente("Living"), sofa));
+
+    ModelAndView modelAndView = this.controladorAmbiente.mueblesDelAmbiente(1L);
+
+    assertThat(this.obtenerMueblesDelModel(modelAndView), contains(cama));
+    assertThat(this.obtenerMueblesDelModel(modelAndView), not(contains(sofa)));
+  }
+
+  @Test
+  public void dadoQueElAmbienteNoTieneMuebles_cuandoEntroAMuebles_entoncesVeoLaListaVacia() {
+    Ambiente pasillo = new Ambiente(4.0, 3.0, new TipoDeAmbiente("Pasillo"));
+    when(this.servicioAmbiente.buscarAmbiente(1L)).thenReturn(pasillo);
+
+    ModelAndView modelAndView = this.controladorAmbiente.mueblesDelAmbiente(1L);
+
+    assertThat(modelAndView.getViewName(), is("muebles"));
+    assertThat(this.obtenerMueblesDelModel(modelAndView), empty());
+  }
+
+  @Test
+  public void dadoQueElAmbienteNoExiste_cuandoEntroAMuebles_entoncesVuelvoAMisAmbientes() {
+    when(this.servicioAmbiente.buscarAmbiente(99L)).thenReturn(null);
+
+    ModelAndView modelAndView = this.controladorAmbiente.mueblesDelAmbiente(99L);
+
+    assertThat(modelAndView.getViewName(), is("redirect:/ambientes"));
+  }
+
   // -------------------------------------------------------------------------
   // Tests HU-04:Aberturas
   // -------------------------------------------------------------------------
@@ -105,6 +154,19 @@ public class ControladorAmbienteTest {
     thenLaVistaEs(mav, "ambiente-aberturas");
     thenElModeloContieneError(mav);
     thenElModeloContieneDatosAberturaOriginal(mav, datosAbertura);
+  }
+
+  private Ambiente unAmbienteConMuebles(TipoDeAmbiente tipo, Mueble... muebles) {
+    Ambiente ambiente = new Ambiente(4.0, 3.0, tipo);
+    for (Mueble mueble : muebles) {
+      ambiente.agregarMueble(mueble);
+    }
+    return ambiente;
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<Mueble> obtenerMueblesDelModel(ModelAndView modelAndView) {
+    return (List<Mueble>) modelAndView.getModel().get("muebles");
   }
 
   // -------------------------------------------------------------------------

@@ -24,6 +24,7 @@ public class ControladorInventarioMueblesTest {
   private ServicioEdicionInventarioMuebles servicioEdicionInventarioMuebles;
   private ServicioPlano2D servicioPlano2D;
   private ServicioCategoriaDeMueble servicioCategoriaDeMueble;
+  private ServicioMaterial servicioMaterial;
   private HttpSession sesion;
   private ControladorInventarioMuebles controladorInventarioMuebles;
 
@@ -33,12 +34,16 @@ public class ControladorInventarioMueblesTest {
     servicioPlano2D = mock(ServicioPlano2D.class);
     sesion = mock(HttpSession.class);
     servicioCategoriaDeMueble = mock(ServicioCategoriaDeMueble.class);
+    servicioMaterial = mock(ServicioMaterial.class);
     when(servicioCategoriaDeMueble.obtenerCategorias()).thenReturn(new java.util.ArrayList<>());
+    when(servicioMaterial.obtenerMateriales()).thenReturn(new java.util.ArrayList<>());
     controladorInventarioMuebles =
       new ControladorInventarioMuebles(
         servicioEdicionInventarioMuebles,
         servicioPlano2D,
-        servicioCategoriaDeMueble
+        servicioCategoriaDeMueble,
+        null,
+        servicioMaterial
       );
   }
 
@@ -242,7 +247,7 @@ public class ControladorInventarioMueblesTest {
   }
 
   private void whenAgregoElMuebleConCategoria(Mueble mueble, Long categoriaId) {
-    controladorInventarioMuebles.agregar(mueble, categoriaId);
+    controladorInventarioMuebles.agregar(mueble, categoriaId, null);
   }
 
   private void thenElControllerCreaElMuebleConCategoria(CategoriaDeMueble categoria) {
@@ -267,13 +272,62 @@ public class ControladorInventarioMueblesTest {
 
   private void whenActualizoElMuebleConCategoria(Mueble datos, Long categoriaId)
     throws MuebleNoEncontrado {
-    controladorInventarioMuebles.editar(1, datos, null, null, categoriaId);
+    controladorInventarioMuebles.editar(1, datos, null, null, categoriaId, null);
   }
 
   private void thenElControllerActualizaElMuebleConCategoria(CategoriaDeMueble categoria)
     throws MuebleNoEncontrado {
     verify(servicioEdicionInventarioMuebles)
       .actualizar(eq(1), argThat(m -> m.getCategoriaDeMueble() == categoria));
+  }
+
+  @Test
+  public void deberiaAsignarElMaterialAlMuebleCuandoLoIndicoEnElAlta() {
+    // Given
+    Material bambu = new Material("Bambú", true);
+    when(servicioMaterial.buscarPorId(3L)).thenReturn(bambu);
+    Mueble muebleNuevo = new Mueble("Mesa ratona", 1.2, 0.6);
+
+    // When
+    controladorInventarioMuebles.agregar(muebleNuevo, null, 3L);
+
+    // Then
+    verify(servicioEdicionInventarioMuebles).crear(argThat(m -> m.getMaterial() == bambu));
+  }
+
+  @Test
+  public void deberiaAsignarElMaterialAlMuebleCuandoLoIndicoEnLaEdicion()
+    throws MuebleNoEncontrado {
+    // Given
+    Material bambu = new Material("Bambú", true);
+    when(servicioMaterial.buscarPorId(3L)).thenReturn(bambu);
+    Mueble datos = new Mueble("Mesa ratona", 1.2, 0.6);
+
+    // When
+    controladorInventarioMuebles.editar(1, datos, null, null, null, 3L);
+
+    // Then
+    verify(servicioEdicionInventarioMuebles)
+      .actualizar(eq(1), argThat(m -> m.getMaterial() == bambu));
+  }
+
+  @Test
+  public void deberiaCargarLosMaterialesEnElModelCuandoSolicitoElInventario() {
+    // When
+    ModelAndView mav = controladorInventarioMuebles.irAInventario(null, null);
+
+    // Then
+    assertEquals(servicioMaterial.obtenerMateriales(), mav.getModel().get("materiales"));
+  }
+
+  @Test
+  public void deberiaCargarLosMaterialesEnElModelCuandoSolicitoElFormularioDeEdicion()
+    throws MuebleNoEncontrado {
+    // When
+    ModelAndView mav = controladorInventarioMuebles.irAEditar(1, null, null);
+
+    // Then
+    assertEquals(servicioMaterial.obtenerMateriales(), mav.getModel().get("materiales"));
   }
 
   @Test

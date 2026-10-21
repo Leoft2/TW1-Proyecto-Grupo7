@@ -1,9 +1,6 @@
 package com.tallerwebi.presentacion;
 
-import com.tallerwebi.dominio.Abertura;
-import com.tallerwebi.dominio.Muro;
-import com.tallerwebi.dominio.ServicioAmbiente;
-import com.tallerwebi.dominio.TipoAbertura;
+import com.tallerwebi.dominio.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,5 +77,17 @@ public class ControladorAmbiente {
       modelo.put("error", e.getMessage());
       return new ModelAndView("ambiente-aberturas", modelo);
     }
+  }
+
+  @RequestMapping(path = "/ambientes/{id}/muebles", method = RequestMethod.GET)
+  public ModelAndView mueblesDelAmbiente(@PathVariable("id") Long id) {
+    Ambiente ambiente = servicioAmbiente.buscarAmbiente(id);
+    if (ambiente == null) {
+      return new ModelAndView("redirect:/ambientes");
+    }
+    Map<String, Object> modelo = new ModelMap();
+    modelo.put("ambiente", ambiente);
+    modelo.put("muebles", ambiente.getMuebles());
+    return new ModelAndView("muebles", modelo);
   }
 }

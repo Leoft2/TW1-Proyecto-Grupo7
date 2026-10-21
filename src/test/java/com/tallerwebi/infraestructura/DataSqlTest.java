@@ -13,6 +13,7 @@ import com.tallerwebi.datos.HsqldbConDatosTestConfig;
 import com.tallerwebi.dominio.Ambiente;
 import com.tallerwebi.dominio.CategoriaDeMueble;
 import com.tallerwebi.dominio.Estilo;
+import com.tallerwebi.dominio.Material;
 import com.tallerwebi.dominio.Mueble;
 import com.tallerwebi.dominio.RepositorioAmbiente;
 import com.tallerwebi.dominio.ServicioCatalogo;
@@ -135,7 +136,7 @@ public class DataSqlTest {
     );
 
     List<String> nombresDeHabitacion = servicioCatalogo
-      .ObtenerMueblesFiltrados(null, null, null, new TipoDeAmbiente("Habitación"), null)
+      .ObtenerMueblesFiltrados(null, null, null, new TipoDeAmbiente("Habitación"), null, null, null)
       .stream()
       .map(Mueble::getNombre)
       .toList();
@@ -155,6 +156,8 @@ public class DataSqlTest {
     List<Mueble> rango = servicioCatalogo.ObtenerMueblesFiltrados(
       20000.0,
       50000.0,
+      null,
+      null,
       null,
       null,
       null
@@ -216,6 +219,70 @@ public class DataSqlTest {
         .toList();
 
     assertThat(mueblesSinMarcar, hasSize(0));
+  }
+
+  @Test
+  @Transactional
+  public void dadoQueArrancaLaAplicacion_cuandoConsultoLosMateriales_entoncesEstanSembrados() {
+    assertThat(
+      this.obtenerNombresDeMateriales(),
+      containsInAnyOrder(
+        "Madera certificada",
+        "Madera reciclada",
+        "Bambú",
+        "Madera común",
+        "Metal",
+        "Melamina",
+        "Plástico",
+        "Otro"
+      )
+    );
+  }
+
+  @Test
+  @Transactional
+  public void dadoQueArrancaLaAplicacion_cuandoConsultoElCatalogo_entoncesTodosLosMueblesTienenMaterial() {
+    List<String> mueblesSinMaterial =
+      this.obtenerMuebles()
+        .stream()
+        .filter(mueble -> mueble.getMaterial() == null)
+        .map(Mueble::getNombre)
+        .toList();
+
+    assertThat(mueblesSinMaterial, hasSize(0));
+  }
+
+  @Test
+  @Transactional
+  public void dadoQueLosMueblesSembrados_cuandoFiltroPorSoloSostenibles_entoncesSoloTraeLosSostenibles()
+    throws PresupuestoNegativoException {
+    ServicioCatalogo servicioCatalogo = new ServicioCatalogoImpl(
+      new RepositorioCatalogoImpl(this.sessionFactory, new BorradorDeMueble(this.sessionFactory))
+    );
+
+    List<Mueble> sostenibles = servicioCatalogo.ObtenerMueblesFiltrados(
+      null,
+      null,
+      null,
+      null,
+      null,
+      true,
+      null
+    );
+
+    assertThat(sostenibles, is(not(empty())));
+    for (Mueble mueble : sostenibles) {
+      assertThat(mueble.getMaterial().isSostenible(), is(true));
+    }
+  }
+
+  private List<String> obtenerNombresDeMateriales() {
+    return this.sessionFactory.getCurrentSession()
+      .createQuery("FROM Material", Material.class)
+      .getResultList()
+      .stream()
+      .map(Material::getNombre)
+      .toList();
   }
 
   @Test

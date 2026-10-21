@@ -12,6 +12,7 @@ import com.tallerwebi.dominio.excepcion.ValidacionException;
 import com.tallerwebi.presentacion.excepcion.FiltroDeMueblesInvalidoException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,9 @@ public class ControladorCatalogoDeMuebles {
   private static final String ROL_ADMIN = "ADMIN";
   private static final String REDIRECCION_AL_CATALOGO = "redirect:/catalogo";
   private static final String VISTA_CREAR_MUEBLE = "crearMueble";
+  private static final String VISTA_EDITAR_MUEBLE = "editarMueble";
+  private static final String ATTR_DATOS_MUEBLE = "datosMuebleCatalogo";
+  private static final String ATTR_ID_MUEBLE = "idMueble";
 
   private final ServicioCatalogo servicioCatalogo;
   private final ServicioCategoriaDeMueble servicioCategoriaDeMueble;
@@ -78,7 +82,7 @@ public class ControladorCatalogoDeMuebles {
 
   @RequestMapping(path = "/muebles/crear", method = RequestMethod.POST)
   public ModelAndView crearMuebleDelCatalogo(
-    @ModelAttribute("datosMuebleCatalogo") DTONuevoMuebleCatalogo datos,
+    @ModelAttribute(ATTR_DATOS_MUEBLE) DTONuevoMuebleCatalogo datos,
     HttpServletRequest request
   ) {
     if (!this.esAdministrador(request)) {
@@ -90,6 +94,63 @@ public class ControladorCatalogoDeMuebles {
       Map<String, Object> modelo = this.modeloDelFormularioDeCreacion();
       modelo.put("error", e.getMessage());
       return new ModelAndView(VISTA_CREAR_MUEBLE, modelo);
+    }
+    return new ModelAndView(REDIRECCION_AL_CATALOGO);
+  }
+
+  @RequestMapping(path = "/muebles/editar/{id}", method = RequestMethod.GET)
+  public ModelAndView editarMueble(@PathVariable("id") int id, HttpServletRequest request) {
+    if (!this.esAdministrador(request)) {
+      return new ModelAndView(REDIRECCION_AL_CATALOGO);
+    }
+    Mueble mueble;
+    try {
+      mueble = this.servicioCatalogo.ObtenerMueblePorId(id);
+    } catch (MuebleNoEncontrado e) {
+      return new ModelAndView(REDIRECCION_AL_CATALOGO);
+    }
+    Map<String, Object> modelo = this.modeloDelFormularioDeCreacion();
+    modelo.put("muebleAEliminar", mueble);
+    modelo.put(ATTR_ID_MUEBLE, mueble.getId());
+    modelo.put(ATTR_DATOS_MUEBLE, this.aDatosDelCatalogo(mueble));
+    return new ModelAndView(VISTA_EDITAR_MUEBLE, modelo);
+  }
+
+  @RequestMapping(path = "/muebles/editar/{id}", method = RequestMethod.POST)
+  public ModelAndView modificarMuebleDelCatalogo(
+    @PathVariable("id") int id,
+    @ModelAttribute(ATTR_DATOS_MUEBLE) DTONuevoMuebleCatalogo datos,
+    HttpServletRequest request
+  ) {
+    if (!this.esAdministrador(request)) {
+      return new ModelAndView(REDIRECCION_AL_CATALOGO);
+    }
+    try {
+      this.servicioCatalogo.modificarMuebleDelCatalogo(id, this.aMuebleDelCatalogo(datos));
+    } catch (ValidacionException e) {
+      Map<String, Object> modelo = this.modeloDelFormularioDeEdicion();
+      modelo.put(ATTR_ID_MUEBLE, id);
+      modelo.put(ATTR_DATOS_MUEBLE, datos);
+      modelo.put("error", e.getMessage());
+      return new ModelAndView(VISTA_EDITAR_MUEBLE, modelo);
+    } catch (MuebleNoEncontrado e) {
+      return new ModelAndView(REDIRECCION_AL_CATALOGO);
+    }
+    return new ModelAndView(REDIRECCION_AL_CATALOGO);
+  }
+
+  @RequestMapping(path = "/muebles/eliminar/{id}", method = RequestMethod.POST)
+  public ModelAndView eliminarMuebleDelCatalogo(
+    @PathVariable("id") int id,
+    HttpServletRequest request
+  ) {
+    if (!this.esAdministrador(request)) {
+      return new ModelAndView(REDIRECCION_AL_CATALOGO);
+    }
+    try {
+      this.servicioCatalogo.eliminarMuebleDelCatalogo(id);
+    } catch (MuebleNoEncontrado e) {
+      return new ModelAndView(REDIRECCION_AL_CATALOGO);
     }
     return new ModelAndView(REDIRECCION_AL_CATALOGO);
   }
@@ -158,6 +219,37 @@ public class ControladorCatalogoDeMuebles {
     modelo.put("categorias", this.servicioCategoriaDeMueble.obtenerCategorias());
     modelo.put("tiposDeAmbiente", TipoDeAmbiente.nombresConocidos());
     return modelo;
+  }
+
+  private Map<String, Object> modeloDelFormularioDeEdicion() {
+    return this.modeloDelFormularioDeCreacion();
+  }
+
+  private DTONuevoMuebleCatalogo aDatosDelCatalogo(Mueble mueble) {
+    DTONuevoMuebleCatalogo datos = new DTONuevoMuebleCatalogo();
+    datos.setNombre(mueble.getNombre());
+    datos.setDescripcion(mueble.getDescripcion());
+    datos.setPrecio(mueble.getPrecio());
+    Estilo estilo = mueble.getEstilo();
+    if (estilo == null) {
+      datos.setEstilo(null);
+    } else {
+      datos.setEstilo(estilo.name());
+    }
+    CategoriaDeMueble categoria = mueble.getCategoriaDeMueble();
+    if (categoria == null) {
+      datos.setCategoria(null);
+    } else {
+      datos.setCategoria(categoria.getId());
+    }
+    datos.setAncho(mueble.getAncho());
+    datos.setLargo(mueble.getLargo());
+    List<String> nombresDeTipo = new ArrayList<>();
+    for (TipoDeAmbiente tipo : mueble.getTiposDeAmbiente()) {
+      nombresDeTipo.add(tipo.getNombre());
+    }
+    datos.setTiposDeAmbiente(nombresDeTipo);
+    return datos;
   }
 
   private Mueble aMuebleDelCatalogo(DTONuevoMuebleCatalogo datos) {

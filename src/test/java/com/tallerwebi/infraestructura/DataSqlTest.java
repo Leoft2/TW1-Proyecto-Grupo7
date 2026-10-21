@@ -131,7 +131,7 @@ public class DataSqlTest {
   public void dadoQueLosMueblesSembrados_cuandoFiltroElCatalogoPorHabitacion_entoncesAparecenLasCamas()
     throws PresupuestoNegativoException {
     ServicioCatalogo servicioCatalogo = new ServicioCatalogoImpl(
-      new RepositorioCatalogoImpl(this.sessionFactory)
+      new RepositorioCatalogoImpl(this.sessionFactory, new BorradorDeMueble(this.sessionFactory))
     );
 
     List<String> nombresDeHabitacion = servicioCatalogo
@@ -149,7 +149,7 @@ public class DataSqlTest {
   public void dadoQueLosMueblesSembrados_cuandoFiltroPorUnRangoDePrecio_entoncesSoloTraeLosDelRango()
     throws PresupuestoNegativoException {
     ServicioCatalogo servicioCatalogo = new ServicioCatalogoImpl(
-      new RepositorioCatalogoImpl(this.sessionFactory)
+      new RepositorioCatalogoImpl(this.sessionFactory, new BorradorDeMueble(this.sessionFactory))
     );
 
     List<Mueble> rango = servicioCatalogo.ObtenerMueblesFiltrados(

@@ -157,6 +157,32 @@ public class ServicioCatalogoImpl implements ServicioCatalogo {
     return mueble;
   }
 
+  @Override
+  public void modificarMuebleDelCatalogo(int id, Mueble datos)
+    throws ValidacionException, MuebleNoEncontrado {
+    Mueble mueble = this.ObtenerMueblePorId(id);
+    this.validarMuebleDelCatalogo(datos);
+    this.copiarDatosDelCatalogo(mueble, datos);
+    this.repositorioCatalogo.guardarMueble(mueble);
+  }
+
+  @Override
+  public void eliminarMuebleDelCatalogo(int id) throws MuebleNoEncontrado {
+    this.ObtenerMueblePorId(id);
+    this.repositorioCatalogo.eliminar(id);
+  }
+
+  private void copiarDatosDelCatalogo(Mueble mueble, Mueble datos) {
+    mueble.setNombre(datos.getNombre());
+    mueble.setDescripcion(datos.getDescripcion());
+    mueble.setPrecio(datos.getPrecio());
+    mueble.setEstilo(datos.getEstilo());
+    mueble.setCategoriaDeMueble(datos.getCategoriaDeMueble());
+    mueble.setAncho(datos.getAncho());
+    mueble.setLargo(datos.getLargo());
+    mueble.setTiposDeAmbiente(datos.getTiposDeAmbiente());
+  }
+
   private void validarMuebleDelCatalogo(Mueble mueble) throws ValidacionException {
     this.validarNombreDelCatalogo(mueble.getNombre());
     this.validarPrecioDelCatalogo(mueble.getPrecio());

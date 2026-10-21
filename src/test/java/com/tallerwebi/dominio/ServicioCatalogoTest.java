@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -577,6 +578,80 @@ public class ServicioCatalogoTest {
 
     assertThat(tipoObtenido, is(nullValue()));
     verifyNoInteractions(this.repositorioCatalogoMock);
+  }
+
+  @Test
+  public void dadoUnMuebleExistente_cuandoLoModificoEnElCatalogo_entoncesSeGuardanLosCambios()
+    throws MuebleNoEncontrado {
+    Mueble existente = new Mueble();
+    existente.setId(7);
+    when(this.repositorioCatalogoMock.ObtenerMueblePorId(7)).thenReturn(existente);
+    Mueble datos = this.dadoQueTengoUnMuebleParaRegistrar();
+
+    this.servicioCatalogo.modificarMuebleDelCatalogo(7, datos);
+
+    assertThat(existente.getNombre(), is("Sillón Retró"));
+    assertThat(existente.getPrecio(), is(85000.0));
+    assertThat(existente.getAncho(), is(0.80));
+    assertThat(existente.getLargo(), is(0.85));
+    assertThat(existente.getTiposDeAmbiente().size(), is(1));
+    verify(this.repositorioCatalogoMock).guardarMueble(existente);
+  }
+
+  @Test
+  public void dadoUnMuebleInexistente_cuandoLoModificoEnElCatalogo_entoncesLanzaMuebleNoEncontrado() {
+    Mueble datos = this.dadoQueTengoUnMuebleParaRegistrar();
+
+    assertThrows(
+      MuebleNoEncontrado.class,
+      () -> {
+        this.servicioCatalogo.modificarMuebleDelCatalogo(99, datos);
+      }
+    );
+
+    verify(this.repositorioCatalogoMock, never()).guardarMueble(datos);
+  }
+
+  @Test
+  public void dadoUnMuebleConDatosInvalidos_cuandoLoModificoEnElCatalogo_entoncesNoSeGuarda() {
+    Mueble existente = new Mueble();
+    existente.setId(7);
+    when(this.repositorioCatalogoMock.ObtenerMueblePorId(7)).thenReturn(existente);
+    Mueble datos = this.dadoQueTengoUnMuebleParaRegistrar();
+    datos.setAncho(0.0);
+
+    assertThrows(
+      ValidacionException.class,
+      () -> {
+        this.servicioCatalogo.modificarMuebleDelCatalogo(7, datos);
+      }
+    );
+
+    verify(this.repositorioCatalogoMock, never()).guardarMueble(datos);
+  }
+
+  @Test
+  public void dadoUnMuebleExistente_cuandoLoEliminoDelCatalogo_entoncesSeElimina()
+    throws MuebleNoEncontrado {
+    Mueble existente = new Mueble();
+    existente.setId(7);
+    when(this.repositorioCatalogoMock.ObtenerMueblePorId(7)).thenReturn(existente);
+
+    this.servicioCatalogo.eliminarMuebleDelCatalogo(7);
+
+    verify(this.repositorioCatalogoMock).eliminar(7);
+  }
+
+  @Test
+  public void dadoUnMuebleInexistente_cuandoLoEliminoDelCatalogo_entoncesLanzaMuebleNoEncontrado() {
+    assertThrows(
+      MuebleNoEncontrado.class,
+      () -> {
+        this.servicioCatalogo.eliminarMuebleDelCatalogo(99);
+      }
+    );
+
+    verify(this.repositorioCatalogoMock, never()).eliminar(99);
   }
 
   private Mueble dadoQueTengoUnMuebleParaRegistrar() {

@@ -30,7 +30,11 @@ public class RepositorioInventarioMueblesTest {
 
   @BeforeEach
   public void init() {
-    this.repositorioInventarioMueble = new RepositorioInventarioMuebleImpl(this.sessionFactory);
+    this.repositorioInventarioMueble =
+      new RepositorioInventarioMuebleImpl(
+        this.sessionFactory,
+        new BorradorDeMueble(this.sessionFactory)
+      );
   }
 
   // -------------------------------------------------------------------------

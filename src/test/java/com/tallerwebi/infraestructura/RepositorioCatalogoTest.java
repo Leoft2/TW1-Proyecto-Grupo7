@@ -34,7 +34,8 @@ public class RepositorioCatalogoTest {
 
   @BeforeEach
   public void init() {
-    repositorioCatalogo = new RepositorioCatalogoImpl(sessionFactory);
+    repositorioCatalogo =
+      new RepositorioCatalogoImpl(sessionFactory, new BorradorDeMueble(sessionFactory));
   }
 
   @Test
@@ -115,6 +116,61 @@ public class RepositorioCatalogoTest {
     Mueble muebleObtenido = this.repositorioCatalogo.ObtenerMueblePorId(mueble.getId() + 1000);
 
     assertThat(muebleObtenido, is(nullValue()));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void DadoUnMuebleConTiposDeAmbienteCuandoLoBuscoPorIdEntoncesLosTiposYaEstanInicializados() {
+    Integer idDelMueble = this.dadoQueGuardoUnMuebleConTipoDeAmbiente("Sillón Retró", "Living");
+    this.sessionFactory.getCurrentSession().flush();
+    this.sessionFactory.getCurrentSession().clear();
+
+    Mueble muebleObtenido = this.repositorioCatalogo.ObtenerMueblePorId(idDelMueble);
+    this.sessionFactory.getCurrentSession().clear();
+
+    assertThat(muebleObtenido.getTiposDeAmbiente().size(), is(1));
+    assertThat(muebleObtenido.getTiposDeAmbiente().get(0).getNombre(), is(equalTo("Living")));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void DadoUnMuebleDelCatalogoCuandoLoEliminoEntoncesYaNoExiste() {
+    Integer idDelMueble = this.dadoQueGuardoUnMuebleConTipoDeAmbiente("Sillón Retró", "Living");
+    this.sessionFactory.getCurrentSession().flush();
+
+    this.repositorioCatalogo.eliminar(idDelMueble);
+    this.sessionFactory.getCurrentSession().clear();
+
+    assertThat(this.repositorioCatalogo.ObtenerMueblePorId(idDelMueble), is(nullValue()));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void DadoVariosMueblesDelCatalogoCuandoEliminoUnoEntoncesLosDemasSiguen() {
+    Integer idAEliminar = this.dadoQueGuardoUnMuebleConTipoDeAmbiente("Sillón Retró", "Living");
+    Mueble mesa = this.dadoQueTengoUnMueble("Mesa Ratona", 45000.0, Estilo.Boho);
+    this.cuandoGuardoUnMueble(mesa);
+    this.sessionFactory.getCurrentSession().flush();
+
+    this.repositorioCatalogo.eliminar(idAEliminar);
+    this.sessionFactory.getCurrentSession().clear();
+
+    Mueble mesaObtenida = this.repositorioCatalogo.ObtenerMueblePorId(mesa.getId());
+    assertThat(mesaObtenida, is(notNullValue()));
+    assertThat(mesaObtenida.getNombre(), is(equalTo("Mesa Ratona")));
+  }
+
+  private Integer dadoQueGuardoUnMuebleConTipoDeAmbiente(String nombre, String nombreDelTipo) {
+    TipoDeAmbiente tipoDeAmbiente = this.dadoQueTengoUnTipoDeAmbienteGuardado(nombreDelTipo);
+    Mueble mueble = this.dadoQueTengoUnMueble(nombre, 85000.0, Estilo.Retro);
+    mueble.setAncho(0.80);
+    mueble.setLargo(0.85);
+    mueble.agregarTipoDeAmbiente(tipoDeAmbiente);
+    this.cuandoGuardoUnMueble(mueble);
+    return mueble.getId();
   }
 
   @Test

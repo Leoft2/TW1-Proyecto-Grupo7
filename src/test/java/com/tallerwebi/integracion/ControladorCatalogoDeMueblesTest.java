@@ -7,6 +7,7 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -39,6 +40,7 @@ public class ControladorCatalogoDeMueblesTest {
 
   private static final String CATALOGO = "catalogo";
   private static final String CREAR_MUEBLE = "crearMueble";
+  private static final String EDITAR_MUEBLE = "editarMueble";
   private static final String REDIRECCION_AL_CATALOGO = "redirect:/catalogo";
   private static final String ROL_ADMIN = "ADMIN";
   private static final String ROL_USUARIO_COMUN = "USER";
@@ -399,6 +401,124 @@ public class ControladorCatalogoDeMueblesTest {
     throws Exception {
     assertThat(modelAndView.getViewName(), is(REDIRECCION_AL_CATALOGO));
     verifyNoInteractions(this.servicioCatalogo);
+  }
+
+  @Test
+  public void dadoQueSoyAdmin_cuandoNavegoAEditarUnMueble_entoncesVeoElFormularioConSusDatos()
+    throws Exception {
+    Mueble retro = unMueble("Sillón Retró", 85000.0, Estilo.Retro);
+    retro.setId(7);
+    retro.setAncho(0.80);
+    retro.setLargo(0.85);
+    retro.setTiposDeAmbiente(Arrays.asList(new TipoDeAmbiente("Living")));
+    this.dadoQueLaSesionTieneElRol(ROL_ADMIN);
+    when(this.servicioCatalogo.ObtenerMueblePorId(7)).thenReturn(retro);
+
+    ModelAndView modelAndView = this.controladorCatalogoDeMuebles.editarMueble(7, this.requestMock);
+
+    assertThat(modelAndView.getViewName(), is(EDITAR_MUEBLE));
+    assertThat(modelAndView.getModel().get("muebleAEliminar"), is(retro));
+  }
+
+  @Test
+  public void dadoQueNoSoyAdmin_cuandoNavegoAEditarUnMueble_entoncesVuelvoAlCatalogo()
+    throws Exception {
+    this.dadoQueLaSesionTieneElRol(ROL_USUARIO_COMUN);
+
+    ModelAndView modelAndView = this.controladorCatalogoDeMuebles.editarMueble(7, this.requestMock);
+
+    this.entoncesVuelvoAlCatalogoSinConsultarElServicio(modelAndView);
+  }
+
+  @Test
+  public void dadoUnFormularioValido_cuandoEditoUnMuebleDelCatalogo_entoncesSeGuarda()
+    throws Exception {
+    CategoriaDeMueble sillones = new CategoriaDeMueble("Sillón", 0.80, 0.85);
+    TipoDeAmbiente living = new TipoDeAmbiente("Living");
+    this.dadoQueLaSesionTieneElRol(ROL_ADMIN);
+    when(this.servicioCategoriaDeMueble.buscarPorId(1L)).thenReturn(sillones);
+    when(this.servicioCatalogo.buscarTipoDeAmbientePorNombre("Living")).thenReturn(living);
+    DTONuevoMuebleCatalogo datos = this.dadoQueCompleteElFormularioDeMueble();
+
+    ModelAndView modelAndView =
+      this.controladorCatalogoDeMuebles.modificarMuebleDelCatalogo(7, datos, this.requestMock);
+
+    assertThat(modelAndView.getViewName(), is(REDIRECCION_AL_CATALOGO));
+    ArgumentCaptor<Mueble> captor = ArgumentCaptor.forClass(Mueble.class);
+    verify(this.servicioCatalogo).modificarMuebleDelCatalogo(eq(7), captor.capture());
+    assertThat(captor.getValue().getNombre(), is("Sillón Retró"));
+    assertThat(captor.getValue().getAncho(), is(0.80));
+  }
+
+  @Test
+  public void dadoUnFormularioConDatosInvalidos_cuandoEditoUnMuebleDelCatalogo_entoncesVeoElError()
+    throws Exception {
+    this.dadoQueLaSesionTieneElRol(ROL_ADMIN);
+    doThrow(new ValidacionException("El precio del mueble debe ser mayor a cero"))
+      .when(this.servicioCatalogo)
+      .modificarMuebleDelCatalogo(eq(7), any(Mueble.class));
+    DTONuevoMuebleCatalogo datos = this.dadoQueCompleteElFormularioDeMueble();
+
+    ModelAndView modelAndView =
+      this.controladorCatalogoDeMuebles.modificarMuebleDelCatalogo(7, datos, this.requestMock);
+
+    assertThat(modelAndView.getViewName(), is(EDITAR_MUEBLE));
+    assertThat(modelAndView.getModel().get("idMueble"), is(7));
+    assertThat(
+      modelAndView.getModel().get("error"),
+      is("El precio del mueble debe ser mayor a cero")
+    );
+  }
+
+  @Test
+  public void dadoUnMuebleInexistente_cuandoLoEdito_entoncesVuelvoAlCatalogo() throws Exception {
+    this.dadoQueLaSesionTieneElRol(ROL_ADMIN);
+    doThrow(new MuebleNoEncontrado("No existe el mueble 7"))
+      .when(this.servicioCatalogo)
+      .modificarMuebleDelCatalogo(eq(7), any(Mueble.class));
+    DTONuevoMuebleCatalogo datos = this.dadoQueCompleteElFormularioDeMueble();
+
+    ModelAndView modelAndView =
+      this.controladorCatalogoDeMuebles.modificarMuebleDelCatalogo(7, datos, this.requestMock);
+
+    assertThat(modelAndView.getViewName(), is(REDIRECCION_AL_CATALOGO));
+  }
+
+  @Test
+  public void dadoQueNoSoyAdmin_cuandoEditoUnMuebleDelCatalogo_entoncesNoSeGuardaNada()
+    throws Exception {
+    this.dadoQueLaSesionTieneElRol(ROL_USUARIO_COMUN);
+    DTONuevoMuebleCatalogo datos = this.dadoQueCompleteElFormularioDeMueble();
+
+    ModelAndView modelAndView =
+      this.controladorCatalogoDeMuebles.modificarMuebleDelCatalogo(7, datos, this.requestMock);
+
+    assertThat(modelAndView.getViewName(), is(REDIRECCION_AL_CATALOGO));
+    verify(this.servicioCatalogo, never()).modificarMuebleDelCatalogo(eq(7), any(Mueble.class));
+  }
+
+  @Test
+  public void dadoQueSoyAdmin_cuandoEliminoUnMuebleDelCatalogo_entoncesSeElimina()
+    throws Exception {
+    this.dadoQueLaSesionTieneElRol(ROL_ADMIN);
+
+    ModelAndView modelAndView =
+      this.controladorCatalogoDeMuebles.eliminarMuebleDelCatalogo(7, this.requestMock);
+
+    assertThat(modelAndView.getViewName(), is(REDIRECCION_AL_CATALOGO));
+    verify(this.servicioCatalogo).eliminarMuebleDelCatalogo(7);
+  }
+
+  @Test
+  public void dadoQueNoSoyAdmin_cuandoEliminoUnMuebleDelCatalogo_entoncesNoSeEliminaNada()
+    throws Exception {
+    this.dadoQueLaSesionTieneElRol(ROL_USUARIO_COMUN);
+
+    ModelAndView modelAndView =
+      this.controladorCatalogoDeMuebles.eliminarMuebleDelCatalogo(7, this.requestMock);
+
+    assertThat(modelAndView.getViewName(), is(REDIRECCION_AL_CATALOGO));
+    verify(this.servicioCatalogo, never()).eliminarMuebleDelCatalogo(7);
   }
 
   private ModelAndView cuandoNavegoAlCatalogo(String estilo, String precioMaximo) {

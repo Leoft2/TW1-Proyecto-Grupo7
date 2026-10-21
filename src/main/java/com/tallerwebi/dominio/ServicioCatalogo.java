@@ -14,6 +14,9 @@ public interface ServicioCatalogo {
   Mueble ObtenerMuebleMasBaratoDeCategoria(Estilo categoria);
   void RegistrarMueble(Mueble mueble1);
   void RegistrarMuebleDelCatalogo(Mueble mueble) throws ValidacionException;
+  void modificarMuebleDelCatalogo(int id, Mueble datos)
+    throws ValidacionException, MuebleNoEncontrado;
+  void eliminarMuebleDelCatalogo(int id) throws MuebleNoEncontrado;
   TipoDeAmbiente buscarTipoDeAmbientePorNombre(String nombre);
   List<Mueble> ObtenerMueblesOrdenadosPorPrecioAsc();
   List<Mueble> ObtenerMueblesOrdenadosPorPrecioDesc();

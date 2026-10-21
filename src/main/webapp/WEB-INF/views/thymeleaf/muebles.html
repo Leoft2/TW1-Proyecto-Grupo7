@@ -11,7 +11,10 @@
       <div>
         <span class="hb-eyebrow">Inventario</span>
         <h1>Muebles</h1>
-        <p>Muebles pertenecientes al ambiente.</p>
+        <p>
+          Muebles pertenecientes al ambiente
+          <span th:text="${ambiente.tipoDeAmbiente.nombre}">Habitación</span>.
+        </p>
       </div>
       <a th:href="@{/muebles/crear}" class="btn btn-lg btn-primary"><i class="bi bi-plus-lg"></i> Agregar mueble</a>
     </header>
@@ -27,27 +30,26 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td class="ps-4 fw-semibold">Cama</td>
-              <td><span class="hb-chip">200cm x 160cm</span></td>
-              <td class="text-end pe-4"><a th:href="@{/mueble/1}" class="btn btn-sm btn-secondary">Detalle</a></td>
+            <tr th:each="mueble : ${muebles}">
+              <td class="ps-4 fw-semibold" th:text="${mueble.nombre}">Cama</td>
+              <td>
+                <span class="hb-chip" th:if="${mueble.ancho != null and mueble.largo != null}"
+                  th:text="${mueble.ancho} + ' m x ' + ${mueble.largo} + ' m'">2.0 m x 1.6 m</span>
+                <span class="hb-chip" th:unless="${mueble.ancho != null and mueble.largo != null}">Sin medidas</span>
+              </td>
+              <td class="text-end pe-4">
+                <a th:href="@{/mueble/{id}(id=${mueble.id})}" class="btn btn-sm btn-secondary">Detalle</a>
+              </td>
             </tr>
-            <tr>
-              <td class="ps-4 fw-semibold">Escritorio</td>
-              <td><span class="hb-chip">120cm x 60cm</span></td>
-              <td class="text-end pe-4"><a th:href="@{/mueble/2}" class="btn btn-sm btn-secondary">Detalle</a></td>
-            </tr>
-            <tr>
-              <td class="ps-4 fw-semibold">Placard</td>
-              <td><span class="hb-chip">200cm x 60cm</span></td>
-              <td class="text-end pe-4"><a th:href="@{/mueble/3}" class="btn btn-sm btn-secondary">Detalle</a></td>
+            <tr th:if="${#lists.isEmpty(muebles)}">
+              <td colspan="3" class="ps-4 text-secondary">Este ambiente todavía no tiene muebles cargados.</td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <a th:href="@{/ambientes/1}" class="btn btn-secondary mt-4"><i class="bi bi-arrow-left"></i> Volver al ambiente</a>
+    <a th:href="@{/ambientes/{id}(id=${ambiente.id})}" class="btn btn-secondary mt-4"><i class="bi bi-arrow-left"></i> Volver al ambiente</a>
   </main>
 
   <footer th:replace="~{fragments/layout :: footer}"></footer>

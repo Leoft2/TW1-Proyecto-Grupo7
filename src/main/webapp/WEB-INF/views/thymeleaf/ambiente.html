@@ -14,7 +14,7 @@
         <p>Acá podés ver, editar y rediseñar este ambiente.</p>
       </div>
       <div class="d-flex flex-wrap gap-2">
-        <a th:href="@{/muebles}" class="btn btn-lg btn-secondary"><i class="bi bi-pencil"></i> Ver / editar muebles</a>
+        <a th:href="@{/ambientes/{id}/muebles(id=${ambiente.id})}" class="btn btn-lg btn-secondary"><i class="bi bi-pencil"></i> Ver / editar muebles</a>
         <a th:href="@{/ambientes/{id}/redisenar(id=${ambiente.id})}" class="btn btn-lg btn-primary"><i class="bi bi-magic"></i> Rediseñar</a>
       </div>
     </header>

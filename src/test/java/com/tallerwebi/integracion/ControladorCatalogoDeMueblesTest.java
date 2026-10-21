@@ -335,12 +335,6 @@ public class ControladorCatalogoDeMueblesTest {
   }
 
   @Test
-  public void dadoQueNavegoAMuebles_cuandoLoHago_entoncesVeoLaVistaDeMuebles() throws Exception {
-    ModelAndView modelAndView = this.controladorCatalogoDeMuebles.muebles();
-    assertThat(modelAndView.getViewName(), is("muebles"));
-  }
-
-  @Test
   public void dadoQueSoyAdmin_cuandoNavegoACrearMueble_entoncesVeoElFormularioDeCreacion()
     throws Exception {
     this.dadoQueLaSesionTieneElRol(ROL_ADMIN);

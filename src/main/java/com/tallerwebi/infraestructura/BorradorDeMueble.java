@@ -1,5 +1,6 @@
 package com.tallerwebi.infraestructura;
 
+import com.tallerwebi.dominio.Ambiente;
 import com.tallerwebi.dominio.Plano;
 import java.util.List;
 import org.hibernate.Session;
@@ -17,6 +18,8 @@ public class BorradorDeMueble {
 
   private static final String PLANOS_QUE_EXCLUYEN_MUEBLE =
     "select p from Plano p join p.mueblesExcluidos m where m.id = :id";
+  private static final String AMBIENTES_CON_EL_MUEBLE =
+    "select a from Ambiente a join a.muebles m where m.id = :id";
   private static final String ELIMINAR_MUEBLES_UBICADOS =
     "delete from MuebleUbicado u where u.mueble.id = :id";
   private static final String ELIMINAR_MUEBLE_TIPO_AMBIENTE =
@@ -32,6 +35,7 @@ public class BorradorDeMueble {
 
   public void eliminar(int id) {
     quitarMuebleDeExcluidos(id);
+    quitarMuebleDeAmbientes(id);
     session().flush();
 
     ejecutarEliminacion(ELIMINAR_MUEBLES_UBICADOS, id);
@@ -47,6 +51,17 @@ public class BorradorDeMueble {
 
     for (Plano plano : planos) {
       plano.getMueblesExcluidos().removeIf(mueble -> mueble.getId() == id);
+    }
+  }
+
+  private void quitarMuebleDeAmbientes(int id) {
+    List<Ambiente> ambientes = session()
+      .createQuery(AMBIENTES_CON_EL_MUEBLE, Ambiente.class)
+      .setParameter("id", id)
+      .getResultList();
+
+    for (Ambiente ambiente : ambientes) {
+      ambiente.getMuebles().removeIf(mueble -> mueble.getId() == id);
     }
   }
 

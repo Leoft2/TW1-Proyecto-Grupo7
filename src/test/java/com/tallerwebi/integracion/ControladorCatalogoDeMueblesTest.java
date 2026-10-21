@@ -41,6 +41,7 @@ import org.springframework.web.servlet.ModelAndView;
 public class ControladorCatalogoDeMueblesTest {
 
   private static final String CATALOGO = "catalogo";
+  private static final String RESULTADOS_DEL_CATALOGO = "catalogo-resultados";
   private static final String CREAR_MUEBLE = "crearMueble";
   private static final String EDITAR_MUEBLE = "editarMueble";
   private static final String REDIRECCION_AL_CATALOGO = "redirect:/catalogo";
@@ -335,6 +336,68 @@ public class ControladorCatalogoDeMueblesTest {
   }
 
   @Test
+  public void dadoQueNavegoAlCatalogo_cuandoLoHago_entoncesElModeloDiceCuantosMueblesHay()
+    throws Exception {
+    Mueble retro = unMueble("Sillón Retró", 85000.0, Estilo.Retro);
+    this.dadoQueElCatalogoCumpleCon(null, null, Arrays.asList(retro, unMueble("Mesa", 10.0, null)));
+
+    ModelAndView modelAndView = this.cuandoNavegoAlCatalogo(null, null);
+
+    assertThat(modelAndView.getModel().get("totalMuebles"), is(2));
+  }
+
+  @Test
+  public void dadoQueNavegoAlCatalogo_cuandoLoHago_entoncesReciboLosTiposDeAmbienteParaFiltrar()
+    throws Exception {
+    ModelAndView modelAndView = this.cuandoNavegoAlCatalogo(null, null);
+
+    assertThat(
+      modelAndView.getModel().get("tiposDeAmbiente"),
+      is(TipoDeAmbiente.nombresConocidos())
+    );
+  }
+
+  @Test
+  public void dadoQuePidoLosResultadosDelCatalogo_cuandoLoHago_entoncesVeoSoloElFragmentoDeMuebles()
+    throws Exception {
+    Mueble retro = unMueble("Sillón Retró", 85000.0, Estilo.Retro);
+    this.dadoQueElCatalogoCumpleCon(Estilo.Retro, null, Arrays.asList(retro));
+    when(this.requestMock.getParameter("estilo")).thenReturn("Retro");
+
+    ModelAndView modelAndView =
+      this.controladorCatalogoDeMuebles.resultadosDelCatalogo(this.requestMock);
+
+    assertThat(modelAndView.getViewName(), is(RESULTADOS_DEL_CATALOGO));
+    assertThat(this.obtenerMueblesDelModel(modelAndView), contains(retro));
+    verify(this.servicioCatalogo)
+      .ObtenerMueblesFiltrados(null, null, Estilo.Retro, null, null, false, null);
+  }
+
+  @Test
+  public void dadoQuePidoLosResultadosDelCatalogo_sinFiltros_cuandoLoHago_entoncesVeoTodosLosMuebles()
+    throws Exception {
+    Mueble retro = unMueble("Sillón Retró", 85000.0, Estilo.Retro);
+    this.dadoQueElCatalogoCumpleCon(null, null, Arrays.asList(retro));
+
+    ModelAndView modelAndView =
+      this.controladorCatalogoDeMuebles.resultadosDelCatalogo(this.requestMock);
+
+    assertThat(modelAndView.getViewName(), is(RESULTADOS_DEL_CATALOGO));
+    assertThat(this.obtenerMueblesDelModel(modelAndView), contains(retro));
+  }
+
+  @Test
+  public void dadoQuePidoLosResultadosDelCatalogo_conUnFiltroInvalido_entoncesVuelvoAlCatalogo()
+    throws Exception {
+    when(this.requestMock.getParameter("precioMin")).thenReturn("-1");
+
+    ModelAndView modelAndView =
+      this.controladorCatalogoDeMuebles.resultadosDelCatalogo(this.requestMock);
+
+    this.entoncesVuelvoAlCatalogoSinConsultarElServicio(modelAndView);
+  }
+
+  @Test
   public void dadoQueSoyAdmin_cuandoNavegoACrearMueble_entoncesVeoElFormularioDeCreacion()
     throws Exception {
     this.dadoQueLaSesionTieneElRol(ROL_ADMIN);
@@ -584,6 +647,25 @@ public class ControladorCatalogoDeMueblesTest {
     verify(this.servicioCatalogo).modificarMuebleDelCatalogo(eq(7), captor.capture());
     assertThat(captor.getValue().getNombre(), is("Sillón Retró"));
     assertThat(captor.getValue().getAncho(), is(0.80));
+  }
+
+  @Test
+  public void dadoUnFormularioConMaterial_cuandoEditoUnMuebleDelCatalogo_entoncesSeGuardaConEseMaterial()
+    throws Exception {
+    CategoriaDeMueble sillones = new CategoriaDeMueble("Sillón", 0.80, 0.85);
+    TipoDeAmbiente living = new TipoDeAmbiente("Living");
+    Material bambu = new Material("Bambú", true);
+    this.dadoQueLaSesionTieneElRol(ROL_ADMIN);
+    when(this.servicioCategoriaDeMueble.buscarPorId(1L)).thenReturn(sillones);
+    when(this.servicioCatalogo.buscarTipoDeAmbientePorNombre("Living")).thenReturn(living);
+    when(this.servicioMaterial.buscarPorId(2L)).thenReturn(bambu);
+    DTONuevoMuebleCatalogo datos = this.dadoQueCompleteElFormularioDeMueble();
+
+    this.controladorCatalogoDeMuebles.modificarMuebleDelCatalogo(7, datos, this.requestMock);
+
+    ArgumentCaptor<Mueble> captor = ArgumentCaptor.forClass(Mueble.class);
+    verify(this.servicioCatalogo).modificarMuebleDelCatalogo(eq(7), captor.capture());
+    assertThat(captor.getValue().getMaterial(), is(bambu));
   }
 
   @Test

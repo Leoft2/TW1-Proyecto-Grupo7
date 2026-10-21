@@ -92,6 +92,179 @@ public class RepositorioAmbienteTest {
   }
 
   // -------------------------------------------------------------------------
+  // Tests para HU-04
+  // -------------------------------------------------------------------------
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaGuardarAberturaCuandoSeAgregaPuertaAlAmbiente() {
+    Ambiente ambiente = this.dadoQueExisteElAmbienteConPuerta(4.0, 5.0, "Living");
+    this.flushYClear();
+
+    List<Abertura> aberturas = this.whenBuscoLasAberturasDelAmbiente(ambiente.getId());
+
+    this.thenLaCantidadDeAberturasEs(aberturas, 1);
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaConservarElMuroCuandoSeGuardaAbertura() {
+    Ambiente ambiente =
+      this.dadoQueExisteElAmbienteConPuertaEnMuro(4.0, 5.0, "Living", Muro.INFERIOR);
+    this.flushYClear();
+
+    Abertura abertura = this.whenBuscoLaPrimeraAberturaDelAmbiente(ambiente.getId());
+
+    this.thenElMuroEs(abertura, Muro.INFERIOR);
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaConservarElAnchoDeLaAberturaCuandoSeGuardaAbertura() {
+    Ambiente ambiente = this.dadoQueExisteElAmbienteConAberturaDeAncho(4.0, 5.0, "Living", 1.2);
+    this.flushYClear();
+
+    Abertura abertura = this.whenBuscoLaPrimeraAberturaDelAmbiente(ambiente.getId());
+
+    this.thenElAnchoDeLaAberturaEs(abertura, 1.2);
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaConservarLaPosicionDeLaAberturaCuandoSeGuardaAbertura() {
+    Ambiente ambiente = this.dadoQueExisteElAmbienteConAberturaEnPosicion(4.0, 5.0, "Living", 2.3);
+    this.flushYClear();
+
+    Abertura abertura = this.whenBuscoLaPrimeraAberturaDelAmbiente(ambiente.getId());
+
+    this.thenLaPosicionDeLaAberturaEs(abertura, 2.3);
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaDevolverLaListaDeAberturasVaciaCuandoElAmbienteNoTieneAberturas() {
+    Ambiente ambiente = this.dadoQueExisteElAmbiente(4.0, 5.0, "Living");
+    this.flushYClear();
+
+    List<Abertura> aberturas = this.whenBuscoLasAberturasDelAmbiente(ambiente.getId());
+
+    this.thenLaCantidadDeAberturasEs(aberturas, 0);
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaConservarLaAberturaDelPrimerAmbienteCuandoHayDosAmbientes() {
+    Ambiente ambienteA = this.dadoQueExisteElAmbienteConPuerta(4.0, 5.0, "Living");
+    this.dadoQueExisteElAmbienteConPuerta(3.0, 3.5, "Dormitorio");
+    this.flushYClear();
+
+    List<Abertura> aberturasA = this.whenBuscoLasAberturasDelAmbiente(ambienteA.getId());
+
+    this.thenLaCantidadDeAberturasEs(aberturasA, 1);
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaConservarLasAberturasDelSegundoAmbienteCuandoHayDosAmbientes() {
+    this.dadoQueExisteElAmbienteConPuerta(4.0, 5.0, "Living");
+    Ambiente ambienteB = this.dadoQueExisteElAmbienteConDosVentanas(3.0, 3.5, "Dormitorio");
+    this.flushYClear();
+
+    List<Abertura> aberturasB = this.whenBuscoLasAberturasDelAmbiente(ambienteB.getId());
+
+    this.thenContieneDosVentanas(aberturasB);
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaConservarLasAberturasCuandoElAmbienteTieneTambienObstaculos() {
+    Ambiente ambiente = this.dadoQueExisteElAmbienteConPuertaYObstaculo(4.0, 5.0, "Living");
+    this.flushYClear();
+
+    List<Abertura> aberturas = this.whenBuscoLasAberturasDelAmbiente(ambiente.getId());
+
+    this.thenLaCantidadDeAberturasEs(aberturas, 1);
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaConservarLosObstaculosCuandoElAmbienteTieneTambienAberturas() {
+    Ambiente ambiente = this.dadoQueExisteElAmbienteConPuertaYObstaculo(4.0, 5.0, "Living");
+    this.flushYClear();
+
+    List<Obstaculo> obstaculos = this.whenBuscoLosObstaculosDelAmbiente(ambiente.getId());
+
+    this.thenLaCantidadDeObstaculosEs(obstaculos, 1);
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaActualizarAberturaCuandoSeModificaYSeGuardaElAmbiente() {
+    Ambiente ambiente = this.dadoQueExisteElAmbienteConPuertaConRadio(4.0, 5.0, "Living", 0.9);
+    this.flushYClear();
+
+    Ambiente ambienteRecargado = this.whenBuscoElAmbiente(ambiente.getId());
+    ambienteRecargado
+      .getAberturas()
+      .set(0, new Abertura(TipoAbertura.PUERTA, Muro.SUPERIOR, 1.0, 0.9, 0.85));
+    this.flushYClear();
+
+    Abertura abertura = this.whenBuscoLaPrimeraAberturaDelAmbiente(ambiente.getId());
+
+    this.thenElRadioDeGiroEs(abertura, 0.85);
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaEliminarAberturaCuandoSeRemueveDeLaListaDelAmbiente() {
+    Ambiente ambiente = this.dadoQueExisteElAmbienteConPuertaYVentana(4.0, 5.0, "Living");
+    this.flushYClear();
+
+    Ambiente ambienteRecargado = this.whenBuscoElAmbiente(ambiente.getId());
+    ambienteRecargado.getAberturas().remove(0);
+    this.flushYClear();
+
+    List<Abertura> aberturas = this.whenBuscoLasAberturasDelAmbiente(ambiente.getId());
+
+    this.thenQuedaSoloLaVentana(aberturas);
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaGuardarVentanaSinRadioDeGiroCuandoSeAgregaVentanaAlAmbiente() {
+    Ambiente ambiente = this.dadoQueExisteElAmbienteConVentana(4.0, 5.0, "Living");
+    this.flushYClear();
+
+    Abertura abertura = this.whenBuscoLaPrimeraAberturaDelAmbiente(ambiente.getId());
+
+    this.thenEsVentanaSinRadio(abertura);
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaConservarTipoDeAberturaCuandoSeGuardanPuertaYVentana() {
+    Ambiente ambiente = this.dadoQueExisteElAmbienteConPuertaYVentana(4.0, 5.0, "Living");
+    this.flushYClear();
+
+    List<Abertura> aberturas = this.whenBuscoLasAberturasDelAmbiente(ambiente.getId());
+
+    this.thenContienePuertaYVentana(aberturas);
+  }
+
+  // -------------------------------------------------------------------------
   // Tests para HU-01
   // -------------------------------------------------------------------------
 
@@ -163,6 +336,96 @@ public class RepositorioAmbienteTest {
   }
 
   // -------------------------------------------------------------------------
+  // Given (preparacion) - HU-04
+  // -------------------------------------------------------------------------
+
+  private Ambiente dadoQueExisteElAmbienteConPuerta(Double ancho, Double largo, String tipo) {
+    Ambiente ambiente = this.dadoQueExisteElAmbiente(ancho, largo, tipo);
+    ambiente.agregarAbertura(new Abertura(TipoAbertura.PUERTA, Muro.SUPERIOR, 1.0, 0.9, 0.9));
+    this.sessionFactory.getCurrentSession().flush();
+    return ambiente;
+  }
+
+  private Ambiente dadoQueExisteElAmbienteConPuertaConRadio(
+    Double ancho,
+    Double largo,
+    String tipo,
+    Double radioDeGiro
+  ) {
+    Ambiente ambiente = this.dadoQueExisteElAmbiente(ancho, largo, tipo);
+    ambiente.agregarAbertura(
+      new Abertura(TipoAbertura.PUERTA, Muro.SUPERIOR, 1.0, 0.9, radioDeGiro)
+    );
+    this.sessionFactory.getCurrentSession().flush();
+    return ambiente;
+  }
+
+  private Ambiente dadoQueExisteElAmbienteConPuertaYVentana(
+    Double ancho,
+    Double largo,
+    String tipo
+  ) {
+    Ambiente ambiente = this.dadoQueExisteElAmbiente(ancho, largo, tipo);
+    ambiente.agregarAbertura(new Abertura(TipoAbertura.PUERTA, Muro.SUPERIOR, 1.0, 0.9, 0.9));
+    ambiente.agregarAbertura(new Abertura(TipoAbertura.VENTANA, Muro.DERECHO, 0.5, 1.5, null));
+    this.sessionFactory.getCurrentSession().flush();
+    return ambiente;
+  }
+
+  private Ambiente dadoQueExisteElAmbienteConDosVentanas(Double ancho, Double largo, String tipo) {
+    Ambiente ambiente = this.dadoQueExisteElAmbiente(ancho, largo, tipo);
+    ambiente.agregarAbertura(new Abertura(TipoAbertura.VENTANA, Muro.DERECHO, 0.5, 1.5, null));
+    ambiente.agregarAbertura(new Abertura(TipoAbertura.VENTANA, Muro.IZQUIERDO, 0.5, 1.5, null));
+    this.sessionFactory.getCurrentSession().flush();
+    return ambiente;
+  }
+
+  private Ambiente dadoQueExisteElAmbienteConVentana(Double ancho, Double largo, String tipo) {
+    Ambiente ambiente = this.dadoQueExisteElAmbiente(ancho, largo, tipo);
+    ambiente.agregarAbertura(new Abertura(TipoAbertura.VENTANA, Muro.DERECHO, 0.5, 1.5, null));
+    this.sessionFactory.getCurrentSession().flush();
+    return ambiente;
+  }
+
+  private Ambiente dadoQueExisteElAmbienteConPuertaEnMuro(
+    Double ancho,
+    Double largo,
+    String tipo,
+    Muro muro
+  ) {
+    Ambiente ambiente = this.dadoQueExisteElAmbiente(ancho, largo, tipo);
+    ambiente.agregarAbertura(new Abertura(TipoAbertura.PUERTA, muro, 1.0, 0.9, 0.9));
+    this.sessionFactory.getCurrentSession().flush();
+    return ambiente;
+  }
+
+  private Ambiente dadoQueExisteElAmbienteConAberturaEnPosicion(
+    Double ancho,
+    Double largo,
+    String tipo,
+    Double posicion
+  ) {
+    Ambiente ambiente = this.dadoQueExisteElAmbiente(ancho, largo, tipo);
+    ambiente.agregarAbertura(new Abertura(TipoAbertura.PUERTA, Muro.SUPERIOR, posicion, 0.9, 0.9));
+    this.sessionFactory.getCurrentSession().flush();
+    return ambiente;
+  }
+
+  private Ambiente dadoQueExisteElAmbienteConPuertaYObstaculo(
+    Double ancho,
+    Double largo,
+    String tipo
+  ) {
+    Ambiente ambiente = this.dadoQueExisteElAmbiente(ancho, largo, tipo);
+    ambiente.agregarAbertura(new Abertura(TipoAbertura.PUERTA, Muro.SUPERIOR, 1.0, 0.9, 0.9));
+    ambiente.agregarObstaculo(
+      new Obstaculo(TipoDeObstaculo.RADIADOR, Muro.IZQUIERDO, 0.5, 1.0, 0.2)
+    );
+    this.sessionFactory.getCurrentSession().flush();
+    return ambiente;
+  }
+
+  // -------------------------------------------------------------------------
   // When (ejecucion) - HU-01
   // -------------------------------------------------------------------------
 
@@ -175,6 +438,22 @@ public class RepositorioAmbienteTest {
   }
 
   // -------------------------------------------------------------------------
+  // When (ejecucion) - HU-04
+  // -------------------------------------------------------------------------
+
+  private List<Abertura> whenBuscoLasAberturasDelAmbiente(Long id) {
+    return this.repositorioAmbiente.buscarPorId(id).getAberturas();
+  }
+
+  private Abertura whenBuscoLaPrimeraAberturaDelAmbiente(Long id) {
+    return this.whenBuscoLasAberturasDelAmbiente(id).get(0);
+  }
+
+  private List<Obstaculo> whenBuscoLosObstaculosDelAmbiente(Long id) {
+    return this.repositorioAmbiente.buscarPorId(id).getObstaculos();
+  }
+
+  // -------------------------------------------------------------------------
   // Then (validacion) - HU-01
   // -------------------------------------------------------------------------
 
@@ -184,6 +463,80 @@ public class RepositorioAmbienteTest {
 
   private void thenElAnchoEs(Ambiente ambiente, Double anchoEsperado) {
     assertThat(ambiente.getAncho(), is(anchoEsperado));
+  }
+
+  // -------------------------------------------------------------------------
+  // Then (validacion) - HU-04
+  // -------------------------------------------------------------------------
+
+  private void thenLaCantidadDeAberturasEs(List<Abertura> aberturas, Integer cantidadEsperada) {
+    assertThat(aberturas, hasSize(cantidadEsperada));
+  }
+
+  private void thenElRadioDeGiroEs(Abertura abertura, Double radioEsperado) {
+    assertThat(abertura.getRadioDeGiro(), is(radioEsperado));
+  }
+
+  private void thenEsVentanaSinRadio(Abertura abertura) {
+    assertThat(abertura.getTipo(), is(TipoAbertura.VENTANA));
+    assertThat(abertura.getRadioDeGiro(), is(nullValue()));
+  }
+
+  private void thenContienePuertaYVentana(List<Abertura> aberturas) {
+    assertThat(aberturas, hasSize(2));
+    assertThat(
+      aberturas,
+      containsInAnyOrder(
+        hasProperty("tipo", is(TipoAbertura.PUERTA)),
+        hasProperty("tipo", is(TipoAbertura.VENTANA))
+      )
+    );
+  }
+
+  private void thenContieneDosVentanas(List<Abertura> aberturas) {
+    assertThat(aberturas, hasSize(2));
+    assertThat(
+      aberturas,
+      containsInAnyOrder(
+        hasProperty("tipo", is(TipoAbertura.VENTANA)),
+        hasProperty("tipo", is(TipoAbertura.VENTANA))
+      )
+    );
+  }
+
+  private void thenElMuroEs(Abertura abertura, Muro muroEsperado) {
+    assertThat(abertura.getMuro(), is(muroEsperado));
+  }
+
+  private void thenElAnchoDeLaAberturaEs(Abertura abertura, Double anchoEsperado) {
+    assertThat(abertura.getAncho(), is(anchoEsperado));
+  }
+
+  private void thenLaPosicionDeLaAberturaEs(Abertura abertura, Double posicionEsperada) {
+    assertThat(abertura.getPosicion(), is(posicionEsperada));
+  }
+
+  private void thenQuedaSoloLaVentana(List<Abertura> aberturas) {
+    assertThat(aberturas, hasSize(1));
+    assertThat(aberturas.get(0).getTipo(), is(TipoAbertura.VENTANA));
+  }
+
+  private void thenLaCantidadDeObstaculosEs(List<Obstaculo> obstaculos, Integer cantidadEsperada) {
+    assertThat(obstaculos, hasSize(cantidadEsperada));
+  }
+
+  private Ambiente dadoQueExisteElAmbienteConAberturaDeAncho(
+    Double ancho,
+    Double largo,
+    String tipo,
+    Double anchoAbertura
+  ) {
+    Ambiente ambiente = this.dadoQueExisteElAmbiente(ancho, largo, tipo);
+    ambiente.agregarAbertura(
+      new Abertura(TipoAbertura.PUERTA, Muro.SUPERIOR, 1.0, anchoAbertura, 0.9)
+    );
+    this.sessionFactory.getCurrentSession().flush();
+    return ambiente;
   }
 
   private void flushYClear() {

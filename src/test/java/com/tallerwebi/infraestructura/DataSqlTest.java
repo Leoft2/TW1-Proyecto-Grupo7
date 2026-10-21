@@ -18,6 +18,7 @@ import com.tallerwebi.dominio.RepositorioAmbiente;
 import com.tallerwebi.dominio.ServicioCatalogo;
 import com.tallerwebi.dominio.ServicioCatalogoImpl;
 import com.tallerwebi.dominio.TipoDeAmbiente;
+import com.tallerwebi.dominio.Usuario;
 import com.tallerwebi.dominio.excepcion.PresupuestoNegativoException;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
@@ -130,7 +131,7 @@ public class DataSqlTest {
   public void dadoQueLosMueblesSembrados_cuandoFiltroElCatalogoPorHabitacion_entoncesAparecenLasCamas()
     throws PresupuestoNegativoException {
     ServicioCatalogo servicioCatalogo = new ServicioCatalogoImpl(
-      new RepositorioCatalogoImpl(this.sessionFactory)
+      new RepositorioCatalogoImpl(this.sessionFactory, new BorradorDeMueble(this.sessionFactory))
     );
 
     List<String> nombresDeHabitacion = servicioCatalogo
@@ -148,7 +149,7 @@ public class DataSqlTest {
   public void dadoQueLosMueblesSembrados_cuandoFiltroPorUnRangoDePrecio_entoncesSoloTraeLosDelRango()
     throws PresupuestoNegativoException {
     ServicioCatalogo servicioCatalogo = new ServicioCatalogoImpl(
-      new RepositorioCatalogoImpl(this.sessionFactory)
+      new RepositorioCatalogoImpl(this.sessionFactory, new BorradorDeMueble(this.sessionFactory))
     );
 
     List<Mueble> rango = servicioCatalogo.ObtenerMueblesFiltrados(
@@ -202,6 +203,36 @@ public class DataSqlTest {
         "Zapatero Escandinavo"
       )
     );
+  }
+
+  @Test
+  @Transactional
+  public void dadoQueArrancaLaAplicacion_cuandoConsultoElCatalogo_entoncesTodosLosMueblesEstanMarcadosComoDelCatalogo() {
+    List<String> mueblesSinMarcar =
+      this.obtenerMuebles()
+        .stream()
+        .filter(mueble -> !mueble.getEnCatalogo())
+        .map(Mueble::getNombre)
+        .toList();
+
+    assertThat(mueblesSinMarcar, hasSize(0));
+  }
+
+  @Test
+  @Transactional
+  public void dadoQueArrancaLaAplicacion_cuandoConsultoLosUsuarios_entoncesHayUnUsuarioComunYUnAdministrador() {
+    Usuario usuarioDeTest = this.obtenerUsuario("test@unlam.edu.ar");
+    Usuario administrador = this.obtenerUsuario("admin@unlam.edu.ar");
+
+    assertThat(usuarioDeTest.getRol(), is("USER"));
+    assertThat(administrador.getRol(), is("ADMIN"));
+  }
+
+  private Usuario obtenerUsuario(String email) {
+    return this.sessionFactory.getCurrentSession()
+      .createQuery("FROM Usuario WHERE email = :email", Usuario.class)
+      .setParameter("email", email)
+      .getSingleResult();
   }
 
   private List<String> nombresDeMueblesDe(Ambiente ambiente) {

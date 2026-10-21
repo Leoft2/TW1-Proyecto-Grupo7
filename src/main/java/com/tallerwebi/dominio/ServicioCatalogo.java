@@ -3,6 +3,7 @@ package com.tallerwebi.dominio;
 import com.tallerwebi.dominio.excepcion.MuebleNoEncontrado;
 import com.tallerwebi.dominio.excepcion.PresupuestoNegativoException;
 import com.tallerwebi.dominio.excepcion.PresupuestoNuloException;
+import com.tallerwebi.dominio.excepcion.ValidacionException;
 import java.util.List;
 
 public interface ServicioCatalogo {
@@ -12,6 +13,11 @@ public interface ServicioCatalogo {
   List<Mueble> ObtenerMueblesDeEstilos(List<Estilo> estilos);
   Mueble ObtenerMuebleMasBaratoDeCategoria(Estilo categoria);
   void RegistrarMueble(Mueble mueble1);
+  void RegistrarMuebleDelCatalogo(Mueble mueble) throws ValidacionException;
+  void modificarMuebleDelCatalogo(int id, Mueble datos)
+    throws ValidacionException, MuebleNoEncontrado;
+  void eliminarMuebleDelCatalogo(int id) throws MuebleNoEncontrado;
+  TipoDeAmbiente buscarTipoDeAmbientePorNombre(String nombre);
   List<Mueble> ObtenerMueblesOrdenadosPorPrecioAsc();
   List<Mueble> ObtenerMueblesOrdenadosPorPrecioDesc();
   List<Mueble> ObtenerMueblesQueCumplan(

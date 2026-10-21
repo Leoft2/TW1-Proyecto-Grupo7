@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -22,6 +23,7 @@ import org.springframework.web.servlet.ModelAndView;
 public class ControladorPlano2D {
 
   private static final String ATRIBUTO_PLANO = "plano";
+  private static final String VISTA_PLANO_INTERACTIVO = "plano-interactivo";
 
   private ServicioPlano2D servicioPlano2D;
   private ServicioCategoriaDeMueble servicioCategoriaDeMueble;
@@ -113,6 +115,11 @@ public class ControladorPlano2D {
     }
 
     MuebleUbicado muebleUbicado = plano.getMuebles().get(indice);
+    if (muebleUbicado.isAnclado()) {
+      return ResponseEntity
+        .status(HttpStatus.CONFLICT)
+        .body("El mueble está anclado. Desanclalo antes de moverlo.");
+    }
     MuebleUbicado candidato = new MuebleUbicado(muebleUbicado.getMueble(), posicionX, posicionY);
     if (!servicioPlano2D.estaDentroDelPerimetro(candidato, plano.getAmbiente())) {
       return ResponseEntity
@@ -156,7 +163,73 @@ public class ControladorPlano2D {
     sesion.setAttribute(ATRIBUTO_PLANO, plano);
     Map<String, Object> modelo = new ModelMap();
     modelo.put(ATRIBUTO_PLANO, plano);
-    return new ModelAndView("plano-interactivo", modelo);
+    return new ModelAndView(VISTA_PLANO_INTERACTIVO, modelo);
+  }
+
+  @RequestMapping(path = "/plano/actual", method = RequestMethod.GET)
+  public ModelAndView planoActual(HttpSession sesion) {
+    Plano plano = (Plano) sesion.getAttribute(ATRIBUTO_PLANO);
+    if (plano == null) {
+      return new ModelAndView("redirect:/plano/ambiente");
+    }
+    Map<String, Object> modelo = new ModelMap();
+    modelo.put(ATRIBUTO_PLANO, plano);
+    return new ModelAndView(VISTA_PLANO_INTERACTIVO, modelo);
+  }
+
+  @RequestMapping(path = "/plano/anclar-mueble", method = RequestMethod.POST)
+  public ModelAndView anclarMueble(
+    @RequestParam("indice") Integer indice,
+    HttpSession sesion,
+    Model modelo
+  ) {
+    Plano plano = (Plano) sesion.getAttribute(ATRIBUTO_PLANO);
+    if (plano != null && indiceExiste(indice, plano)) {
+      plano.getMuebles().get(indice).anclar();
+      guardarPlanoDelUsuario(plano, sesion, modelo);
+    }
+    return new ModelAndView("redirect:/plano/actual");
+  }
+
+  @RequestMapping(path = "/plano/desanclar-mueble", method = RequestMethod.POST)
+  public ModelAndView desanclarMueble(
+    @RequestParam("indice") Integer indice,
+    HttpSession sesion,
+    Model modelo
+  ) {
+    Plano plano = (Plano) sesion.getAttribute(ATRIBUTO_PLANO);
+    if (plano != null && indiceExiste(indice, plano)) {
+      plano.getMuebles().get(indice).desanclar();
+      guardarPlanoDelUsuario(plano, sesion, modelo);
+    }
+    return new ModelAndView("redirect:/plano/actual");
+  }
+
+  @RequestMapping(path = "/plano/recalcular", method = RequestMethod.POST)
+  public ModelAndView recalcularPlano(HttpSession sesion, Model modelo) {
+    Plano plano = (Plano) sesion.getAttribute(ATRIBUTO_PLANO);
+    if (plano != null) {
+      servicioPlano2D.recalcularPlano(plano);
+      guardarPlanoDelUsuario(plano, sesion, modelo);
+    }
+    return new ModelAndView("redirect:/plano/actual");
+  }
+
+  private boolean indiceExiste(Integer indice, Plano plano) {
+    return indice != null && indice >= 0 && indice < plano.getMuebles().size();
+  }
+
+  // @SessionAttributes("plano") vuelve a guardar en la sesion el plano del modelo al terminar el
+  // request, por eso el plano recargado tambien se pone en el modelo.
+  private void guardarPlanoDelUsuario(Plano plano, HttpSession sesion, Model modelo) {
+    String usuarioEmail = (String) sesion.getAttribute("USUARIO_EMAIL");
+    Plano planoParaLaSesion = plano;
+    if (usuarioEmail != null) {
+      servicioPersistenciaPlano.guardar(plano, usuarioEmail);
+      planoParaLaSesion = servicioPersistenciaPlano.buscarUltimoDe(usuarioEmail);
+    }
+    sesion.setAttribute(ATRIBUTO_PLANO, planoParaLaSesion);
+    modelo.addAttribute(ATRIBUTO_PLANO, planoParaLaSesion);
   }
 
   private boolean movimientoEsValido(

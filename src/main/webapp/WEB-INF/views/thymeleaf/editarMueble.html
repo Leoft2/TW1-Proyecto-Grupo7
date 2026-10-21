@@ -1,0 +1,118 @@
+<!DOCTYPE HTML>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/layout :: head('Editar mueble del catálogo')}"></head>
+
+<body>
+  <nav th:replace="~{fragments/layout :: navbar('catalogo')}"></nav>
+
+  <main class="container">
+    <header class="hb-page-header">
+      <div>
+        <span class="hb-eyebrow">Catálogo</span>
+        <h1>Editar mueble del catálogo</h1>
+        <p>Actualizá los datos del mueble o eliminalo del catálogo.</p>
+      </div>
+    </header>
+
+    <div class="alert alert-danger" role="alert" th:if="${error}" th:text="${error}"></div>
+
+    <div class="card">
+      <div class="card-body p-4">
+        <form th:action="@{/muebles/editar/{id}(id=${idMueble})}" method="post">
+          <p class="form-text mt-0">Los campos con <span class="text-danger">*</span> son
+            obligatorios.</p>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="nombre" class="form-label">Nombre <span
+                  class="text-danger">*</span></label>
+              <input type="text" id="nombre" name="nombre" class="form-control" required
+                placeholder="Ej: Sillón Retró" th:value="${datosMuebleCatalogo?.nombre}">
+            </div>
+            <div class="col-md-6">
+              <label for="precio" class="form-label">Precio <span
+                  class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" id="precio" name="precio" class="form-control" min="1" step="0.01" required
+                  placeholder="Ej: 85000" th:value="${datosMuebleCatalogo?.precio}">
+              </div>
+            </div>
+            <div class="col-12">
+              <label for="descripcion" class="form-label">Descripción</label>
+              <textarea id="descripcion" name="descripcion" class="form-control" rows="3"
+                placeholder="Ej: Sillón de voluteadas tapizado en terciopelo."
+                th:text="${datosMuebleCatalogo?.descripcion}"></textarea>
+            </div>
+            <div class="col-md-4">
+              <label for="estilo" class="form-label">Estilo <span
+                  class="text-danger">*</span></label>
+              <select id="estilo" name="estilo" class="form-select" required>
+                <option value="">Elegí un estilo</option>
+                <option th:each="estilo : ${estilos}" th:value="${estilo.name()}" th:text="${estilo}"
+                  th:selected="${datosMuebleCatalogo?.estilo == estilo.name()}">Retro</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="categoria" class="form-label">Categoría <span
+                  class="text-danger">*</span></label>
+              <select id="categoria" name="categoria" class="form-select" required>
+                <option value="">Elegí una categoría</option>
+                <option th:each="categoria : ${categorias}" th:value="${categoria.id}"
+                  th:text="${categoria.nombre}"
+                  th:selected="${datosMuebleCatalogo?.categoria == categoria.id}">Sillón</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="ancho" class="form-label">Ancho (m) <span
+                  class="text-danger">*</span></label>
+              <input type="number" id="ancho" name="ancho" class="form-control" min="0.01" step="0.01"
+                required placeholder="Ej: 0.80" th:value="${datosMuebleCatalogo?.ancho}">
+            </div>
+            <div class="col-md-4">
+              <label for="largo" class="form-label">Largo (m) <span
+                  class="text-danger">*</span></label>
+              <input type="number" id="largo" name="largo" class="form-control" min="0.01" step="0.01"
+                required placeholder="Ej: 0.85" th:value="${datosMuebleCatalogo?.largo}">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Tipos de ambiente <span
+                  class="text-danger">*</span></label>
+              <div class="d-flex flex-wrap gap-3">
+                <div class="form-check" th:each="tipo : ${tiposDeAmbiente}">
+                  <input class="form-check-input" type="checkbox" name="tiposDeAmbiente"
+                    th:id="${'tipoDeAmbiente-' + tipo}" th:value="${tipo}"
+                    th:checked="${datosMuebleCatalogo?.tiposDeAmbiente?.contains(tipo)}">
+                  <label class="form-check-label" th:for="${'tipoDeAmbiente-' + tipo}"
+                    th:text="${tipo}">Living</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            <a th:href="@{/catalogo}" class="btn btn-secondary">Volver</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-3 border-danger">
+      <div class="card-body p-4">
+        <h2 class="h5">Eliminar mueble</h2>
+        <p class="text-secondary">Esta acción quita el mueble del catálogo de forma permanente.</p>
+        <form th:action="@{/muebles/eliminar/{id}(id=${idMueble})}" method="post"
+          data-confirmar-eliminacion>
+          <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Eliminar</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer th:replace="~{fragments/layout :: footer}"></footer>
+  <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+  <script type="module" th:src="@{/js/catalogo.js}"></script>
+</body>
+
+</html>

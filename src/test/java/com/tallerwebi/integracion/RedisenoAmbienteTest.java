@@ -95,6 +95,7 @@ public class RedisenoAmbienteTest {
     mueble.setPrecio(precio);
     mueble.setEstilo(Estilo.Japandi);
     mueble.setCategoriaDeMueble(categoria);
+    mueble.setEnCatalogo(true);
     this.sessionFactory.getCurrentSession().persist(mueble);
     this.sessionFactory.getCurrentSession().flush();
   }

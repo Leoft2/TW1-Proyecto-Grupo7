@@ -7,7 +7,6 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 import static org.mockito.Mockito.*;
 
-import com.tallerwebi.dominio.Ambiente;
 import com.tallerwebi.dominio.ServicioAmbiente;
 import com.tallerwebi.dominio.ServicioLogin;
 import com.tallerwebi.dominio.Usuario;

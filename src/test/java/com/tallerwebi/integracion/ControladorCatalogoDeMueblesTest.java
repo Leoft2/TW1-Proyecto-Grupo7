@@ -104,7 +104,8 @@ public class ControladorCatalogoDeMueblesTest {
 
     assertThat(this.obtenerMueblesDelModel(modelAndView), contains(retro));
     assertThat(modelAndView.getModel().get("estiloSeleccionado"), is(Estilo.Retro));
-    verify(this.servicioCatalogo).ObtenerMueblesFiltrados(null, null, Estilo.Retro, null, null);
+    verify(this.servicioCatalogo)
+      .ObtenerMueblesFiltrados(null, null, Estilo.Retro, null, null, false);
   }
 
   @Test
@@ -119,7 +120,7 @@ public class ControladorCatalogoDeMueblesTest {
 
     assertThat(this.obtenerMueblesDelModel(modelAndView), contains(barato));
     assertThat(modelAndView.getModel().get("precioMaximo"), is(50000.0));
-    verify(this.servicioCatalogo).ObtenerMueblesFiltrados(null, 50000.0, null, null, null);
+    verify(this.servicioCatalogo).ObtenerMueblesFiltrados(null, 50000.0, null, null, null, false);
   }
 
   @Test
@@ -130,7 +131,8 @@ public class ControladorCatalogoDeMueblesTest {
 
     this.cuandoNavegoAlCatalogo("Retro", "50000");
 
-    verify(this.servicioCatalogo).ObtenerMueblesFiltrados(null, 50000.0, Estilo.Retro, null, null);
+    verify(this.servicioCatalogo)
+      .ObtenerMueblesFiltrados(null, 50000.0, Estilo.Retro, null, null, false);
   }
 
   @Test
@@ -141,7 +143,7 @@ public class ControladorCatalogoDeMueblesTest {
 
     this.cuandoNavegoAlCatalogo("", "50000");
 
-    verify(this.servicioCatalogo).ObtenerMueblesFiltrados(null, 50000.0, null, null, null);
+    verify(this.servicioCatalogo).ObtenerMueblesFiltrados(null, 50000.0, null, null, null, false);
   }
 
   @Test
@@ -158,7 +160,9 @@ public class ControladorCatalogoDeMueblesTest {
   @Test
   public void dadoQueElCatalogoRechazaElPrecioMaximo_cuandoNavegoAlCatalogo_entoncesVeoElErrorYNoLosMuebles()
     throws Exception {
-    when(this.servicioCatalogo.ObtenerMueblesFiltrados(null, 50000.0, Estilo.Retro, null, null))
+    when(
+      this.servicioCatalogo.ObtenerMueblesFiltrados(null, 50000.0, Estilo.Retro, null, null, false)
+    )
       .thenThrow(new PresupuestoNegativoException("El presupuesto no puede ser negativo"));
 
     ModelAndView modelAndView = this.cuandoNavegoAlCatalogo("Retro", "50000");
@@ -198,15 +202,15 @@ public class ControladorCatalogoDeMueblesTest {
     Mueble caro = unMueble("Sillón Retró", 85000.0, Estilo.Retro);
     ArrayList<Mueble> muebles = new ArrayList<>();
     muebles.add(caro);
-    when(this.servicioCatalogo.ObtenerMueblesFiltrados(50000.0, null, null, null, null))
+    when(this.servicioCatalogo.ObtenerMueblesFiltrados(50000.0, null, null, null, null, false))
       .thenReturn(muebles);
 
     ModelAndView modelAndView =
-      this.controladorCatalogoDeMuebles.catalogo(null, null, "50000", null, null);
+      this.controladorCatalogoDeMuebles.catalogo(null, null, "50000", null, null, null);
 
     assertThat(this.obtenerMueblesDelModel(modelAndView), contains(caro));
     assertThat(modelAndView.getModel().get("precioMinimo"), is(50000.0));
-    verify(this.servicioCatalogo).ObtenerMueblesFiltrados(50000.0, null, null, null, null);
+    verify(this.servicioCatalogo).ObtenerMueblesFiltrados(50000.0, null, null, null, null, false);
   }
 
   @Test
@@ -216,15 +220,42 @@ public class ControladorCatalogoDeMueblesTest {
     Mueble paraLiving = unMueble("Sillón Retró", 85000.0, Estilo.Retro);
     ArrayList<Mueble> muebles = new ArrayList<>();
     muebles.add(paraLiving);
-    when(this.servicioCatalogo.ObtenerMueblesFiltrados(null, null, null, living, null))
+    when(this.servicioCatalogo.ObtenerMueblesFiltrados(null, null, null, living, null, false))
       .thenReturn(muebles);
 
     ModelAndView modelAndView =
-      this.controladorCatalogoDeMuebles.catalogo(null, null, null, "Living", null);
+      this.controladorCatalogoDeMuebles.catalogo(null, null, null, "Living", null, null);
 
-    verify(this.servicioCatalogo).ObtenerMueblesFiltrados(null, null, null, living, null);
+    verify(this.servicioCatalogo).ObtenerMueblesFiltrados(null, null, null, living, null, false);
     assertThat(modelAndView.getModel().get("tipoDeAmbiente"), is("Living"));
     assertThat(this.obtenerMueblesDelModel(modelAndView), contains(paraLiving));
+  }
+
+  @Test
+  public void dadoQueFiltroPorSoloSostenibles_cuandoNavegoAlCatalogo_entoncesSeLoPidoAsiAlServicio()
+    throws Exception {
+    Mueble sostenible = unMueble("Sillón de bambú", 85000.0, Estilo.Retro);
+    ArrayList<Mueble> muebles = new ArrayList<>();
+    muebles.add(sostenible);
+    when(this.servicioCatalogo.ObtenerMueblesFiltrados(null, null, null, null, null, true))
+      .thenReturn(muebles);
+
+    ModelAndView modelAndView =
+      this.controladorCatalogoDeMuebles.catalogo(null, null, null, null, null, "true");
+
+    verify(this.servicioCatalogo).ObtenerMueblesFiltrados(null, null, null, null, null, true);
+    assertThat(modelAndView.getModel().get("soloSostenibles"), is(true));
+    assertThat(this.obtenerMueblesDelModel(modelAndView), contains(sostenible));
+  }
+
+  @Test
+  public void dadoQueNoFiltroPorSoloSostenibles_cuandoNavegoAlCatalogo_entoncesElModeloNoLoIndica()
+    throws Exception {
+    ModelAndView modelAndView =
+      this.controladorCatalogoDeMuebles.catalogo(null, null, null, null, null, null);
+
+    assertThat(modelAndView.getModel().get("soloSostenibles"), is(false));
+    verify(this.servicioCatalogo).ObtenerMueblesFiltrados(null, null, null, null, null, false);
   }
 
   @Test
@@ -522,12 +553,14 @@ public class ControladorCatalogoDeMueblesTest {
   }
 
   private ModelAndView cuandoNavegoAlCatalogo(String estilo, String precioMaximo) {
-    return this.controladorCatalogoDeMuebles.catalogo(estilo, precioMaximo, null, null, null);
+    return this.controladorCatalogoDeMuebles.catalogo(estilo, precioMaximo, null, null, null, null);
   }
 
   private void dadoQueElCatalogoCumpleCon(Estilo estilo, Double precioMaximo, List<Mueble> muebles)
     throws Exception {
-    when(this.servicioCatalogo.ObtenerMueblesFiltrados(null, precioMaximo, estilo, null, null))
+    when(
+      this.servicioCatalogo.ObtenerMueblesFiltrados(null, precioMaximo, estilo, null, null, false)
+    )
       .thenReturn(muebles);
   }
 

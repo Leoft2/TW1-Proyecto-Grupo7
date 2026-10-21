@@ -90,8 +90,38 @@ public class ControladorRedisenoTest {
 
     this.cuandoEnvioElFormulario(ESTILO, PRESUPUESTO);
 
-    verify(this.servicioCatalogo).ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO);
+    verify(this.servicioCatalogo).ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO, false);
     verify(this.servicioRediseño).recomendar(ESTILO);
+  }
+
+  @Test
+  public void dadoQueElijoSoloSostenibles_cuandoEnvioElFormularioDeRediseno_entoncesSeLoPidoAsiAlCatalogo()
+    throws Exception {
+    this.dadoQueElAmbienteNoTieneTipo();
+    List<Mueble> muebles = new ArrayList<>();
+    when(this.servicioCatalogo.ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO, true))
+      .thenReturn(muebles);
+
+    this.controladorRediseno.generarPropuesta(
+        AMBIENTE_ID,
+        ESTILO.name(),
+        String.valueOf(PRESUPUESTO),
+        "true"
+      );
+
+    verify(this.servicioCatalogo).ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO, true);
+  }
+
+  @Test
+  public void dadoQueNoElijoSoloSostenibles_cuandoEnvioElFormularioDeRediseno_entoncesElModeloNoLoIndica()
+    throws Exception {
+    this.dadoQueElAmbienteNoTieneTipo();
+    List<Mueble> muebles = new ArrayList<>();
+    this.dadoQueElCatalogoCumpleCon(ESTILO, PRESUPUESTO, muebles);
+
+    ModelAndView modelAndView = this.cuandoEnvioElFormulario(ESTILO, PRESUPUESTO);
+
+    assertThat(modelAndView.getModel().get("soloSostenibles"), is(false));
   }
 
   @Test
@@ -171,7 +201,7 @@ public class ControladorRedisenoTest {
     throws Exception {
     this.dadoQueElAmbienteNoTieneTipo();
     when(this.servicioRediseño.recomendar(ESTILO)).thenReturn(this.unaRecomendacion(ESTILO));
-    when(this.servicioCatalogo.ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO))
+    when(this.servicioCatalogo.ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO, false))
       .thenThrow(new PresupuestoNegativoException("El presupuesto no puede ser negativo"));
 
     ModelAndView modelAndView = this.cuandoEnvioElFormulario(ESTILO, PRESUPUESTO);
@@ -187,17 +217,18 @@ public class ControladorRedisenoTest {
     TipoDeAmbiente living = new TipoDeAmbiente("Living");
     this.dadoQueExisteElAmbiente(living);
     List<Mueble> muebles = new ArrayList<>();
-    when(this.servicioCatalogo.ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO))
+    when(this.servicioCatalogo.ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO, false))
       .thenReturn(muebles);
 
     ModelAndView modelAndView =
       this.controladorRediseno.generarPropuesta(
           AMBIENTE_ID,
           ESTILO.name(),
-          String.valueOf(PRESUPUESTO)
+          String.valueOf(PRESUPUESTO),
+          null
         );
 
-    verify(this.servicioCatalogo).ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO);
+    verify(this.servicioCatalogo).ObtenerMueblesQueCumplan(null, ESTILO, PRESUPUESTO, false);
     assertThat(modelAndView.getViewName(), is(RESULTADOS));
   }
 
@@ -239,7 +270,7 @@ public class ControladorRedisenoTest {
   }
 
   private ModelAndView cuandoEnvioElFormularioConTexto(String estilo, String presupuesto) {
-    return this.controladorRediseno.generarPropuesta(AMBIENTE_ID, estilo, presupuesto);
+    return this.controladorRediseno.generarPropuesta(AMBIENTE_ID, estilo, presupuesto, null);
   }
 
   private ModelAndView cuandoEnvioElFormulario(Estilo estilo, Double presupuesto) {
@@ -257,7 +288,7 @@ public class ControladorRedisenoTest {
 
   private void dadoQueElCatalogoCumpleCon(Estilo estilo, Double presupuesto, List<Mueble> muebles)
     throws Exception {
-    when(this.servicioCatalogo.ObtenerMueblesQueCumplan(null, estilo, presupuesto))
+    when(this.servicioCatalogo.ObtenerMueblesQueCumplan(null, estilo, presupuesto, false))
       .thenReturn(muebles);
   }
 

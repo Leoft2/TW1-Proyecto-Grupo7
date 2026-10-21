@@ -55,12 +55,13 @@ public class ControladorRediseno {
   public ModelAndView generarPropuesta(
     @PathVariable("id") Long id,
     @RequestParam(name = ESTILO, required = false) String estilo,
-    @RequestParam(name = PRESUPUESTO, required = false) String presupuesto
+    @RequestParam(name = PRESUPUESTO, required = false) String presupuesto,
+    @RequestParam(name = "soloSostenibles", required = false) String soloSostenibles
   ) {
     FiltroDeMuebles propuesta;
 
     try {
-      propuesta = FiltroDeMuebles.deUnaPropuesta(estilo, presupuesto);
+      propuesta = FiltroDeMuebles.deUnaPropuesta(estilo, presupuesto, soloSostenibles);
     } catch (FiltroDeMueblesInvalidoException e) {
       return this.redirectAlFormulario(id);
     }
@@ -81,6 +82,7 @@ public class ControladorRediseno {
     modelo.put(AMBIENTE, ambiente);
     modelo.put("tipoDeAmbiente", tipo == null ? null : tipo.getNombre());
     modelo.put("recomendacion", this.servicioRediseño.recomendar(propuesta.getEstilo()));
+    modelo.put("soloSostenibles", propuesta.getSoloSostenibles());
 
     List<Mueble> muebles = null;
 
@@ -89,7 +91,8 @@ public class ControladorRediseno {
         this.servicioCatalogo.ObtenerMueblesQueCumplan(
             null,
             propuesta.getEstilo(),
-            propuesta.getPrecioMaximo()
+            propuesta.getPrecioMaximo(),
+            propuesta.getSoloSostenibles()
           );
     } catch (PresupuestoNegativoException e) {
       modelo.put("error", "El presupuesto no puede ser negativo");

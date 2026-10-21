@@ -1,5 +1,6 @@
 package com.tallerwebi.infraestructura;
 
+import com.tallerwebi.dominio.Estilo;
 import com.tallerwebi.dominio.Mueble;
 import com.tallerwebi.dominio.RepositorioCatalogo;
 import com.tallerwebi.dominio.TipoDeAmbiente;
@@ -30,6 +31,30 @@ public class RepositorioCatalogoImpl implements RepositorioCatalogo {
   public List<Mueble> ObtenerTodosLosMuebles() {
     String query = "FROM Mueble m LEFT JOIN FETCH m.categoriaDeMueble WHERE m.enCatalogo = true";
     return sessionFactory.getCurrentSession().createQuery(query, Mueble.class).getResultList();
+  }
+
+  @Override
+  public List<Mueble> ObtenerMueblesDelCatalogo(
+    Estilo estilo,
+    Double precioMinimo,
+    Double precioMaximo,
+    Boolean soloSostenibles
+  ) {
+    String query =
+      "FROM Mueble m LEFT JOIN m.material mat WHERE m.enCatalogo = true " +
+      "AND (:estilo IS NULL OR m.estilo = :estilo) " +
+      "AND (:precioMinimo IS NULL OR m.precio >= :precioMinimo) " +
+      "AND (:precioMaximo IS NULL OR m.precio <= :precioMaximo) " +
+      "AND (:soloSostenibles = false OR mat IS NULL OR mat.sostenible = true)";
+
+    return sessionFactory
+      .getCurrentSession()
+      .createQuery(query, Mueble.class)
+      .setParameter("estilo", estilo)
+      .setParameter("precioMinimo", precioMinimo)
+      .setParameter("precioMaximo", precioMaximo)
+      .setParameter("soloSostenibles", Boolean.TRUE.equals(soloSostenibles))
+      .getResultList();
   }
 
   @Override

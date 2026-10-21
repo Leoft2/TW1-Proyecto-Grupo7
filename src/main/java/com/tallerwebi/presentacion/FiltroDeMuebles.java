@@ -12,19 +12,22 @@ public final class FiltroDeMuebles {
   private final Double precioMinimo;
   private final String tipoDeAmbiente;
   private final OrdenDeMuebles orden;
+  private final boolean soloSostenibles;
 
   private FiltroDeMuebles(
     Estilo estilo,
     Double precioMaximo,
     Double precioMinimo,
     String tipoDeAmbiente,
-    OrdenDeMuebles orden
+    OrdenDeMuebles orden,
+    boolean soloSostenibles
   ) {
     this.estilo = estilo;
     this.precioMaximo = precioMaximo;
     this.precioMinimo = precioMinimo;
     this.tipoDeAmbiente = tipoDeAmbiente;
     this.orden = orden;
+    this.soloSostenibles = soloSostenibles;
   }
 
   public static FiltroDeMuebles delCatalogo(
@@ -32,7 +35,8 @@ public final class FiltroDeMuebles {
     String precioMaximo,
     String precioMinimo,
     String tipoDeAmbiente,
-    String orden
+    String orden,
+    String soloSostenibles
   ) throws FiltroDeMueblesInvalidoException {
     if (
       esUnEstiloDesconocido(estilo) ||
@@ -50,12 +54,16 @@ public final class FiltroDeMuebles {
       aPrecio(precioMaximo),
       aPrecio(precioMinimo),
       aTipoDeAmbiente(tipoDeAmbiente),
-      aOrden(orden)
+      aOrden(orden),
+      aSoloSostenibles(soloSostenibles)
     );
   }
 
-  public static FiltroDeMuebles deUnaPropuesta(String estilo, String presupuesto)
-    throws FiltroDeMueblesInvalidoException {
+  public static FiltroDeMuebles deUnaPropuesta(
+    String estilo,
+    String presupuesto,
+    String soloSostenibles
+  ) throws FiltroDeMueblesInvalidoException {
     if (
       estaVacio(estilo) ||
       estaVacio(presupuesto) ||
@@ -72,7 +80,8 @@ public final class FiltroDeMuebles {
       Double.parseDouble(presupuesto),
       null,
       null,
-      null
+      null,
+      aSoloSostenibles(soloSostenibles)
     );
   }
 
@@ -94,6 +103,10 @@ public final class FiltroDeMuebles {
 
   public OrdenDeMuebles getOrden() {
     return this.orden;
+  }
+
+  public boolean getSoloSostenibles() {
+    return this.soloSostenibles;
   }
 
   private static boolean estaVacio(String valor) {
@@ -143,5 +156,9 @@ public final class FiltroDeMuebles {
 
   private static OrdenDeMuebles aOrden(String orden) {
     return estaVacio(orden) ? null : OrdenDeMuebles.valueOf(orden);
+  }
+
+  private static boolean aSoloSostenibles(String soloSostenibles) {
+    return Boolean.parseBoolean(soloSostenibles);
   }
 }

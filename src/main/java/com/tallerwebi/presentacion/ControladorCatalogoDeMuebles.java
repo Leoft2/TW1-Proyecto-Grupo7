@@ -53,13 +53,21 @@ public class ControladorCatalogoDeMuebles {
     @RequestParam(name = "precioMax", required = false) String precioMaximo,
     @RequestParam(name = "precioMin", required = false) String precioMinimo,
     @RequestParam(name = "tipoDeAmbiente", required = false) String tipoDeAmbiente,
-    @RequestParam(name = "orden", required = false) String orden
+    @RequestParam(name = "orden", required = false) String orden,
+    @RequestParam(name = "soloSostenibles", required = false) String soloSostenibles
   ) {
     FiltroDeMuebles filtro;
 
     try {
       filtro =
-        FiltroDeMuebles.delCatalogo(estilo, precioMaximo, precioMinimo, tipoDeAmbiente, orden);
+        FiltroDeMuebles.delCatalogo(
+          estilo,
+          precioMaximo,
+          precioMinimo,
+          tipoDeAmbiente,
+          orden,
+          soloSostenibles
+        );
     } catch (FiltroDeMueblesInvalidoException e) {
       return new ModelAndView(REDIRECCION_AL_CATALOGO);
     }
@@ -180,6 +188,7 @@ public class ControladorCatalogoDeMuebles {
     modelo.put("precioMinimo", filtro.getPrecioMinimo());
     modelo.put("tipoDeAmbiente", filtro.getTipoDeAmbiente());
     modelo.put("orden", filtro.getOrden());
+    modelo.put("soloSostenibles", filtro.getSoloSostenibles());
     List<Mueble> muebles = null;
     TipoDeAmbiente tipoDeAmbiente = this.aTipoDeAmbiente(filtro.getTipoDeAmbiente());
 
@@ -190,7 +199,8 @@ public class ControladorCatalogoDeMuebles {
             filtro.getPrecioMaximo(),
             filtro.getEstilo(),
             tipoDeAmbiente,
-            filtro.getOrden()
+            filtro.getOrden(),
+            filtro.getSoloSostenibles()
           );
     } catch (PresupuestoNegativoException e) {
       modelo.put("error", "El presupuesto no puede ser negativo");

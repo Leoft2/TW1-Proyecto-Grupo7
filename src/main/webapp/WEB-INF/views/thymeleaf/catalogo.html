@@ -65,6 +65,13 @@
                 <option value="PRECIO_DESC" th:selected="${orden == T(com.tallerwebi.dominio.OrdenDeMuebles).PRECIO_DESC}">Mayor a menor</option>
               </select>
             </div>
+            <div class="col-md-3 d-flex align-items-end">
+              <div class="form-check">
+                <input type="checkbox" id="soloSostenibles" name="soloSostenibles" value="true"
+                  class="form-check-input" th:checked="${soloSostenibles}">
+                <label for="soloSostenibles" class="form-check-label">Solo sostenibles</label>
+              </div>
+            </div>
             <div class="col-md-12 d-flex gap-2">
               <button type="submit" class="btn btn-primary"><i class="bi bi-funnel"></i> Filtrar</button>
               <a th:href="@{/catalogo}" class="btn btn-secondary">Limpiar filtros</a>

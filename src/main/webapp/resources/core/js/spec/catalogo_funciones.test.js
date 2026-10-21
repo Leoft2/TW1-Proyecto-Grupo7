@@ -5,6 +5,7 @@ import { JSDOM } from "jsdom";
 import {
   conectarConfirmacionDeEliminacion,
   MENSAJE_CONFIRMAR_ELIMINACION,
+  TITULO_CONFIRMAR_ELIMINACION,
 } from "../catalogo_funciones.js";
 
 const PAGINA = `
@@ -20,11 +21,13 @@ const PAGINA = `
 describe("Confirmación de eliminación de muebles del catálogo", function() {
   let documento;
   let contenedor;
+  let formularioEliminar;
 
   beforeEach(function() {
-    documento = new JSDOM(PAGINA).window.document;
+    documento = new JSDOM(PAGINA, { runScripts: "outside-only" }).window.document;
     contenedor = documento.querySelector("main");
-    conectarConfirmacionDeEliminacion(contenedor, documento.defaultView);
+    formularioEliminar = documento.getElementById("eliminar");
+    conectarConfirmacionDeEliminacion(contenedor);
   });
 
   function enviar(id) {
@@ -37,37 +40,78 @@ describe("Confirmación de eliminación de muebles del catálogo", function() {
     return evento;
   }
 
-  it("pide confirmación al enviar un formulario marcado para eliminar", function() {
-    spyOn(documento.defaultView, "confirm").and.returnValue(true);
+  function clickEn(accion) {
+    documento
+      .querySelector(`#hb-modal-confirmacion [data-accion='${accion}']`)
+      .dispatchEvent(new documento.defaultView.Event("click", { bubbles: true }));
+  }
 
-    enviar("eliminar");
-
-    expect(documento.defaultView.confirm).toHaveBeenCalledWith(MENSAJE_CONFIRMAR_ELIMINACION);
+  it("crea el modal una sola vez", function() {
+    expect(documento.querySelectorAll("#hb-modal-confirmacion").length).toBe(1);
   });
 
-  it("deja enviar el formulario cuando el usuario confirma", function() {
-    spyOn(documento.defaultView, "confirm").and.returnValue(true);
-
-    const evento = enviar("eliminar");
-
-    expect(evento.defaultPrevented).toBe(false);
-  });
-
-  it("cancela el envío cuando el usuario rechaza la confirmación", function() {
-    spyOn(documento.defaultView, "confirm").and.returnValue(false);
-
+  it("abre el modal con el mensaje al enviar un formulario marcado para eliminar", function() {
     const evento = enviar("eliminar");
 
     expect(evento.defaultPrevented).toBe(true);
+    expect(documento.getElementById("hb-modal-confirmacion").hidden).toBe(false);
+    expect(documento.querySelector(".hb-modal-titulo").textContent).toBe(
+      TITULO_CONFIRMAR_ELIMINACION
+    );
+
+    expect(documento.querySelector(".hb-modal-mensaje").textContent).toBe(
+      MENSAJE_CONFIRMAR_ELIMINACION
+    );
   });
 
-  it("no pide confirmación para formularios que no eliminan", function() {
-    spyOn(documento.defaultView, "confirm").and.returnValue(true);
+  it("no abre el modal para formularios que no eliminan", function() {
+    enviar("otro");
 
-    const evento = enviar("otro");
+    expect(documento.getElementById("hb-modal-confirmacion").hidden).toBe(true);
+  });
 
-    expect(documento.defaultView.confirm).not.toHaveBeenCalled();
-    expect(evento.defaultPrevented).toBe(false);
+  it("envía el formulario al confirmar", function() {
+    const enviados = [];
+    formularioEliminar.submit = function() {
+      enviados.push(this.id);
+    };
+
+    enviar("eliminar");
+    clickEn("confirmar");
+
+    expect(enviados).toEqual(["eliminar"]);
+    expect(documento.getElementById("hb-modal-confirmacion").hidden).toBe(true);
+  });
+
+  it("no envía el formulario al cancelar", function() {
+    let enviado = false;
+    formularioEliminar.submit = function() {
+      enviado = true;
+    };
+
+    enviar("eliminar");
+    clickEn("cancelar");
+
+    expect(enviado).toBe(false);
+    expect(documento.getElementById("hb-modal-confirmacion").hidden).toBe(true);
+  });
+
+  it("cierra el modal al presionar Escape", function() {
+    enviar("eliminar");
+
+    documento.dispatchEvent(
+      new documento.defaultView.KeyboardEvent("keydown", { key: "Escape" })
+    );
+
+    expect(documento.getElementById("hb-modal-confirmacion").hidden).toBe(true);
+  });
+
+  it("usa un mensaje propio del formulario si lo define", function() {
+    formularioEliminar.dataset.mensajeConfirmacion = "¿Borrar de verdad?";
+
+    enviar("eliminar");
+
+    expect(documento.querySelector(".hb-modal-mensaje").textContent).toBe("¿Borrar de verdad?");
   });
 
   it("no falla si el contenedor no existe", function() {

@@ -91,6 +91,16 @@ h1, h2, h3, h4, h5, h6,
   --bs-btn-focus-shadow-rgb: 94, 112, 82;
 }
 
+.btn-danger {
+  --bs-btn-bg: #b42318;
+  --bs-btn-border-color: #b42318;
+  --bs-btn-hover-bg: #8f1d12;
+  --bs-btn-hover-border-color: #8f1d12;
+  --bs-btn-active-bg: #8f1d12;
+  --bs-btn-active-border-color: #8f1d12;
+  --bs-btn-focus-shadow-rgb: 180, 35, 24;
+}
+
 .form-control,
 .form-select {
   border-color: var(--hb-borde);
@@ -526,3 +536,98 @@ h1, h2, h3, h4, h5, h6,
 .hb-tabla-muebles .form-select {
   min-width: 7rem;
 }
+
+.hb-modal[hidden] {
+  display: none;
+}
+
+.hb-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1080;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.hb-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(43, 38, 34, 0.5);
+}
+
+.hb-modal-dialog {
+  position: relative;
+  width: 100%;
+  max-width: 26rem;
+}
+
+.hb-modal-content {
+  background: var(--hb-superficie);
+  border: 1px solid var(--hb-borde);
+  border-radius: var(--hb-radio-lg);
+  box-shadow: var(--hb-sombra-hover);
+  padding: 1.75rem;
+  text-align: center;
+}
+
+.hb-modal-abierto .hb-modal-backdrop {
+  animation: hb-modal-fade 0.18s ease-out;
+}
+
+.hb-modal-abierto .hb-modal-dialog {
+  animation: hb-modal-aparecer 0.22s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+@keyframes hb-modal-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hb-modal-aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.hb-modal-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
+  border-radius: 999px;
+  background: var(--hb-terracota-suave);
+  color: var(--hb-terracota);
+  font-size: 1.4rem;
+}
+
+.hb-modal-titulo {
+  font-size: 1.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.hb-modal-mensaje {
+  color: var(--hb-texto-suave);
+  margin-bottom: 1.5rem;
+}
+
+.hb-modal-acciones {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+

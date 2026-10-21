@@ -1,2 +1,8 @@
-import { conectarConfirmacionDeEliminacion } from "./catalogo_funciones.js";
-conectarConfirmacionDeEliminacion(document.querySelector("main"));
+import {
+  conectarConfirmacionDeEliminacion,
+  conectarFiltrosDinamicos,
+} from "./catalogo_funciones.js";
+
+const principal = document.querySelector("main");
+conectarConfirmacionDeEliminacion(principal);
+conectarFiltrosDinamicos(principal);

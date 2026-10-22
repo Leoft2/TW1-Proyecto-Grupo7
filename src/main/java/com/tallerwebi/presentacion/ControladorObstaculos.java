@@ -46,6 +46,7 @@ public class ControladorObstaculos {
 
   @RequestMapping(path = "/plano/obstaculos/confirmar", method = RequestMethod.POST)
   public ModelAndView confirmarObstaculos(DatosPlano datosDelFormulario, HttpSession sesion) {
+    sesion.setAttribute(ATRIBUTO_DATOS, datosDelFormulario);
     try {
       servicioObstaculos.validarObstaculos(datosDelFormulario.aAmbiente());
     } catch (ValidacionException e) {

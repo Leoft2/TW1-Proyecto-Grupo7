@@ -27,27 +27,30 @@ public class DatosPlano {
         ambiente.agregarObstaculo(datosObstaculo.aObstaculo());
       }
     }
-    if (aberturas != null) {
-      for (DatosAbertura datosAbertura : aberturas) {
-        if (
-          datosAbertura.getTipo() != null &&
-          datosAbertura.getMuro() != null &&
-          datosAbertura.getPosicion() != null &&
-          datosAbertura.getAncho() != null
-        ) {
-          ambiente.agregarAbertura(
-            new com.tallerwebi.dominio.Abertura(
-              datosAbertura.getTipo(),
-              datosAbertura.getMuro(),
-              datosAbertura.getPosicion(),
-              datosAbertura.getAncho(),
-              datosAbertura.getRadioDeGiro()
-            )
-          );
-        }
+    for (DatosAbertura datosAbertura : getAberturas()) {
+      if (!datosAbertura.estaIncompleta()) {
+        ambiente.agregarAbertura(
+          new com.tallerwebi.dominio.Abertura(
+            datosAbertura.getTipo(),
+            datosAbertura.getMuro(),
+            datosAbertura.getPosicion(),
+            datosAbertura.getAncho(),
+            datosAbertura.getRadioDeGiro()
+          )
+        );
       }
     }
     return ambiente;
+  }
+
+  /** True si alguna fila de abertura quedó a medias: hay que completarla o quitarla. */
+  public boolean hayAberturasIncompletas() {
+    for (DatosAbertura datosAbertura : getAberturas()) {
+      if (datosAbertura.estaIncompleta()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public Double getAncho() {

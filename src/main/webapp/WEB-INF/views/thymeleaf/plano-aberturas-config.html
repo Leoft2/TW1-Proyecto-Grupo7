@@ -46,7 +46,7 @@
 
         <fieldset class="mb-4">
             <legend class="h5">Aberturas</legend>
-            <p class="text-muted">Puertas y ventanas. El radio de giro se usa para las zonas de exclusión de las puertas.</p>
+            <p class="text-muted">Puertas y ventanas. El radio de giro se usa para las zonas de exclusión de las puertas. Las aberturas son opcionales: si no vas a cargar ninguna, seguí al paso siguiente.</p>
 
             <div class="table-responsive">
                 <table class="table align-middle">
@@ -72,8 +72,8 @@
                                 <option th:each="muro : ${muros}" th:value="${muro}" th:selected="${abertura != null && muro == abertura.muro}" th:text="${muro}">SUPERIOR</option>
                             </select>
                         </td>
-                        <td><input type="number" step="0.01" min="0" class="form-control" th:name="|aberturas[${fila.index}].posicion|" th:value="${abertura != null ? abertura.posicion : ''}" required></td>
-                        <td><input type="number" step="0.01" min="0" class="form-control" th:name="|aberturas[${fila.index}].ancho|" th:value="${abertura != null ? abertura.ancho : ''}" required></td>
+                        <td><input type="number" step="0.01" min="0" class="form-control" th:name="|aberturas[${fila.index}].posicion|" th:value="${abertura != null ? abertura.posicion : ''}"></td>
+                        <td><input type="number" step="0.01" min="0" class="form-control" th:name="|aberturas[${fila.index}].ancho|" th:value="${abertura != null ? abertura.ancho : ''}"></td>
                         <td><input type="number" step="0.01" min="0" class="form-control" th:name="|aberturas[${fila.index}].radioDeGiro|" th:value="${abertura != null ? abertura.radioDeGiro : ''}"></td>
                         <td>
                             <button type="button" class="btn btn-outline-danger btn-sm btn-eliminar-abertura">Eliminar</button>
@@ -95,8 +95,8 @@
                             <option th:each="muro : ${muros}" th:value="${muro}" th:text="${muro}">SUPERIOR</option>
                         </select>
                     </td>
-                    <td><input type="number" step="0.01" min="0" class="form-control" name="__POSICION__" required></td>
-                    <td><input type="number" step="0.01" min="0" class="form-control" name="__ANCHO__" required></td>
+                    <td><input type="number" step="0.01" min="0" class="form-control" name="__POSICION__"></td>
+                    <td><input type="number" step="0.01" min="0" class="form-control" name="__ANCHO__"></td>
                     <td><input type="number" step="0.01" min="0" class="form-control" name="__RADIO__"></td>
                     <td>
                         <button type="button" class="btn btn-outline-danger btn-sm btn-eliminar-abertura">Eliminar</button>
@@ -119,42 +119,6 @@
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 
-<script>
-    function renumerarAberturas() {
-        document.querySelectorAll('#filas-aberturas tr').forEach(function (fila, indice) {
-            fila.querySelectorAll('input, select').forEach(function (campo) {
-                if (campo.name) {
-                    campo.name = campo.name.replace(/aberturas\[\d+\]/, 'aberturas[' + indice + ']');
-                }
-            });
-        });
-    }
-
-    document.getElementById('agregar-abertura').addEventListener('click', function () {
-        var cuerpo = document.getElementById('filas-aberturas');
-        var prefijo = 'aberturas[' + cuerpo.querySelectorAll('tr').length + ']';
-        var html = document.getElementById('plantilla-abertura').innerHTML
-            .replaceAll('__TIPO__', prefijo + '.tipo')
-            .replaceAll('__MURO__', prefijo + '.muro')
-            .replaceAll('__POSICION__', prefijo + '.posicion')
-            .replaceAll('__ANCHO__', prefijo + '.ancho')
-            .replaceAll('__RADIO__', prefijo + '.radioDeGiro');
-        var contenedor = document.createElement('tbody');
-        contenedor.innerHTML = html;
-        var fila = contenedor.firstElementChild;
-        cuerpo.appendChild(fila);
-    });
-
-    document.getElementById('filas-aberturas').addEventListener('click', function (evento) {
-        if (evento.target.classList.contains('btn-eliminar-abertura')) {
-            var filas = document.querySelectorAll('#filas-aberturas tr');
-            if (filas.length <= 1) {
-                return;
-            }
-            evento.target.closest('tr').remove();
-            renumerarAberturas();
-        }
-    });
-</script>
+<script type="module" th:src="@{/js/aberturas.js}"></script>
 </body>
 </html>

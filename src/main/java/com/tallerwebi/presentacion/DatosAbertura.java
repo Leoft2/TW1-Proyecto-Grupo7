@@ -3,6 +3,9 @@ package com.tallerwebi.presentacion;
 import com.tallerwebi.dominio.Muro;
 import com.tallerwebi.dominio.TipoAbertura;
 
+/**
+ * Formulario de una abertura del muro (puerta o ventana) del paso de aberturas del asistente.
+ */
 public class DatosAbertura {
 
   private TipoAbertura tipo;
@@ -49,5 +52,13 @@ public class DatosAbertura {
 
   public void setRadioDeGiro(Double radioDeGiro) {
     this.radioDeGiro = radioDeGiro;
+  }
+
+  /**
+   * Una abertura esta incompleta si le falta el tipo, el muro, la posicion o el ancho. El radio
+   * de giro es opcional: cuando no se carga, la puerta usa su propio ancho.
+   */
+  public boolean estaIncompleta() {
+    return tipo == null || muro == null || posicion == null || ancho == null;
   }
 }

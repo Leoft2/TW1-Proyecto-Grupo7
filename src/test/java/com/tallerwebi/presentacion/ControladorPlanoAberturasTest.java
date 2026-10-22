@@ -1,6 +1,7 @@
 package com.tallerwebi.presentacion;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.*;
@@ -61,6 +62,24 @@ public class ControladorPlanoAberturasTest {
     verify(sesion).setAttribute(eq("datosPlano"), eq(datosPlano));
   }
 
+  @Test
+  public void deberiaNoModificarLosDatosDeLaSesionCuandoAbroElPasoDeAberturas() {
+    DatosPlano datosPlano = givenDatosPlanoEnSesion();
+
+    whenVoyAConfigurarAberturas(sesion);
+
+    thenLasAberturasSiguenVacias(datosPlano);
+  }
+
+  @Test
+  public void deberiaVolverAlPasoDeAberturasCuandoUnaAberturaEstaIncompleta() {
+    DatosPlano datosPlano = givenDatosPlanoConAberturaIncompleta();
+
+    ModelAndView mav = whenConfirmoAberturas(datosPlano, sesion);
+
+    thenLaVistaEs(mav, "plano-aberturas-config");
+  }
+
   // Given
   private DatosPlano givenDatosPlanoEnSesion() {
     DatosPlano datosPlano = new DatosPlano();
@@ -80,6 +99,20 @@ public class ControladorPlanoAberturasTest {
     datosAbertura.setPosicion(1.0);
     datosAbertura.setAncho(0.9);
     datosAbertura.setRadioDeGiro(0.9);
+    List<DatosAbertura> aberturas = new ArrayList<>();
+    aberturas.add(datosAbertura);
+    datosPlano.setAberturas(aberturas);
+    return datosPlano;
+  }
+
+  private DatosPlano givenDatosPlanoConAberturaIncompleta() {
+    DatosPlano datosPlano = new DatosPlano();
+    datosPlano.setAncho(4.0);
+    datosPlano.setLargo(5.0);
+    DatosAbertura datosAbertura = new DatosAbertura();
+    datosAbertura.setTipo(TipoAbertura.PUERTA);
+    datosAbertura.setMuro(Muro.SUPERIOR);
+    datosAbertura.setPosicion(1.0);
     List<DatosAbertura> aberturas = new ArrayList<>();
     aberturas.add(datosAbertura);
     datosPlano.setAberturas(aberturas);
@@ -106,5 +139,9 @@ public class ControladorPlanoAberturasTest {
 
   private void thenElModeloContieneClave(ModelAndView mav, String clave) {
     assertThat(mav.getModel(), hasKey(clave));
+  }
+
+  private void thenLasAberturasSiguenVacias(DatosPlano datosPlano) {
+    assertThat(datosPlano.getAberturas(), is(empty()));
   }
 }

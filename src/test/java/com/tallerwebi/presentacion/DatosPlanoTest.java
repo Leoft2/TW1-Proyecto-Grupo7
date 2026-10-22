@@ -63,6 +63,18 @@ public class DatosPlanoTest {
     thenElAmbienteTieneUnaAberturaDelTipo(ambiente, TipoAbertura.PUERTA);
   }
 
+  @Test
+  public void deberiaDetectarUnaAberturaIncompletaCuandoFaltaElAncho() {
+    // given
+    DatosPlano formulario = givenDatosPlanoConAberturaIncompleta();
+
+    // when
+    boolean hayAberturasIncompletas = whenSeBuscanAberturasIncompletas(formulario);
+
+    // then
+    thenHayAberturasIncompletas(hayAberturasIncompletas);
+  }
+
   private DatosPlano givenUnFormularioConLosObstaculos(DatosObstaculo... datosObstaculos) {
     DatosPlano formulario = new DatosPlano();
     formulario.setAncho(4.0);
@@ -93,8 +105,30 @@ public class DatosPlanoTest {
     return formulario;
   }
 
+  private DatosPlano givenDatosPlanoConAberturaIncompleta() {
+    DatosPlano formulario = new DatosPlano();
+    formulario.setAncho(4.0);
+    formulario.setLargo(5.0);
+    DatosAbertura datosAbertura = new DatosAbertura();
+    datosAbertura.setTipo(TipoAbertura.PUERTA);
+    datosAbertura.setMuro(Muro.SUPERIOR);
+    datosAbertura.setPosicion(1.0);
+    List<DatosAbertura> aberturas = new ArrayList<DatosAbertura>();
+    aberturas.add(datosAbertura);
+    formulario.setAberturas(aberturas);
+    return formulario;
+  }
+
   private Ambiente whenSeConstruyeElAmbiente(DatosPlano formulario) {
     return formulario.aAmbiente();
+  }
+
+  private boolean whenSeBuscanAberturasIncompletas(DatosPlano formulario) {
+    return formulario.hayAberturasIncompletas();
+  }
+
+  private void thenHayAberturasIncompletas(boolean hayAberturasIncompletas) {
+    assertThat(hayAberturasIncompletas, is(true));
   }
 
   private void thenElAmbienteTieneMedidas(

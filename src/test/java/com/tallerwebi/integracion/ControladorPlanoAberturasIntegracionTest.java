@@ -3,6 +3,7 @@ package com.tallerwebi.integracion;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,10 +29,8 @@ import org.springframework.web.context.WebApplicationContext;
  * ahi a los obstaculos; las aberturas cargadas tienen que sobrevivir el cambio de paso.
  */
 
-
 // Tests de integracion para el controlador de aberturas, que es parte del flujo de armado del plano.
 //HU-04: Aberturas
-
 
 @ExtendWith(SpringExtension.class)
 @WebAppConfiguration
@@ -95,6 +94,38 @@ public class ControladorPlanoAberturasIntegracionTest {
   }
 
   @Test
+  public void deberiaRenderizarElPasoDeAberturasSinCamposObligatoriosCuandoConfirmoElEspacio()
+    throws Exception {
+    // Given: el usuario cargo el ancho y el largo del ambiente.
+
+    // When
+    String html = whenConfirmoElEspacio();
+
+    // Then
+    thenElPasoDeAberturasNoTieneCamposObligatorios(html);
+  }
+
+  private void thenElPasoDeAberturasNoTieneCamposObligatorios(String html) {
+    assertThat(html, not(containsString("required")));
+  }
+
+  @Test
+  public void deberiaMostrarElFormularioSinFilasDeAberturaCuandoConfirmoElEspacio()
+    throws Exception {
+    // Given: el usuario cargo el ancho y el largo del ambiente.
+
+    // When
+    String html = whenConfirmoElEspacio();
+
+    // Then
+    thenElPasoDeAberturasNoTieneFilasCargadas(html);
+  }
+
+  private void thenElPasoDeAberturasNoTieneFilasCargadas(String html) {
+    assertThat(html, not(containsString("name=\"aberturas[0].posicion\"")));
+  }
+
+  @Test
   public void deberiaMostrarElPasoDeAberturasCuandoConfirmoElEspacio() throws Exception {
     // Given: el usuario cargo el ancho y el largo del ambiente.
 
@@ -115,6 +146,62 @@ public class ControladorPlanoAberturasIntegracionTest {
 
   private void thenLaVistaEsElPasoDeAberturas(String vista) {
     assertThat(vista, is("plano-aberturas-config"));
+  }
+
+  @Test
+  public void deberiaAvanzarAlPasoDeObstaculosCuandoConfirmoElEspacioSinAberturas()
+    throws Exception {
+    // Given: el usuario confirmo el espacio sin cargar ninguna abertura.
+
+    // When
+    String redireccion = whenConfirmoElEspacioSinAberturas();
+
+    // Then
+    thenElAsistenteAvanzaAlPasoDeObstaculos(redireccion);
+  }
+
+  private String whenConfirmoElEspacioSinAberturas() throws Exception {
+    return this.mockMvc.perform(
+        post("/plano/aberturas/confirmar").param("ancho", "4").param("largo", "3")
+      )
+      .andExpect(status().is3xxRedirection())
+      .andReturn()
+      .getResponse()
+      .getRedirectedUrl();
+  }
+
+  private void thenElAsistenteAvanzaAlPasoDeObstaculos(String redireccion) {
+    assertThat(redireccion, is("/plano/obstaculos"));
+  }
+
+  @Test
+  public void deberiaMostrarElErrorCuandoUnaAberturaEstaIncompleta() throws Exception {
+    // Given: el usuario cargo una puerta sin el ancho y confirmo el paso de aberturas.
+
+    // When
+    String html = whenConfirmoElPasoDeAberturasConUnaAberturaIncompleta();
+
+    // Then
+    thenSeMuestraElErrorDeAberturaIncompleta(html);
+  }
+
+  private String whenConfirmoElPasoDeAberturasConUnaAberturaIncompleta() throws Exception {
+    return this.mockMvc.perform(
+        post("/plano/aberturas/confirmar")
+          .param("ancho", "4")
+          .param("largo", "3")
+          .param("aberturas[0].tipo", "PUERTA")
+          .param("aberturas[0].muro", "SUPERIOR")
+          .param("aberturas[0].posicion", "1.0")
+      )
+      .andExpect(status().isOk())
+      .andReturn()
+      .getResponse()
+      .getContentAsString();
+  }
+
+  private void thenSeMuestraElErrorDeAberturaIncompleta(String html) {
+    assertThat(html, containsString("Completá la posición y el ancho de cada abertura"));
   }
 
   @Test
@@ -224,6 +311,36 @@ public class ControladorPlanoAberturasIntegracionTest {
 
   private void thenElPlanoDibujaLaZonaDeExclusion(String html) {
     assertThat(html, containsString("class=\"plano-zona-apertura\""));
+  }
+
+  @Test
+  public void deberiaGenerarElPlanoCuandoLaPuertaNoCargoRadioDeGiro() throws Exception {
+    // Given: el ambiente tiene una puerta cargada sin radio de giro.
+
+    // When
+    String html = whenGeneroElPlanoConUnaPuertaSinRadioDeGiro();
+
+    // Then
+    thenElPlanoDibujaLaZonaDeExclusion(html);
+  }
+
+  private String whenGeneroElPlanoConUnaPuertaSinRadioDeGiro() throws Exception {
+    return this.mockMvc.perform(
+        post("/plano/generar")
+          .param("ancho", "4")
+          .param("largo", "3")
+          .param("aberturas[0].tipo", "PUERTA")
+          .param("aberturas[0].muro", "SUPERIOR")
+          .param("aberturas[0].posicion", "1.0")
+          .param("aberturas[0].ancho", "0.9")
+          .param("muebles[0].nombre", "Rack")
+          .param("muebles[0].ancho", "1.0")
+          .param("muebles[0].profundidad", "0.5")
+      )
+      .andExpect(status().isOk())
+      .andReturn()
+      .getResponse()
+      .getContentAsString();
   }
 
   @Test

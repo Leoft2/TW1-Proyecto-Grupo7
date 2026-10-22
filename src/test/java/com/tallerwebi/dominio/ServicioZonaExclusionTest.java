@@ -67,6 +67,31 @@ public class ServicioZonaExclusionTest {
   }
 
   @Test
+  public void deberiaUsarElAnchoComoRadioDeGiroCuandoLaPuertaNoCargoRadioDeGiro() {
+    Ambiente ambiente = givenAmbiente(4.0, 5.0);
+    ambiente.agregarAbertura(givenPuertaSinRadioDeGiro(Muro.SUPERIOR, 1.0, 0.9));
+
+    List<ZonaExclusion> zonas = whenCalculoLasZonas(ambiente);
+
+    thenLaProfundidadDeLaZonaEs(0.9, zonas.get(0));
+  }
+
+  @Test
+  public void deberiaUsarElAnchoDeCadaPuertaCuandoNingunaCargoRadioDeGiro() {
+    Ambiente ambienteConPuertaChica = givenAmbiente(4.0, 5.0);
+    ambienteConPuertaChica.agregarAbertura(givenPuertaSinRadioDeGiro(Muro.SUPERIOR, 1.0, 0.9));
+    Ambiente ambienteConPuertaGrande = givenAmbiente(4.0, 5.0);
+    ambienteConPuertaGrande.agregarAbertura(givenPuertaSinRadioDeGiro(Muro.SUPERIOR, 1.0, 1.2));
+
+    List<Double> profundidades = whenCalculoLasProfundidadesDeLasZonas(
+      ambienteConPuertaChica,
+      ambienteConPuertaGrande
+    );
+
+    thenLasProfundidadesSon(0.9, 1.2, profundidades);
+  }
+
+  @Test
   public void deberiaUbicarZonaHaciaElInteriorCuandoPuertaEstaEnElMuroInferior() {
     Ambiente ambiente = givenAmbiente(4.0, 5.0);
     ambiente.agregarAbertura(givenPuerta(Muro.INFERIOR, 1.0, 0.9, 0.9));
@@ -260,6 +285,10 @@ public class ServicioZonaExclusionTest {
 
   private Abertura givenPuerta(Muro muro, Double posicion, Double ancho, Double radioDeGiro) {
     return new Abertura(TipoAbertura.PUERTA, muro, posicion, ancho, radioDeGiro);
+  }
+
+  private Abertura givenPuertaSinRadioDeGiro(Muro muro, Double posicion, Double ancho) {
+    return new Abertura(TipoAbertura.PUERTA, muro, posicion, ancho, null);
   }
 
   private Abertura givenVentana(Muro muro, Double posicion, Double ancho) {

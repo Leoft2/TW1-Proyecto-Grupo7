@@ -23,31 +23,47 @@ import org.springframework.web.servlet.ModelAndView;
 public class ControladorPlano2D {
 
   private static final String ATRIBUTO_PLANO = "plano";
+  private static final String ATRIBUTO_ZONAS_DE_EXCLUSION = "zonasDeExclusion";
   private static final String VISTA_PLANO_INTERACTIVO = "plano-interactivo";
 
   private ServicioPlano2D servicioPlano2D;
   private ServicioCategoriaDeMueble servicioCategoriaDeMueble;
   private ServicioPersistenciaPlano servicioPersistenciaPlano;
+  private ServicioZonaExclusion servicioZonaExclusion;
 
   public ControladorPlano2D(
     ServicioPlano2D servicioPlano2D,
     ServicioCategoriaDeMueble servicioCategoriaDeMueble
   ) {
-    this(servicioPlano2D, servicioCategoriaDeMueble, null);
+    this(servicioPlano2D, servicioCategoriaDeMueble, null, new ServicioZonaExclusionImpl());
+  }
+
+  public ControladorPlano2D(
+    ServicioPlano2D servicioPlano2D,
+    ServicioCategoriaDeMueble servicioCategoriaDeMueble,
+    ServicioPersistenciaPlano servicioPersistenciaPlano
+  ) {
+    this(
+      servicioPlano2D,
+      servicioCategoriaDeMueble,
+      servicioPersistenciaPlano,
+      new ServicioZonaExclusionImpl()
+    );
   }
 
   @Autowired
   public ControladorPlano2D(
     ServicioPlano2D servicioPlano2D,
     ServicioCategoriaDeMueble servicioCategoriaDeMueble,
-    ServicioPersistenciaPlano servicioPersistenciaPlano
+    ServicioPersistenciaPlano servicioPersistenciaPlano,
+    ServicioZonaExclusion servicioZonaExclusion
   ) {
     this.servicioPlano2D = servicioPlano2D;
     this.servicioCategoriaDeMueble = servicioCategoriaDeMueble;
     this.servicioPersistenciaPlano = servicioPersistenciaPlano;
+    this.servicioZonaExclusion = servicioZonaExclusion;
   }
 
-  //Review 2 : Usar model Map que vinimos haciendo en clase.
   @RequestMapping(path = "/plano/ambiente", method = RequestMethod.GET)
   public ModelAndView irAConfigurarAmbiente() {
     return new ModelAndView(
@@ -60,7 +76,10 @@ public class ControladorPlano2D {
   public ModelAndView generarPlano(Ambiente ambiente, List<Mueble> muebles) {
     try {
       Plano plano = servicioPlano2D.generarPlano(ambiente, muebles);
-      return new ModelAndView("plano-interactivo", "plano", plano);
+      Map<String, Object> modelo = new ModelMap();
+      modelo.put(ATRIBUTO_PLANO, plano);
+      modelo.put(ATRIBUTO_ZONAS_DE_EXCLUSION, servicioZonaExclusion.calcularZonas(ambiente));
+      return new ModelAndView("plano-interactivo", modelo);
     } catch (ValidacionException e) {
       return planoConError(e);
     }
@@ -80,18 +99,37 @@ public class ControladorPlano2D {
    */
   @RequestMapping(path = "/plano/generar", method = RequestMethod.POST)
   public ModelAndView generarPlanoDesdeFormulario(DatosPlano datosDelFormulario) {
-    Ambiente ambiente = datosDelFormulario.aAmbiente();
+    return generarPlanoDesdeFormulario(datosDelFormulario, null);
+  }
+
+  public ModelAndView generarPlanoDesdeFormulario(
+    DatosPlano datosDelFormulario,
+    HttpSession sesion
+  ) {
+    DatosPlano datos = datosDelFormulario;
+    if (datos == null && sesion != null) {
+      datos = (DatosPlano) sesion.getAttribute("datosPlano");
+    }
+    if (datos == null) {
+      datos = new DatosPlano();
+    }
+    if (sesion != null) {
+      sesion.setAttribute("datosPlano", datos);
+    }
+    Ambiente ambiente = datos.aAmbiente();
     List<Mueble> muebles = new ArrayList<>();
     try {
-      for (DatosMueble datosMueble : datosDelFormulario.getMuebles()) {
-        muebles.add(
-          servicioCategoriaDeMueble.crearMueble(
-            datosMueble.getNombre(),
-            datosMueble.getCategoria(),
-            datosMueble.getAncho(),
-            datosMueble.getProfundidad()
-          )
-        );
+      if (datos.getMuebles() != null) {
+        for (DatosMueble datosMueble : datos.getMuebles()) {
+          muebles.add(
+            servicioCategoriaDeMueble.crearMueble(
+              datosMueble.getNombre(),
+              datosMueble.getCategoria(),
+              datosMueble.getAncho(),
+              datosMueble.getProfundidad()
+            )
+          );
+        }
       }
     } catch (ValidacionException e) {
       return planoConError(e);
@@ -163,6 +201,10 @@ public class ControladorPlano2D {
     sesion.setAttribute(ATRIBUTO_PLANO, plano);
     Map<String, Object> modelo = new ModelMap();
     modelo.put(ATRIBUTO_PLANO, plano);
+    modelo.put(
+      ATRIBUTO_ZONAS_DE_EXCLUSION,
+      servicioZonaExclusion.calcularZonas(plano.getAmbiente())
+    );
     return new ModelAndView(VISTA_PLANO_INTERACTIVO, modelo);
   }
 
@@ -174,6 +216,10 @@ public class ControladorPlano2D {
     }
     Map<String, Object> modelo = new ModelMap();
     modelo.put(ATRIBUTO_PLANO, plano);
+    modelo.put(
+      ATRIBUTO_ZONAS_DE_EXCLUSION,
+      servicioZonaExclusion.calcularZonas(plano.getAmbiente())
+    );
     return new ModelAndView(VISTA_PLANO_INTERACTIVO, modelo);
   }
 

@@ -1,13 +1,10 @@
 package com.tallerwebi.dominio;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,11 +54,63 @@ public class ServicioAmbienteTest {
     assertThat(obtenido, is(ambiente));
   }
 
-  @Test
-  public void dadoUnIdNulo_cuandoBuscoElAmbiente_entoncesNoVoyAlRepositorio() {
-    Ambiente obtenido = this.servicioAmbiente.buscarAmbiente(null);
+  // -------------------------------------------------------------------------
+  // Tests HU-04:Aberturas
+  // -------------------------------------------------------------------------
 
-    assertThat(obtenido, is(nullValue()));
-    verify(this.repositorioAmbiente, never()).buscarPorId(null);
+  @Test
+  public void deberiaAgregarAberturaCuandoElAmbienteExiste() {
+    Ambiente ambiente = givenAmbientePersistido(1L);
+
+    whenAgregoPuertaAlAmbiente(ambiente.getId());
+
+    thenElAmbienteTieneUnaAberturaDelTipo(ambiente, TipoAbertura.PUERTA);
+  }
+
+  @Test
+  public void deberiaLanzarExcepcionCuandoElAmbienteNoExisteAlAgregarAbertura() {
+    givenAmbienteInexistente(99L);
+
+    assertThrows(
+      RuntimeException.class,
+      () -> whenAgregoPuertaAlAmbiente(99L),
+      "Cuando el ambiente no existe, debe lanzar una excepción al agregar una abertura"
+    );
+  }
+
+  @Test
+  public void deberiaBuscarElAmbienteEnElRepositorioCuandoSeAgregaUnaAbertura() {
+    Ambiente ambiente = givenAmbientePersistido(1L);
+
+    whenAgregoPuertaAlAmbiente(ambiente.getId());
+
+    thenSeInvocoBuscarPorId(ambiente.getId());
+  }
+
+  // Given
+  private Ambiente givenAmbientePersistido(Long id) {
+    Ambiente ambiente = new Ambiente(4.0, 5.0, new TipoDeAmbiente("Living"));
+    when(repositorioAmbiente.buscarPorId(org.mockito.ArgumentMatchers.any())).thenReturn(ambiente);
+    return ambiente;
+  }
+
+  private void givenAmbienteInexistente(Long id) {
+    when(repositorioAmbiente.buscarPorId(id)).thenReturn(null);
+  }
+
+  // When
+  private void whenAgregoPuertaAlAmbiente(Long ambienteId) {
+    Abertura abertura = new Abertura(TipoAbertura.PUERTA, Muro.SUPERIOR, 1.0, 0.9, 0.9);
+    servicioAmbiente.agregarAbertura(ambienteId, abertura);
+  }
+
+  // Then
+  private void thenElAmbienteTieneUnaAberturaDelTipo(Ambiente ambiente, TipoAbertura tipoEsperado) {
+    assertThat(ambiente.getAberturas(), hasSize(1));
+    assertThat(ambiente.getAberturas().get(0).getTipo(), is(tipoEsperado));
+  }
+
+  private void thenSeInvocoBuscarPorId(Long id) {
+    verify(repositorioAmbiente, times(1)).buscarPorId(id);
   }
 }

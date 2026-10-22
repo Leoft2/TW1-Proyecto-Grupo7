@@ -2,6 +2,7 @@ package com.tallerwebi.integracion;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
@@ -80,6 +82,26 @@ public class ControladorObstaculosTest {
           .param("obstaculos[0].profundidad", "0.15")
       )
       .andExpect(redirectedUrl("/inventario-muebles?ancho=4.0&largo=3.0"));
+  }
+
+  @Test
+  public void dadoQueConfirmoLosObstaculos_cuandoVuelvoAlPasoDeObstaculos_entoncesSiguenEstandoCargados()
+    throws Exception {
+    MockHttpSession sesion = new MockHttpSession();
+    this.mockMvc.perform(
+        this.conElAmbienteYUnRack(post("/plano/obstaculos/confirmar"))
+          .session(sesion)
+          .param("obstaculos[0].tipo", "RADIADOR")
+          .param("obstaculos[0].muro", "SUPERIOR")
+          .param("obstaculos[0].posicion", "0")
+          .param("obstaculos[0].ancho", "0.8")
+          .param("obstaculos[0].profundidad", "0.15")
+      )
+      .andExpect(status().is3xxRedirection());
+
+    String html = this.htmlDe(get("/plano/obstaculos").session(sesion));
+
+    assertThat(html, containsString("name=\"obstaculos[0].ancho\" value=\"0.8\""));
   }
 
   private MockHttpServletRequestBuilder conElAmbienteYUnRack(MockHttpServletRequestBuilder pedido) {

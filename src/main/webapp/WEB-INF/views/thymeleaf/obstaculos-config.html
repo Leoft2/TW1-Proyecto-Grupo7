@@ -16,11 +16,11 @@
     </header>
 
     <ol class="list-group list-group-horizontal-md mb-4">
-        <li class="list-group-item active fw-semibold">1 · Espacio</li>
-        <li class="list-group-item">2 · Muebles</li>
-        <li class="list-group-item">3 · Plano</li>
-        <li class="list-group-item disabled">4 · Presupuesto</li>
-        <li class="list-group-item disabled">5 · Resumen</li>
+        <li class="list-group-item list-group-item-success">1 · Espacio ✓</li>
+        <li class="list-group-item list-group-item-success">2 · Aberturas ✓</li>
+        <li class="list-group-item active fw-semibold">3 · Obstáculos</li>
+        <li class="list-group-item">4 · Muebles</li>
+        <li class="list-group-item">5 · Plano</li>
     </ol>
 
     <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}">
@@ -36,6 +36,15 @@
             <input type="hidden" th:name="|muebles[${fila.index}].categoria|" th:value="${mueble.categoria}">
             <input type="hidden" th:name="|muebles[${fila.index}].ancho|" th:value="${mueble.ancho}">
             <input type="hidden" th:name="|muebles[${fila.index}].profundidad|" th:value="${mueble.profundidad}">
+        </th:block>
+        <!-- Las aberturas ya se cargaron en el paso anterior: se reenvian ocultas para que el
+             ambiente que arme este paso las conserve y el plano respete sus zonas de exclusion. -->
+        <th:block th:each="abertura, fila : ${datosPlano.aberturas}">
+            <input type="hidden" th:name="|aberturas[${fila.index}].tipo|" th:value="${abertura.tipo}">
+            <input type="hidden" th:name="|aberturas[${fila.index}].muro|" th:value="${abertura.muro}">
+            <input type="hidden" th:name="|aberturas[${fila.index}].posicion|" th:value="${abertura.posicion}">
+            <input type="hidden" th:name="|aberturas[${fila.index}].ancho|" th:value="${abertura.ancho}">
+            <input type="hidden" th:name="|aberturas[${fila.index}].radioDeGiro|" th:value="${abertura.radioDeGiro}">
         </th:block>
 
         <fieldset class="mb-4">

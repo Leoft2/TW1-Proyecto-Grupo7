@@ -58,10 +58,22 @@ public class ServicioZonaExclusionImpl implements ServicioZonaExclusion {
   }
 
   private Double profundidadDe(Abertura abertura, Ambiente ambiente) {
-    Double profundidad = abertura.getTipo() == TipoAbertura.VENTANA
-      ? PROFUNDIDAD_DE_ZONA_DE_VENTANA
-      : abertura.getRadioDeGiro();
+    Double profundidad = profundidadDeLaAbertura(abertura);
     Double disponible = abertura.getMuro().profundidadDisponibleEn(ambiente);
     return Math.min(profundidad, disponible);
+  }
+
+  /**
+   * La ventana tiene una profundidad fija. La puerta usa su radio de giro y, cuando no se cargo,
+   * el ancho de la hoja: la puerta gira sobre si misma y ocupa su propio ancho.
+   */
+  private Double profundidadDeLaAbertura(Abertura abertura) {
+    if (abertura.getTipo() == TipoAbertura.VENTANA) {
+      return PROFUNDIDAD_DE_ZONA_DE_VENTANA;
+    }
+    if (abertura.getRadioDeGiro() != null) {
+      return abertura.getRadioDeGiro();
+    }
+    return abertura.getAncho();
   }
 }

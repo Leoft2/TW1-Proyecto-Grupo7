@@ -17,10 +17,10 @@
 
     <ol class="list-group list-group-horizontal-md mb-4">
         <li class="list-group-item list-group-item-success">1 · Espacio ✓</li>
-        <li class="list-group-item list-group-item-success">2 · Muebles ✓</li>
-        <li class="list-group-item active fw-semibold">3 · Plano</li>
-        <li class="list-group-item disabled">4 · Presupuesto</li>
-        <li class="list-group-item disabled">5 · Resumen</li>
+        <li class="list-group-item list-group-item-success">2 · Aberturas ✓</li>
+        <li class="list-group-item list-group-item-success">3 · Obstáculos ✓</li>
+        <li class="list-group-item list-group-item-success">4 · Muebles ✓</li>
+        <li class="list-group-item active fw-semibold">5 · Plano</li>
     </ol>
 
     <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}">
@@ -63,6 +63,10 @@
                         <i class="bi bi-slash-square"></i>
                         <span th:text="${#lists.size(plano.ambiente.obstaculos)}">1</span> obstáculos
                     </span>
+                    <span th:if="${not #lists.isEmpty(zonasDeExclusion)}" class="hb-chip">
+                        <i class="bi bi-door-open"></i>
+                        <span th:text="${#lists.size(zonasDeExclusion)}">1</span> zonas de exclusión
+                    </span>
                     <span th:if="${not #lists.isEmpty(plano.mueblesEnConflicto)}" class="hb-chip hb-chip-alerta">
                         <i class="bi bi-exclamation-triangle"></i>
                         <span th:text="${#lists.size(plano.mueblesEnConflicto)}">1</span> en conflicto
@@ -80,7 +84,7 @@
                      role="alert" aria-live="assertive"></div>
 
                 <!-- El viewBox usa las mismas coordenadas en metros que devuelve el servicio. -->
-                <svg th:if="${not #lists.isEmpty(plano.muebles) or not #lists.isEmpty(plano.ambiente.obstaculos)}"
+                <svg th:if="${not #lists.isEmpty(plano.muebles) or not #lists.isEmpty(plano.ambiente.obstaculos) or not #lists.isEmpty(zonasDeExclusion)}"
                      th:attr="viewBox=${'-0.45 -0.45 ' + (plano.ambiente.ancho + 0.9) + ' ' + (plano.ambiente.largo + 0.9)},
                               data-url=@{/plano/mover-mueble},data-ancho=${plano.ambiente.ancho},
                               data-largo=${plano.ambiente.largo}"
@@ -100,6 +104,11 @@
                             <rect width="0.08" height="0.08" fill="#e6e1dc"></rect>
                             <path d="M 0 0 L 0 0.08" stroke="#8a817a" stroke-width="0.03"></path>
                         </pattern>
+                        <pattern id="plano-rejilla-apertura" width="0.08" height="0.08" patternUnits="userSpaceOnUse"
+                                 patternTransform="rotate(-45)">
+                            <rect width="0.08" height="0.08" fill="#e3e8e4"></rect>
+                            <path d="M 0 0 L 0 0.08" stroke="#7f8c85" stroke-width="0.03"></path>
+                        </pattern>
                     </defs>
 
                     <rect x="0" y="0" fill="url(#plano-floor)"
@@ -116,6 +125,78 @@
                         <rect fill="url(#plano-no-disponible)" stroke="#8a817a"
                               th:attr="x=${zona.posicionX}, y=${zona.posicionY},
                                        width=${zona.ancho}, height=${zona.largo}, stroke-width=${0.02}"></rect>
+                    </g>
+
+                    <!-- Zonas de exclusion de las aberturas: ningun mueble puede ocuparlas. -->
+                    <g th:each="zona : ${zonasDeExclusion}" class="plano-zona-apertura">
+                        <title th:text="${zona.tipo.name() + ' - zona de exclusión'}">PUERTA - zona de exclusión</title>
+                        <rect fill="url(#plano-rejilla-apertura)" stroke="#7f8c85"
+                              th:attr="x=${zona.posicionX}, y=${zona.posicionY},
+                                       width=${zona.ancho}, height=${zona.profundidad}, stroke-width=${0.02}"></rect>
+                    </g>
+
+                    <!-- Marca de la abertura sobre el muro: el hueco que deja y, si es una puerta,
+                         la hoja abierta con su arco de barrido. -->
+                    <g th:each="abertura : ${plano.ambiente.aberturas}" class="plano-apertura"
+                       th:if="${abertura.posicion != null and abertura.ancho != null}">
+                        <title th:text="${abertura.tipo.name() + ' en el muro ' + abertura.muro.nombre}">PUERTA en el muro superior</title>
+
+                        <!-- Hueco del muro: el mismo grosor del trazo del muro. -->
+                        <rect fill="url(#plano-floor)" stroke="none"
+                              th:if="${abertura.muro.nombre == 'superior'}"
+                              th:attr="x=${abertura.posicion}, y=${-0.06},
+                                       width=${abertura.ancho}, height=${0.12}"></rect>
+                        <rect fill="url(#plano-floor)" stroke="none"
+                              th:if="${abertura.muro.nombre == 'inferior'}"
+                              th:attr="x=${abertura.posicion}, y=${plano.ambiente.largo - 0.06},
+                                       width=${abertura.ancho}, height=${0.12}"></rect>
+                        <rect fill="url(#plano-floor)" stroke="none"
+                              th:if="${abertura.muro.nombre == 'derecho'}"
+                              th:attr="x=${plano.ambiente.ancho - 0.06}, y=${abertura.posicion},
+                                       width=${0.12}, height=${abertura.ancho}"></rect>
+                        <rect fill="url(#plano-floor)" stroke="none"
+                              th:if="${abertura.muro.nombre == 'izquierdo'}"
+                              th:attr="x=${-0.06}, y=${abertura.posicion},
+                                       width=${0.12}, height=${abertura.ancho}"></rect>
+
+                        <!-- Hoja de la puerta: arranca en el extremo lejano al origen del muro y
+                             se abre hacia adentro del ambiente. -->
+                        <g th:if="${abertura.tipo.name() == 'PUERTA'}" class="plano-apertura-hoja">
+                            <line stroke="#8a817a" stroke-width="0.03"
+                                  th:if="${abertura.muro.nombre == 'superior'}"
+                                  th:with="p=${abertura.posicion},w=${abertura.ancho}"
+                                  th:attr="x1=${p + w}, y1=${0}, x2=${p + w}, y2=${w}"></line>
+                            <line stroke="#8a817a" stroke-width="0.03"
+                                  th:if="${abertura.muro.nombre == 'derecho'}"
+                                  th:with="p=${abertura.posicion},w=${abertura.ancho},a=${plano.ambiente.ancho}"
+                                  th:attr="x1=${a}, y1=${p + w}, x2=${a - w}, y2=${p + w}"></line>
+                            <line stroke="#8a817a" stroke-width="0.03"
+                                  th:if="${abertura.muro.nombre == 'inferior'}"
+                                  th:with="p=${abertura.posicion},w=${abertura.ancho},l=${plano.ambiente.largo}"
+                                  th:attr="x1=${p + w}, y1=${l}, x2=${p + w}, y2=${l - w}"></line>
+                            <line stroke="#8a817a" stroke-width="0.03"
+                                  th:if="${abertura.muro.nombre == 'izquierdo'}"
+                                  th:with="p=${abertura.posicion},w=${abertura.ancho}"
+                                  th:attr="x1=${0}, y1=${p + w}, x2=${w}, y2=${p + w}"></line>
+
+                            <!-- Arco de barrido de la hoja. -->
+                            <path fill="none" stroke="#8a817a" stroke-width="0.02" stroke-dasharray="0.06 0.04"
+                                  th:if="${abertura.muro.nombre == 'superior'}"
+                                  th:with="p=${abertura.posicion},w=${abertura.ancho}"
+                                  th:attr="d=${'M ' + p + ' 0 A ' + w + ' ' + w + ' 0 0 0 ' + (p + w) + ' ' + w}"></path>
+                            <path fill="none" stroke="#8a817a" stroke-width="0.02" stroke-dasharray="0.06 0.04"
+                                  th:if="${abertura.muro.nombre == 'derecho'}"
+                                  th:with="p=${abertura.posicion},w=${abertura.ancho},a=${plano.ambiente.ancho}"
+                                  th:attr="d=${'M ' + a + ' ' + p + ' A ' + w + ' ' + w + ' 0 0 0 ' + (a - w) + ' ' + (p + w)}"></path>
+                            <path fill="none" stroke="#8a817a" stroke-width="0.02" stroke-dasharray="0.06 0.04"
+                                  th:if="${abertura.muro.nombre == 'inferior'}"
+                                  th:with="p=${abertura.posicion},w=${abertura.ancho},l=${plano.ambiente.largo}"
+                                  th:attr="d=${'M ' + p + ' ' + l + ' A ' + w + ' ' + w + ' 0 0 1 ' + (p + w) + ' ' + (l - w)}"></path>
+                            <path fill="none" stroke="#8a817a" stroke-width="0.02" stroke-dasharray="0.06 0.04"
+                                  th:if="${abertura.muro.nombre == 'izquierdo'}"
+                                  th:with="p=${abertura.posicion},w=${abertura.ancho}"
+                                  th:attr="d=${'M 0 ' + p + ' A ' + w + ' ' + w + ' 0 0 1 ' + w + ' ' + (p + w)}"></path>
+                        </g>
                     </g>
 
                     <g th:each="ubicado, i : ${plano.muebles}" class="plano-mueble plano-mueble-arrastrable"
@@ -161,6 +242,7 @@
                 <div class="hb-plano-legend">
                     <span><i class="hb-legend-swatch"></i> Mueble ubicado</span>
                     <span><i class="hb-legend-no-disponible"></i> Zona no disponible</span>
+                    <span><i class="hb-legend-zona-apertura"></i> Zona de exclusión por apertura</span>
                     <span><i class="hb-legend-conflicto"></i> Mueble en conflicto</span>
                     <span><i class="hb-legend-grid"></i> Cada cuadrícula representa 0,5 m</span>
                 </div>

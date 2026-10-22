@@ -6,4 +6,5 @@ public interface ServicioAmbiente {
   List<Ambiente> obtenerAmbientes();
   List<Ambiente> obtenerAmbientesDe(String email);
   Ambiente buscarAmbiente(Long id);
+  void agregarAbertura(Long ambienteId, Abertura abertura);
 }

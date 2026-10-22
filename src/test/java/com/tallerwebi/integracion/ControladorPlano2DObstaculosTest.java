@@ -37,8 +37,20 @@ public class ControladorPlano2DObstaculosTest {
   }
 
   @Test
-  public void dadoQueAbroElFormularioDelPlano_entoncesLosObstaculosSeCarganEnElPasoSiguiente()
+  public void deberiaMostrarElFormularioDeObstaculosCuandoAbroElPasoDeObstaculos()
     throws Exception {
+    String html =
+      this.mockMvc.perform(get("/plano/obstaculos"))
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+
+    assertThat(html, containsString("action=\"/plano/obstaculos/confirmar\""));
+  }
+
+  @Test
+  public void deberiaOcultarLaTablaDeObstaculosCuandoEstoyEnElPasoDeEspacio() throws Exception {
     String html =
       this.mockMvc.perform(get("/plano/ambiente"))
         .andExpect(status().isOk())
@@ -46,7 +58,6 @@ public class ControladorPlano2DObstaculosTest {
         .getResponse()
         .getContentAsString();
 
-    assertThat(html, containsString("action=\"/plano/obstaculos\""));
     assertThat(html, not(containsString("id=\"filas-obstaculos\"")));
   }
 

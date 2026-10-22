@@ -20,6 +20,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.web.servlet.ModelAndView;
 
+// Se agregan tests para arreglar bugs
+
 public class ControladorObstaculosTest {
 
   private ServicioObstaculos servicioObstaculos;
@@ -95,6 +97,36 @@ public class ControladorObstaculosTest {
   public void deberiaGuardarElFormularioEnSesionCuandoCargoElPasoDeObstaculos() {
     // ejecucion
     controladorObstaculos.irACargarObstaculos(formulario, sesion);
+
+    // validacion
+    verify(sesion).setAttribute("datosPlano", formulario);
+  }
+
+  @Test
+  public void deberiaGuardarElFormularioEnSesionCuandoConfirmoLosObstaculos() {
+    // preparacion
+    formulario.setObstaculos(
+      new ArrayList<>(
+        List.of(new DatosObstaculo(TipoDeObstaculo.RADIADOR, Muro.DERECHO, 0.5, 0.8, 0.15))
+      )
+    );
+
+    // ejecucion
+    controladorObstaculos.confirmarObstaculos(formulario, sesion);
+
+    // validacion
+    verify(sesion).setAttribute("datosPlano", formulario);
+  }
+
+  @Test
+  public void deberiaGuardarElFormularioEnSesionCuandoUnObstaculoNoEsValido() {
+    // preparacion
+    doThrow(new ValidacionException("Radiador se sale del muro derecho"))
+      .when(servicioObstaculos)
+      .validarObstaculos(any(Ambiente.class));
+
+    // ejecucion
+    controladorObstaculos.confirmarObstaculos(formulario, sesion);
 
     // validacion
     verify(sesion).setAttribute("datosPlano", formulario);

@@ -25,6 +25,7 @@ public class ControladorInventarioMueblesTest {
   private ServicioPlano2D servicioPlano2D;
   private ServicioCategoriaDeMueble servicioCategoriaDeMueble;
   private ServicioMaterial servicioMaterial;
+  private ServicioZonaExclusion servicioZonaExclusion;
   private HttpSession sesion;
   private ControladorInventarioMuebles controladorInventarioMuebles;
 
@@ -35,6 +36,7 @@ public class ControladorInventarioMueblesTest {
     sesion = mock(HttpSession.class);
     servicioCategoriaDeMueble = mock(ServicioCategoriaDeMueble.class);
     servicioMaterial = mock(ServicioMaterial.class);
+    servicioZonaExclusion = mock(ServicioZonaExclusion.class);
     when(servicioCategoriaDeMueble.obtenerCategorias()).thenReturn(new java.util.ArrayList<>());
     when(servicioMaterial.obtenerMateriales()).thenReturn(new java.util.ArrayList<>());
     controladorInventarioMuebles =
@@ -43,7 +45,8 @@ public class ControladorInventarioMueblesTest {
         servicioPlano2D,
         servicioCategoriaDeMueble,
         null,
-        servicioMaterial
+        servicioMaterial,
+        servicioZonaExclusion
       );
   }
 
@@ -173,6 +176,28 @@ public class ControladorInventarioMueblesTest {
 
   private void thenLaVistaEsPlanoInteractivo(ModelAndView mav) {
     assertEquals("plano-interactivo", mav.getViewName());
+  }
+
+  @Test
+  public void deberiaPasarLasZonasDeExclusionAlModeloCuandoGeneroElPlano() {
+    // Given
+    givenAmbienteYInventarioListos();
+    java.util.List<ZonaExclusion> zonas = new java.util.ArrayList<>();
+    zonas.add(new ZonaExclusion(1.0, 0.0, 0.9, 0.9, TipoAbertura.PUERTA));
+    when(servicioZonaExclusion.calcularZonas(any(Ambiente.class))).thenReturn(zonas);
+
+    // When
+    ModelAndView mav = whenConfirmoElInventario();
+
+    // Then
+    thenElModeloTieneLasZonasDeExclusion(zonas, mav);
+  }
+
+  private void thenElModeloTieneLasZonasDeExclusion(
+    java.util.List<ZonaExclusion> zonasEsperadas,
+    ModelAndView mav
+  ) {
+    assertEquals(zonasEsperadas, mav.getModel().get("zonasDeExclusion"));
   }
 
   @Test

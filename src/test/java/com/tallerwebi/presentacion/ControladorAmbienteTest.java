@@ -1,18 +1,12 @@
 package com.tallerwebi.presentacion;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
 
-import com.tallerwebi.dominio.Ambiente;
-import com.tallerwebi.dominio.Mueble;
-import com.tallerwebi.dominio.ServicioAmbiente;
-import com.tallerwebi.dominio.TipoDeAmbiente;
+import com.tallerwebi.dominio.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import java.util.ArrayList;
@@ -72,11 +66,6 @@ public class ControladorAmbienteTest {
     assertThat(modelAndView.getModel().get("ambiente"), is(ambiente));
   }
 
-  @SuppressWarnings("unchecked")
-  private List<Ambiente> obtenerAmbientesDelModel(ModelAndView modelAndView) {
-    return (List<Ambiente>) modelAndView.getModel().get("ambientes");
-  }
-
   @Test
   public void dadoQueEntroAMueblesDeUnAmbiente_entoncesVeoLosMueblesDeEseAmbiente() {
     Mueble cama = new Mueble("Cama", 2.0, 1.6);
@@ -126,6 +115,47 @@ public class ControladorAmbienteTest {
     assertThat(modelAndView.getViewName(), is("redirect:/ambientes"));
   }
 
+  // -------------------------------------------------------------------------
+  // Tests HU-04:Aberturas
+  // -------------------------------------------------------------------------
+
+  @Test
+  public void deberiaMostrarElFormularioDeAberturasCuandoSePidePorId() {
+    givenAmbienteDevueltoPorServicio(1L);
+
+    ModelAndView mav = whenVoyAConfigurarAberturas(1L);
+
+    thenLaVistaEs(mav, "ambiente-aberturas");
+    thenElModeloContieneClave(mav, "ambiente");
+    thenElModeloContieneDatosAberturaVacio(mav);
+    thenElModeloContieneTiposAbertura(mav);
+    thenElModeloContieneMuros(mav);
+  }
+
+  @Test
+  public void deberiaAgregarAberturaYRedirigirCuandoElFormularioEsValido() {
+    givenAmbienteDevueltoPorServicio(1L);
+    DatosAbertura datosAbertura = givenDatosAberturaPuerta();
+
+    ModelAndView mav = whenAgregoAberturaDesdeFormulario(1L, datosAbertura);
+
+    thenLaVistaEs(mav, "redirect:/ambientes/1/aberturas");
+    verify(servicioAmbiente).agregarAbertura(eq(1L), any(Abertura.class));
+  }
+
+  @Test
+  public void deberiaVolverAlFormularioConErrorCuandoElServicioLanzaExcepcionAlNoEncontrarAmbiente() {
+    givenAmbienteDevueltoPorServicio(1L);
+    givenAgregarAberturaLanzaExcepcion(1L, "Ambiente no encontrado");
+    DatosAbertura datosAbertura = givenDatosAberturaPuerta();
+
+    ModelAndView mav = whenAgregoAberturaDesdeFormulario(1L, datosAbertura);
+
+    thenLaVistaEs(mav, "ambiente-aberturas");
+    thenElModeloContieneError(mav);
+    thenElModeloContieneDatosAberturaOriginal(mav, datosAbertura);
+  }
+
   private Ambiente unAmbienteConMuebles(TipoDeAmbiente tipo, Mueble... muebles) {
     Ambiente ambiente = new Ambiente(4.0, 3.0, tipo);
     for (Mueble mueble : muebles) {
@@ -137,5 +167,82 @@ public class ControladorAmbienteTest {
   @SuppressWarnings("unchecked")
   private List<Mueble> obtenerMueblesDelModel(ModelAndView modelAndView) {
     return (List<Mueble>) modelAndView.getModel().get("muebles");
+  }
+
+  // -------------------------------------------------------------------------
+  // Given
+  // -------------------------------------------------------------------------
+
+  private Ambiente givenAmbienteDevueltoPorServicio(Long id) {
+    Ambiente ambiente = new Ambiente(4.0, 5.0, new TipoDeAmbiente("Living"));
+    when(servicioAmbiente.buscarAmbiente(id)).thenReturn(ambiente);
+    return ambiente;
+  }
+
+  private DatosAbertura givenDatosAberturaPuerta() {
+    DatosAbertura datos = new DatosAbertura();
+    datos.setTipo(TipoAbertura.PUERTA);
+    datos.setMuro(Muro.SUPERIOR);
+    datos.setPosicion(1.0);
+    datos.setAncho(0.9);
+    datos.setRadioDeGiro(0.9);
+    return datos;
+  }
+
+  private void givenAgregarAberturaLanzaExcepcion(Long id, String mensaje) {
+    doThrow(new RuntimeException(mensaje))
+      .when(servicioAmbiente)
+      .agregarAbertura(eq(id), any(Abertura.class));
+  }
+
+  // -------------------------------------------------------------------------
+  // When
+  // -------------------------------------------------------------------------
+
+  private ModelAndView whenVoyAConfigurarAberturas(Long id) {
+    return controladorAmbiente.irAConfigurarAberturas(id);
+  }
+
+  private ModelAndView whenAgregoAberturaDesdeFormulario(Long id, DatosAbertura datos) {
+    return controladorAmbiente.agregarAbertura(id, datos);
+  }
+
+  // -------------------------------------------------------------------------
+  // Then
+  // -------------------------------------------------------------------------
+
+  private void thenLaVistaEs(ModelAndView mav, String nombreVista) {
+    assertThat(mav.getViewName(), is(nombreVista));
+  }
+
+  private void thenElModeloContieneClave(ModelAndView mav, String clave) {
+    assertThat(mav.getModel(), hasKey(clave));
+  }
+
+  private void thenElModeloContieneDatosAberturaVacio(ModelAndView mav) {
+    assertThat(mav.getModel().get("datosAbertura"), is(notNullValue()));
+    assertThat(mav.getModel().get("datosAbertura"), instanceOf(DatosAbertura.class));
+  }
+
+  private void thenElModeloContieneTiposAbertura(ModelAndView mav) {
+    assertThat(mav.getModel(), hasKey("tiposAbertura"));
+  }
+
+  private void thenElModeloContieneMuros(ModelAndView mav) {
+    assertThat(mav.getModel(), hasKey("muros"));
+  }
+
+  private void thenElModeloContieneError(ModelAndView mav) {
+    assertThat(mav.getModel(), hasKey("error"));
+    assertThat(mav.getModel().get("error"), is(notNullValue()));
+  }
+
+  private void thenElModeloContieneDatosAberturaOriginal(ModelAndView mav, DatosAbertura datos) {
+    assertThat(mav.getModel().get("datosAbertura"), is(datos));
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<Ambiente> obtenerAmbientesDelModel(ModelAndView modelAndView) {
+    return (List<Ambiente>) modelAndView.getModel().get("ambientes");
   }
 }

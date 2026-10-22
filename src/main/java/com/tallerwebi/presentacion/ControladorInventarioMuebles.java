@@ -26,19 +26,45 @@ public class ControladorInventarioMuebles {
   private static final String ATTR_MATERIALES = "materiales";
   private static final String ATRIBUTO_AMBIENTE = "ambiente";
   private static final String ATRIBUTO_PLANO = "plano";
+  private static final String ATRIBUTO_ZONAS_DE_EXCLUSION = "zonasDeExclusion";
 
   private final ServicioEdicionInventarioMuebles servicioEdicionInventarioMuebles;
   private final ServicioPlano2D servicioPlano2D;
   private final ServicioCategoriaDeMueble servicioCategoriaDeMueble;
   private final ServicioPersistenciaPlano servicioPersistenciaPlano;
   private final ServicioMaterial servicioMaterial;
+  private final ServicioZonaExclusion servicioZonaExclusion;
 
   public ControladorInventarioMuebles(
     ServicioEdicionInventarioMuebles servicioEdicionInventarioMuebles,
     ServicioPlano2D servicioPlano2D,
     ServicioCategoriaDeMueble servicioCategoriaDeMueble
   ) {
-    this(servicioEdicionInventarioMuebles, servicioPlano2D, servicioCategoriaDeMueble, null, null);
+    this(
+      servicioEdicionInventarioMuebles,
+      servicioPlano2D,
+      servicioCategoriaDeMueble,
+      null,
+      null,
+      new ServicioZonaExclusionImpl()
+    );
+  }
+
+  public ControladorInventarioMuebles(
+    ServicioEdicionInventarioMuebles servicioEdicionInventarioMuebles,
+    ServicioPlano2D servicioPlano2D,
+    ServicioCategoriaDeMueble servicioCategoriaDeMueble,
+    ServicioPersistenciaPlano servicioPersistenciaPlano,
+    ServicioMaterial servicioMaterial
+  ) {
+    this(
+      servicioEdicionInventarioMuebles,
+      servicioPlano2D,
+      servicioCategoriaDeMueble,
+      servicioPersistenciaPlano,
+      servicioMaterial,
+      new ServicioZonaExclusionImpl()
+    );
   }
 
   @Autowired
@@ -47,13 +73,15 @@ public class ControladorInventarioMuebles {
     ServicioPlano2D servicioPlano2D,
     ServicioCategoriaDeMueble servicioCategoriaDeMueble,
     ServicioPersistenciaPlano servicioPersistenciaPlano,
-    ServicioMaterial servicioMaterial
+    ServicioMaterial servicioMaterial,
+    ServicioZonaExclusion servicioZonaExclusion
   ) {
     this.servicioEdicionInventarioMuebles = servicioEdicionInventarioMuebles;
     this.servicioPlano2D = servicioPlano2D;
     this.servicioCategoriaDeMueble = servicioCategoriaDeMueble;
     this.servicioPersistenciaPlano = servicioPersistenciaPlano;
     this.servicioMaterial = servicioMaterial;
+    this.servicioZonaExclusion = servicioZonaExclusion;
   }
 
   @GetMapping("/inventario-muebles")
@@ -179,6 +207,7 @@ public class ControladorInventarioMuebles {
       }
       sesion.setAttribute(ATRIBUTO_PLANO, plano);
       model.put(ATRIBUTO_PLANO, plano);
+      model.put(ATRIBUTO_ZONAS_DE_EXCLUSION, servicioZonaExclusion.calcularZonas(ambiente));
       return new ModelAndView("plano-interactivo", model);
     } catch (ValidacionException e) {
       return new ModelAndView("redirect:/plano/ambiente");

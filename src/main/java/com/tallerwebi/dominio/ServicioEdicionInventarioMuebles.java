@@ -13,4 +13,6 @@ public interface ServicioEdicionInventarioMuebles {
   List<Mueble> listar();
 
   void crear(Mueble mueble);
+
+  boolean sonIguales(Mueble muebleUno, Mueble muebleDos);
 }

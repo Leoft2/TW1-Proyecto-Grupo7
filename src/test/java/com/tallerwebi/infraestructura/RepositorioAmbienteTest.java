@@ -65,7 +65,9 @@ public class RepositorioAmbienteTest {
     List<Ambiente> ambientes = this.repositorioAmbiente.obtenerTodos();
 
     assertThat(ambientes, hasSize(2));
-    assertThat(ambientes, contains(habitacion, cocina));
+    assertThat(ambientes, hasSize(2));
+    assertThat(ambientes.get(0).getId(), is(equalTo(habitacion.getId())));
+    assertThat(ambientes.get(1).getId(), is(equalTo(cocina.getId())));
   }
 
   @Test
@@ -88,7 +90,9 @@ public class RepositorioAmbienteTest {
     List<Ambiente> ambientes = this.repositorioAmbiente.obtenerAmbientesDe("test@unlam.edu.ar");
 
     assertThat(ambientes, hasSize(1));
-    assertThat(ambientes.get(0).getMuebles(), contains(cama, escritorio));
+    assertThat(ambientes.get(0).getMuebles(), hasSize(2));
+    assertThat(ambientes.get(0).getMuebles().get(0).getId(), is(equalTo(cama.getId())));
+    assertThat(ambientes.get(0).getMuebles().get(1).getId(), is(equalTo(escritorio.getId())));
   }
 
   // -------------------------------------------------------------------------

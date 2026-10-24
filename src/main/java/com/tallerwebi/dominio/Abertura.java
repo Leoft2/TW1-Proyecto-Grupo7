@@ -8,6 +8,8 @@ import jakarta.persistence.Enumerated;
  * Abertura de un muro del ambiente (puerta o ventana). La posicion se mide desde el inicio del
  * muro, igual que un obstaculo. El radio de giro es propio de las puertas.
  */
+
+// Review 3: se puede inyectar. Quien la consume?
 @Embeddable
 public class Abertura {
 

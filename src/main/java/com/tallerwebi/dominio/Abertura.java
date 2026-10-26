@@ -9,7 +9,9 @@ import jakarta.persistence.Enumerated;
  * muro, igual que un obstaculo. El radio de giro es propio de las puertas.
  */
 
-// Review 3: se puede inyectar. Quien la consume?
+// Es incrustable y la consume la entidad Ambiente con @ElementCollection.
+// No es entidad porque una Abertura no existe ni se referencia fuera de su Ambiente.
+// Se puede inyectar?
 @Embeddable
 public class Abertura {
 

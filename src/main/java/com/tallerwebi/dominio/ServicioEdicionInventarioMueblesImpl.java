@@ -63,11 +63,8 @@ public class ServicioEdicionInventarioMueblesImpl implements ServicioEdicionInve
   }
 
   @Override
-  // Se suprime PMD.CompareObjectsWithEquals: el chequeo por identidad (==) es intencional y
-  // forma parte del patrón canónico de equals/sonIguales (atajo eficiente cuando es la misma instancia).
-  @SuppressWarnings("PMD.CompareObjectsWithEquals")
   public boolean sonIguales(Mueble muebleUno, Mueble muebleDos) {
-    if (muebleUno == muebleDos) {
+    if (Objects.equals(muebleUno, muebleDos)) {
       return true;
     }
     if (muebleUno == null || muebleDos == null) {

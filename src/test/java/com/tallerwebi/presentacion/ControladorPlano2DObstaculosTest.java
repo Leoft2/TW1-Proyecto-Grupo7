@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import com.tallerwebi.dominio.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,9 @@ public class ControladorPlano2DObstaculosTest {
     controladorPlano2D =
       new ControladorPlano2D(servicioPlano2D, mock(ServicioCategoriaDeMueble.class));
     when(servicioPlano2D.generarPlano(any(Ambiente.class), anyList()))
-      .thenReturn(new Plano(new Ambiente(4.0, 3.0), List.of(), List.of(), List.of()));
+      .thenReturn(
+        new Plano(new Ambiente(4.0, 3.0), new ArrayList<>(), new ArrayList<>(), new ArrayList<>())
+      );
   }
 
   @Test
@@ -36,8 +39,10 @@ public class ControladorPlano2DObstaculosTest {
     assertEquals(TipoDeObstaculo.RADIADOR, obstaculo.getTipo());
     assertEquals(Muro.DERECHO, obstaculo.getMuro());
     assertEquals(
-      List.of(0.5, 0.8, 0.15),
-      List.of(obstaculo.getPosicion(), obstaculo.getAncho(), obstaculo.getProfundidad())
+      new ArrayList<>(Arrays.asList(0.5, 0.8, 0.15)),
+      new ArrayList<>(
+        Arrays.asList(obstaculo.getPosicion(), obstaculo.getAncho(), obstaculo.getProfundidad())
+      )
     );
   }
 
@@ -49,7 +54,7 @@ public class ControladorPlano2DObstaculosTest {
 
     controladorPlano2D.generarPlanoDesdeFormulario(formulario);
 
-    assertEquals(List.of(), thenElAmbienteQueRecibeElServicio().getObstaculos());
+    assertEquals(new ArrayList<>(), thenElAmbienteQueRecibeElServicio().getObstaculos());
   }
 
   private DatosPlano givenUnFormularioConElObstaculo(DatosObstaculo datosObstaculo) {

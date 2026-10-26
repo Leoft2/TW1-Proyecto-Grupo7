@@ -1,11 +1,9 @@
 package com.tallerwebi.dominio;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import com.tallerwebi.dominio.excepcion.ValidacionException;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -29,135 +27,126 @@ public class ServicioObstaculosPlano2DTest {
 
   @Test
   public void deberiaRechazarElPlanoCuandoUnObstaculoSeSaleDelMuro() {
-    // preparacion
-    ambiente.agregarObstaculo(radiadorEn(Muro.DERECHO, 2.5, 0.8));
+    ambiente.agregarObstaculo(givenUnObstaculoEn(Muro.DERECHO, 2.5, 0.8));
 
-    // ejecucion y validacion
-    assertThrows(
-      ValidacionException.class,
-      () -> servicioPlano2D.generarPlano(ambiente, List.of(rack))
-    );
+    assertThrows(ValidacionException.class, () -> whenGeneroElPlano(ambiente, Arrays.asList(rack)));
   }
 
   @Test
   public void deberiaUbicarElMuebleDespuesDelObstaculoCuandoElObstaculoEstaEnElMuroSuperior() {
-    // preparacion
-    ambiente.agregarObstaculo(radiadorEn(Muro.SUPERIOR, 0.0, 0.8));
+    ambiente.agregarObstaculo(givenUnObstaculoEn(Muro.SUPERIOR, 0.0, 0.8));
 
-    // ejecucion
-    Plano plano = servicioPlano2D.generarPlano(ambiente, List.of(rack));
+    Plano plano = whenGeneroElPlano(ambiente, Arrays.asList(rack));
 
-    // validacion
     thenElMuebleQuedaEn(plano, 0.8, 0.0);
   }
 
   @Test
   public void deberiaPasarAlMuroDerechoCuandoUnObstaculoOcupaTodoElMuroSuperior() {
-    // preparacion
-    ambiente.agregarObstaculo(radiadorEn(Muro.SUPERIOR, 0.0, 4.0));
+    ambiente.agregarObstaculo(givenUnObstaculoEn(Muro.SUPERIOR, 0.0, 4.0));
 
-    // ejecucion
-    Plano plano = servicioPlano2D.generarPlano(ambiente, List.of(rack));
+    Plano plano = whenGeneroElPlano(ambiente, Arrays.asList(rack));
 
-    // validacion
     thenElMuebleQuedaEn(plano, 3.0, 0.5);
   }
 
   @Test
   public void deberiaUbicarElMuebleDebajoDelObstaculoCuandoElObstaculoEstaEnElMuroDerecho() {
-    // preparacion
-    ambiente.agregarObstaculo(radiadorEn(Muro.SUPERIOR, 0.0, 4.0));
-    ambiente.agregarObstaculo(radiadorEn(Muro.DERECHO, 0.5, 0.8));
+    ambiente.agregarObstaculo(givenUnObstaculoEn(Muro.SUPERIOR, 0.0, 4.0));
+    ambiente.agregarObstaculo(givenUnObstaculoEn(Muro.DERECHO, 0.5, 0.8));
 
-    // ejecucion
-    Plano plano = servicioPlano2D.generarPlano(ambiente, List.of(rack));
+    Plano plano = whenGeneroElPlano(ambiente, Arrays.asList(rack));
 
-    // validacion
     thenElMuebleQuedaEn(plano, 3.0, 1.3);
   }
 
   @Test
   public void deberiaUbicarElMuebleALaIzquierdaDelObstaculoCuandoElObstaculoEstaEnElMuroInferior() {
-    // preparacion
-    ambiente.agregarObstaculo(radiadorEn(Muro.SUPERIOR, 0.0, 4.0));
-    ambiente.agregarObstaculo(radiadorEn(Muro.DERECHO, 0.0, 3.0));
-    ambiente.agregarObstaculo(radiadorEn(Muro.INFERIOR, 2.5, 0.8));
+    ambiente.agregarObstaculo(givenUnObstaculoEn(Muro.SUPERIOR, 0.0, 4.0));
+    ambiente.agregarObstaculo(givenUnObstaculoEn(Muro.DERECHO, 0.0, 3.0));
+    ambiente.agregarObstaculo(givenUnObstaculoEn(Muro.INFERIOR, 2.5, 0.8));
 
-    // ejecucion
-    Plano plano = servicioPlano2D.generarPlano(ambiente, List.of(rack));
+    Plano plano = whenGeneroElPlano(ambiente, Arrays.asList(rack));
 
-    // validacion
     thenElMuebleQuedaEn(plano, 1.5, 2.5);
   }
 
   @Test
   public void deberiaUbicarElMuebleArribaDelObstaculoCuandoElObstaculoEstaEnElMuroIzquierdo() {
-    // preparacion
-    ambiente.agregarObstaculo(radiadorEn(Muro.SUPERIOR, 0.0, 4.0));
-    ambiente.agregarObstaculo(radiadorEn(Muro.DERECHO, 0.0, 3.0));
-    ambiente.agregarObstaculo(radiadorEn(Muro.INFERIOR, 0.0, 4.0));
-    ambiente.agregarObstaculo(radiadorEn(Muro.IZQUIERDO, 1.8, 0.8));
+    ambiente.agregarObstaculo(givenUnObstaculoEn(Muro.SUPERIOR, 0.0, 4.0));
+    ambiente.agregarObstaculo(givenUnObstaculoEn(Muro.DERECHO, 0.0, 3.0));
+    ambiente.agregarObstaculo(givenUnObstaculoEn(Muro.INFERIOR, 0.0, 4.0));
+    ambiente.agregarObstaculo(givenUnObstaculoEn(Muro.IZQUIERDO, 1.8, 0.8));
 
-    // ejecucion
-    Plano plano = servicioPlano2D.generarPlano(ambiente, List.of(rack));
+    Plano plano = whenGeneroElPlano(ambiente, Arrays.asList(rack));
 
-    // validacion
     thenElMuebleQuedaEn(plano, 0.0, 1.3);
   }
 
   @Test
   public void deberiaUbicarElMuebleEnConflictoCuandoLosObstaculosNoDejanLugarLibre() {
-    // preparacion
-    dadoQueTodosLosMurosEstanCubiertos();
+    givenQueTodosLosMurosEstanCubiertos();
 
-    // ejecucion
-    Plano plano = servicioPlano2D.generarPlano(ambiente, List.of(rack));
+    Plano plano = whenGeneroElPlano(ambiente, Arrays.asList(rack));
 
-    // validacion
     thenElMuebleQuedaEn(plano, 0.0, 0.0);
-    assertTrue(plano.getMuebles().get(0).isEnConflicto());
+    thenElMuebleQuedaEnConflicto(plano);
   }
 
   @Test
   public void deberiaUbicarElMuebleSinConflictoCuandoNoPisaNingunObstaculo() {
-    // preparacion
-    ambiente.agregarObstaculo(radiadorEn(Muro.SUPERIOR, 0.0, 0.8));
+    ambiente.agregarObstaculo(givenUnObstaculoEn(Muro.SUPERIOR, 0.0, 0.8));
 
-    // ejecucion
-    Plano plano = servicioPlano2D.generarPlano(ambiente, List.of(rack));
+    Plano plano = whenGeneroElPlano(ambiente, Arrays.asList(rack));
 
-    // validacion
-    assertFalse(plano.getMuebles().get(0).isEnConflicto());
+    thenElMuebleQuedaSinConflicto(plano);
   }
 
   @Test
   public void deberiaUbicarElMuebleJustoEntreElObstaculoYLaEsquinaAunqueHayaErrorDeRedondeo() {
-    // preparacion
-    Ambiente ambienteDeTresTreinta = new Ambiente(3.3, 3.0);
-    ambienteDeTresTreinta.agregarObstaculo(radiadorEn(Muro.SUPERIOR, 0.0, 2.2));
-    Mueble mesa = new Mueble("Mesa", 1.1, 0.5);
+    Ambiente ambienteDeTresTreinta = givenUnAmbiente(3.3, 3.0);
+    ambienteDeTresTreinta.agregarObstaculo(givenUnObstaculoEn(Muro.SUPERIOR, 0.0, 2.2));
+    Mueble mesa = givenUnMueble("Mesa", 1.1, 0.5);
 
-    // ejecucion
-    Plano plano = servicioPlano2D.generarPlano(ambienteDeTresTreinta, List.of(mesa));
+    Plano plano = whenGeneroElPlano(ambienteDeTresTreinta, Arrays.asList(mesa));
 
-    // validacion
     thenElMuebleQuedaEn(plano, 2.2, 0.0);
   }
 
-  private void dadoQueTodosLosMurosEstanCubiertos() {
-    ambiente.agregarObstaculo(radiadorEn(Muro.SUPERIOR, 0.0, 4.0));
-    ambiente.agregarObstaculo(radiadorEn(Muro.DERECHO, 0.0, 3.0));
-    ambiente.agregarObstaculo(radiadorEn(Muro.INFERIOR, 0.0, 4.0));
-    ambiente.agregarObstaculo(radiadorEn(Muro.IZQUIERDO, 0.0, 3.0));
+  private Ambiente givenUnAmbiente(Double ancho, Double largo) {
+    return new Ambiente(ancho, largo);
   }
 
-  private Obstaculo radiadorEn(Muro muro, Double posicion, Double ancho) {
+  private Mueble givenUnMueble(String nombre, Double ancho, Double largo) {
+    return new Mueble(nombre, ancho, largo);
+  }
+
+  private Obstaculo givenUnObstaculoEn(Muro muro, Double posicion, Double ancho) {
     return new Obstaculo(TipoDeObstaculo.RADIADOR, muro, posicion, ancho, 0.15);
+  }
+
+  private void givenQueTodosLosMurosEstanCubiertos() {
+    ambiente.agregarObstaculo(givenUnObstaculoEn(Muro.SUPERIOR, 0.0, 4.0));
+    ambiente.agregarObstaculo(givenUnObstaculoEn(Muro.DERECHO, 0.0, 3.0));
+    ambiente.agregarObstaculo(givenUnObstaculoEn(Muro.INFERIOR, 0.0, 4.0));
+    ambiente.agregarObstaculo(givenUnObstaculoEn(Muro.IZQUIERDO, 0.0, 3.0));
+  }
+
+  private Plano whenGeneroElPlano(Ambiente ambiente, List<Mueble> muebles) {
+    return servicioPlano2D.generarPlano(ambiente, muebles);
   }
 
   private void thenElMuebleQuedaEn(Plano plano, double posicionX, double posicionY) {
     MuebleUbicado ubicado = plano.getMuebles().get(0);
     assertEquals(posicionX, ubicado.getPosicionX(), TOLERANCIA);
     assertEquals(posicionY, ubicado.getPosicionY(), TOLERANCIA);
+  }
+
+  private void thenElMuebleQuedaEnConflicto(Plano plano) {
+    assertTrue(plano.getMuebles().get(0).isEnConflicto());
+  }
+
+  private void thenElMuebleQuedaSinConflicto(Plano plano) {
+    assertFalse(plano.getMuebles().get(0).isEnConflicto());
   }
 }

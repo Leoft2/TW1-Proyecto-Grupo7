@@ -132,8 +132,6 @@ public class Mueble {
     this.enCatalogo = enCatalogo;
   }
 
-  //Review 2: Va en servicio de inventario, no en la entidad. La entidad no tiene por qué saber si es igual a otra entidad, eso lo decide el servicio.
-
   public List<TipoDeAmbiente> getTiposDeAmbiente() {
     return this.tiposDeAmbienteAsociados.stream()
       .map(MuebleTipoDeAmbiente::getTipoDeAmbiente)

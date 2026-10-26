@@ -12,9 +12,11 @@ import org.springframework.stereotype.Service;
 public class ServicioPlano2DImpl implements ServicioPlano2D {
 
   private final ServicioZonaExclusion servicioZonaExclusion;
+  private final ServicioReglasDeUbicacion servicioReglasDeUbicacion;
 
   public ServicioPlano2DImpl(ServicioZonaExclusion servicioZonaExclusion) {
     this.servicioZonaExclusion = servicioZonaExclusion;
+    this.servicioReglasDeUbicacion = new ServicioReglasDeUbicacionImpl(servicioZonaExclusion);
   }
 
   @Override
@@ -30,6 +32,7 @@ public class ServicioPlano2DImpl implements ServicioPlano2D {
     List<MuebleUbicado> mueblesUbicados = new ArrayList<>();
     List<Mueble> mueblesExcluidos = new ArrayList<>();
     List<String> motivosDeExclusion = new ArrayList<>();
+    List<String> avisos = new ArrayList<>();
 
     if (muebles.isEmpty()) {
       Plano plano = new Plano(ambiente, mueblesUbicados, mueblesExcluidos, motivosDeExclusion);
@@ -45,12 +48,33 @@ public class ServicioPlano2DImpl implements ServicioPlano2D {
       MuebleUbicado muebleUbicado = recorrido.ubicar(mueble);
       if (muebleUbicado != null) {
         mueblesUbicados.add(muebleUbicado);
+        agregarAvisosDeCategoria(avisos, muebleUbicado, ambiente);
       } else {
         mueblesExcluidos.add(mueble);
         motivosDeExclusion.add("El mueble " + mueble.getNombre() + " no entra en el ambiente");
       }
     }
-    return new Plano(ambiente, mueblesUbicados, mueblesExcluidos, motivosDeExclusion);
+    Plano plano = new Plano(ambiente, mueblesUbicados, mueblesExcluidos, motivosDeExclusion);
+    if (!avisos.isEmpty()) {
+      plano.setMensaje(String.join(". ", avisos));
+    }
+    return plano;
+  }
+
+  private void agregarAvisosDeCategoria(
+    List<String> avisos,
+    MuebleUbicado muebleUbicado,
+    Ambiente ambiente
+  ) {
+    String aviso = servicioReglasDeUbicacion.avisoDeCategoria(muebleUbicado.getMueble());
+    if (aviso != null) {
+      avisos.add(aviso);
+    }
+    if (!servicioReglasDeUbicacion.cumpleReglasDeCategoria(muebleUbicado, ambiente)) {
+      avisos.add(
+        "El mueble " + muebleUbicado.getMueble().getNombre() + " no quedo opuesto a la ventana"
+      );
+    }
   }
 
   /**

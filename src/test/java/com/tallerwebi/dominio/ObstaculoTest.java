@@ -25,88 +25,70 @@ public class ObstaculoTest {
 
   @Test
   public void deberiaUbicarLaZonaNoDisponibleContraElMuroSuperiorDesdeSuPosicion() {
-    // preparacion
-    Obstaculo radiador = new Obstaculo(TipoDeObstaculo.RADIADOR, Muro.SUPERIOR, 1.0, 0.8, 0.15);
+    Obstaculo radiador = givenUnObstaculo(Muro.SUPERIOR, 1.0, 0.8, 0.15);
 
-    // ejecucion
-    ZonaNoDisponible zona = radiador.zonaNoDisponible(ambiente);
+    ZonaNoDisponible zona = whenCalculoLaZonaNoDisponible(radiador);
 
-    // validacion
     thenLaZonaEs(zona, 1.0, 0.0, 0.8, 0.15);
   }
 
   @Test
   public void deberiaUbicarLaZonaNoDisponibleContraElMuroDerechoDesdeArriba() {
-    // preparacion
-    Obstaculo radiador = new Obstaculo(TipoDeObstaculo.RADIADOR, Muro.DERECHO, 0.5, 0.8, 0.15);
+    Obstaculo radiador = givenUnObstaculo(Muro.DERECHO, 0.5, 0.8, 0.15);
 
-    // ejecucion
-    ZonaNoDisponible zona = radiador.zonaNoDisponible(ambiente);
+    ZonaNoDisponible zona = whenCalculoLaZonaNoDisponible(radiador);
 
-    // validacion
     thenLaZonaEs(zona, 3.85, 0.5, 0.15, 0.8);
   }
 
   @Test
   public void deberiaUbicarLaZonaNoDisponibleContraElMuroInferiorDesdeLaIzquierda() {
-    // preparacion
-    Obstaculo radiador = new Obstaculo(TipoDeObstaculo.RADIADOR, Muro.INFERIOR, 2.0, 0.8, 0.15);
+    Obstaculo radiador = givenUnObstaculo(Muro.INFERIOR, 2.0, 0.8, 0.15);
 
-    // ejecucion
-    ZonaNoDisponible zona = radiador.zonaNoDisponible(ambiente);
+    ZonaNoDisponible zona = whenCalculoLaZonaNoDisponible(radiador);
 
-    // validacion
     thenLaZonaEs(zona, 2.0, 2.85, 0.8, 0.15);
   }
 
   @Test
   public void deberiaUbicarLaZonaNoDisponibleContraElMuroIzquierdoDesdeArriba() {
-    // preparacion
-    Obstaculo radiador = new Obstaculo(TipoDeObstaculo.RADIADOR, Muro.IZQUIERDO, 1.0, 0.8, 0.15);
+    Obstaculo radiador = givenUnObstaculo(Muro.IZQUIERDO, 1.0, 0.8, 0.15);
 
-    // ejecucion
-    ZonaNoDisponible zona = radiador.zonaNoDisponible(ambiente);
+    ZonaNoDisponible zona = whenCalculoLaZonaNoDisponible(radiador);
 
-    // validacion
     thenLaZonaEs(zona, 0.0, 1.0, 0.15, 0.8);
   }
 
   @Test
   public void deberiaColisionarCuandoElMuebleSeSuperponeConElObstaculo() {
-    // preparacion
-    Obstaculo radiador = new Obstaculo(TipoDeObstaculo.RADIADOR, Muro.SUPERIOR, 1.0, 0.8, 0.15);
-    MuebleUbicado rack = new MuebleUbicado(new Mueble("Rack", 1.0, 0.5), 0.5, 0.0);
+    Obstaculo radiador = givenUnObstaculo(Muro.SUPERIOR, 1.0, 0.8, 0.15);
+    MuebleUbicado rack = givenUnMuebleUbicado("Rack", 1.0, 0.5, 0.5, 0.0);
 
-    // ejecucion
-    boolean colisiona = radiador.colisionaCon(rack, ambiente);
+    boolean colisiona = whenVerificoSiColisiona(radiador, rack);
 
-    // validacion
-    assertTrue(colisiona);
+    thenColisiona(colisiona);
   }
 
   @Test
   public void deberiaNoColisionarCuandoElMuebleTerminaDondeEmpiezaElObstaculo() {
-    // preparacion
-    Obstaculo radiador = new Obstaculo(TipoDeObstaculo.RADIADOR, Muro.INFERIOR, 0.7, 0.8, 0.15);
+    Obstaculo radiador = givenUnObstaculo(Muro.INFERIOR, 0.7, 0.8, 0.15);
     // Asi calcula el recorrido la X en el muro inferior: da 0.20000000000000018, no 0.2.
     Double posicionX = 4.0 - (4.0 - 0.7) - 0.5;
-    MuebleUbicado mesa = new MuebleUbicado(new Mueble("Mesa", 0.5, 0.5), posicionX, 2.5);
+    MuebleUbicado mesa = givenUnMuebleUbicado("Mesa", 0.5, 0.5, posicionX, 2.5);
 
-    // ejecucion
-    boolean colisiona = radiador.colisionaCon(mesa, ambiente);
+    boolean colisiona = whenVerificoSiColisiona(radiador, mesa);
 
-    // validacion
-    assertFalse(colisiona);
+    thenNoColisiona(colisiona);
   }
 
   @Test
   public void deberiaRechazarUnObstaculoQueSeSaleDelMuro() {
-    // preparacion
-    Obstaculo radiador = new Obstaculo(TipoDeObstaculo.RADIADOR, Muro.DERECHO, 2.5, 0.8, 0.15);
+    Obstaculo radiador = givenUnObstaculo(Muro.DERECHO, 2.5, 0.8, 0.15);
 
-    // ejecucion y validacion
+    ValidacionException error = whenValidoElObstaculo(radiador);
+
     thenElObstaculoSeRechazaCon(
-      radiador,
+      error,
       "Radiador se sale del muro derecho: va de 2,5 m a 3,3 m contando desde arriba y el muro " +
       "mide 3 m. Ubicalo como máximo en la posición 2,2 m."
     );
@@ -114,95 +96,136 @@ public class ObstaculoTest {
 
   @Test
   public void deberiaRechazarUnObstaculoMasAnchoQueElMuro() {
-    // preparacion
-    Obstaculo radiador = new Obstaculo(TipoDeObstaculo.RADIADOR, Muro.SUPERIOR, 0.0, 4.5, 0.15);
+    Obstaculo radiador = givenUnObstaculo(Muro.SUPERIOR, 0.0, 4.5, 0.15);
 
-    // ejecucion y validacion
+    ValidacionException error = whenValidoElObstaculo(radiador);
+
     thenElObstaculoSeRechazaCon(
-      radiador,
+      error,
       "Radiador mide 4,5 m de ancho y no entra en el muro superior, que mide 4 m."
     );
   }
 
   @Test
   public void deberiaAceptarUnObstaculoQueLlegaJustoAlFinalDelMuro() {
-    // preparacion
-    Obstaculo radiador = new Obstaculo(TipoDeObstaculo.RADIADOR, Muro.DERECHO, 2.2, 0.8, 0.15);
+    Obstaculo radiador = givenUnObstaculo(Muro.DERECHO, 2.2, 0.8, 0.15);
 
-    // ejecucion y validacion
-    assertDoesNotThrow(() -> radiador.validarEn(ambiente));
+    // validarEn no devuelve nada: la ausencia de excepción es el resultado a verificar.
+    assertDoesNotThrow(() -> whenValidoElObstaculoSinError(radiador));
   }
 
   @Test
   public void deberiaRechazarUnObstaculoSinAncho() {
-    // preparacion
-    Obstaculo radiador = new Obstaculo(TipoDeObstaculo.RADIADOR, Muro.SUPERIOR, 0.5, 0.0, 0.15);
+    Obstaculo radiador = givenUnObstaculo(Muro.SUPERIOR, 0.5, 0.0, 0.15);
 
-    // ejecucion y validacion
-    thenElObstaculoSeRechazaCon(radiador, "Las medidas de Radiador deben ser mayores a 0");
+    ValidacionException error = whenValidoElObstaculo(radiador);
+
+    thenElObstaculoSeRechazaCon(error, "Las medidas de Radiador deben ser mayores a 0");
   }
 
   @Test
   public void deberiaRechazarUnObstaculoSinProfundidadCargada() {
-    // preparacion
-    Obstaculo radiador = new Obstaculo(TipoDeObstaculo.RADIADOR, Muro.SUPERIOR, 0.5, 0.8, null);
+    Obstaculo radiador = givenUnObstaculo(Muro.SUPERIOR, 0.5, 0.8, null);
 
-    // ejecucion y validacion
-    thenElObstaculoSeRechazaCon(radiador, "Las medidas de Radiador deben ser mayores a 0");
+    ValidacionException error = whenValidoElObstaculo(radiador);
+
+    thenElObstaculoSeRechazaCon(error, "Las medidas de Radiador deben ser mayores a 0");
   }
 
   @Test
   public void deberiaRechazarUnObstaculoConPosicionNegativa() {
-    // preparacion
-    Obstaculo radiador = new Obstaculo(TipoDeObstaculo.RADIADOR, Muro.SUPERIOR, -0.1, 0.8, 0.15);
+    Obstaculo radiador = givenUnObstaculo(Muro.SUPERIOR, -0.1, 0.8, 0.15);
 
-    // ejecucion y validacion
-    thenElObstaculoSeRechazaCon(radiador, "La posición de Radiador debe ser 0 o mayor");
+    ValidacionException error = whenValidoElObstaculo(radiador);
+
+    thenElObstaculoSeRechazaCon(error, "La posición de Radiador debe ser 0 o mayor");
   }
 
   @Test
   public void deberiaRechazarUnObstaculoSinPosicionCargada() {
-    // preparacion
-    Obstaculo radiador = new Obstaculo(TipoDeObstaculo.RADIADOR, Muro.SUPERIOR, null, 0.8, 0.15);
+    Obstaculo radiador = givenUnObstaculo(Muro.SUPERIOR, null, 0.8, 0.15);
 
-    // ejecucion y validacion
-    thenElObstaculoSeRechazaCon(radiador, "La posición de Radiador debe ser 0 o mayor");
+    ValidacionException error = whenValidoElObstaculo(radiador);
+
+    thenElObstaculoSeRechazaCon(error, "La posición de Radiador debe ser 0 o mayor");
   }
 
   @Test
   public void deberiaRechazarUnObstaculoSinMuro() {
-    // preparacion
-    Obstaculo radiador = new Obstaculo(TipoDeObstaculo.RADIADOR, null, 0.5, 0.8, 0.15);
+    Obstaculo radiador = givenUnObstaculo(null, 0.5, 0.8, 0.15);
 
-    // ejecucion y validacion
-    thenElObstaculoSeRechazaCon(radiador, "Elegí el tipo y el muro de cada obstáculo");
+    ValidacionException error = whenValidoElObstaculo(radiador);
+
+    thenElObstaculoSeRechazaCon(error, "Elegí el tipo y el muro de cada obstáculo");
   }
 
   @Test
   public void deberiaRechazarUnObstaculoMasProfundoQueElAmbiente() {
-    // preparacion
-    Obstaculo radiador = new Obstaculo(TipoDeObstaculo.RADIADOR, Muro.SUPERIOR, 0.0, 0.8, 3.0);
+    Obstaculo radiador = givenUnObstaculo(Muro.SUPERIOR, 0.0, 0.8, 3.0);
 
-    // ejecucion y validacion
-    thenElObstaculoSeRechazaCon(radiador, "Radiador es más profundo que el ambiente");
+    ValidacionException error = whenValidoElObstaculo(radiador);
+
+    thenElObstaculoSeRechazaCon(error, "Radiador es más profundo que el ambiente");
   }
 
   @Test
   public void deberiaAceptarUnObstaculoQueLlegaAlFinalDelMuroAunqueHayaErrorDeRedondeo() {
-    // preparacion
-    Ambiente ambienteDeTresTreinta = new Ambiente(3.3, 3.0);
+    Ambiente ambienteDeTresTreinta = givenUnAmbiente(3.3, 3.0);
     // 2.2 + 1.1 da 3.3000000000000003, apenas mas que el muro de 3.3.
-    Obstaculo radiador = new Obstaculo(TipoDeObstaculo.RADIADOR, Muro.SUPERIOR, 2.2, 1.1, 0.15);
+    Obstaculo radiador = givenUnObstaculo(Muro.SUPERIOR, 2.2, 1.1, 0.15);
 
-    // ejecucion y validacion
-    assertDoesNotThrow(() -> radiador.validarEn(ambienteDeTresTreinta));
+    // validarEn no devuelve nada: la ausencia de excepción es el resultado a verificar.
+    assertDoesNotThrow(() -> whenValidoElObstaculoSinErrorEn(radiador, ambienteDeTresTreinta));
   }
 
-  private void thenElObstaculoSeRechazaCon(Obstaculo obstaculo, String mensajeEsperado) {
-    ValidacionException error = assertThrows(
-      ValidacionException.class,
-      () -> obstaculo.validarEn(ambiente)
-    );
+  private Obstaculo givenUnObstaculo(Muro muro, Double posicion, Double ancho, Double profundidad) {
+    return new Obstaculo(TipoDeObstaculo.RADIADOR, muro, posicion, ancho, profundidad);
+  }
+
+  private MuebleUbicado givenUnMuebleUbicado(
+    String nombre,
+    Double ancho,
+    Double largo,
+    Double posicionX,
+    Double posicionY
+  ) {
+    return new MuebleUbicado(new Mueble(nombre, ancho, largo), posicionX, posicionY);
+  }
+
+  private Ambiente givenUnAmbiente(Double ancho, Double largo) {
+    return new Ambiente(ancho, largo);
+  }
+
+  private ZonaNoDisponible whenCalculoLaZonaNoDisponible(Obstaculo obstaculo) {
+    return obstaculo.zonaNoDisponible(ambiente);
+  }
+
+  private boolean whenVerificoSiColisiona(Obstaculo obstaculo, MuebleUbicado ubicado) {
+    return obstaculo.colisionaCon(ubicado, ambiente);
+  }
+
+  // validarEn no devuelve nada: la excepción es el resultado que luego se valida en el Then.
+  private ValidacionException whenValidoElObstaculo(Obstaculo obstaculo) {
+    return assertThrows(ValidacionException.class, () -> obstaculo.validarEn(ambiente));
+  }
+
+  private void whenValidoElObstaculoSinError(Obstaculo obstaculo) {
+    obstaculo.validarEn(ambiente);
+  }
+
+  private void whenValidoElObstaculoSinErrorEn(Obstaculo obstaculo, Ambiente ambiente) {
+    obstaculo.validarEn(ambiente);
+  }
+
+  private void thenColisiona(boolean colisiona) {
+    assertTrue(colisiona);
+  }
+
+  private void thenNoColisiona(boolean colisiona) {
+    assertFalse(colisiona);
+  }
+
+  private void thenElObstaculoSeRechazaCon(ValidacionException error, String mensajeEsperado) {
     assertEquals(mensajeEsperado, error.getMessage());
   }
 

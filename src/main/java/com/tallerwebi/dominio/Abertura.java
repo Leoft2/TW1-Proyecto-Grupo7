@@ -8,6 +8,10 @@ import jakarta.persistence.Enumerated;
  * Abertura de un muro del ambiente (puerta o ventana). La posicion se mide desde el inicio del
  * muro, igual que un obstaculo. El radio de giro es propio de las puertas.
  */
+
+// Es incrustable y la consume la entidad Ambiente con @ElementCollection.
+// No es entidad porque una Abertura no existe ni se referencia fuera de su Ambiente.
+// Se puede inyectar?
 @Embeddable
 public class Abertura {
 

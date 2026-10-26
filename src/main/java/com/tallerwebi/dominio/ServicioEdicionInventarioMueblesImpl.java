@@ -2,6 +2,7 @@ package com.tallerwebi.dominio;
 
 import com.tallerwebi.dominio.excepcion.MuebleNoEncontrado;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,5 +60,23 @@ public class ServicioEdicionInventarioMueblesImpl implements ServicioEdicionInve
       throw new MuebleNoEncontrado("No se encontro un mueble con el id " + id);
     }
     return mueble;
+  }
+
+  @Override
+  public boolean sonIguales(Mueble muebleUno, Mueble muebleDos) {
+    if (Objects.equals(muebleUno, muebleDos)) {
+      return true;
+    }
+    if (muebleUno == null || muebleDos == null) {
+      return false;
+    }
+    return (
+      Objects.equals(muebleUno.getAncho(), muebleDos.getAncho()) &&
+      Objects.equals(muebleUno.getLargo(), muebleDos.getLargo()) &&
+      Double.compare(muebleUno.getPrecio(), muebleDos.getPrecio()) == 0 &&
+      Objects.equals(muebleUno.getNombre(), muebleDos.getNombre()) &&
+      Objects.equals(muebleUno.getDescripcion(), muebleDos.getDescripcion()) &&
+      muebleUno.getEstilo() == muebleDos.getEstilo()
+    );
   }
 }

@@ -12,7 +12,7 @@ import com.tallerwebi.dominio.TipoDeAmbiente;
 import com.tallerwebi.dominio.TipoDeObstaculo;
 import com.tallerwebi.infraestructura.config.HibernateInfraestructuraTestConfig;
 import jakarta.transaction.Transactional;
-import java.util.List;
+import java.util.Arrays;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.junit.jupiter.api.Test;
@@ -35,24 +35,47 @@ public class AmbienteObstaculosTest {
   @Rollback
   public void dadoQueUnAmbienteTieneUnObstaculo_cuandoLoGuardoYLoRecupero_entoncesConservaElObstaculo() {
     Session sesion = this.sessionFactory.getCurrentSession();
-    TipoDeAmbiente living = new TipoDeAmbiente("Living");
+    Ambiente ambiente = givenUnAmbientePersistidoConUnRadiador(sesion);
+
+    Ambiente recuperado = whenRecuperoElAmbiente(sesion, ambiente.getId());
+
+    thenElAmbienteConservaElObstaculo(recuperado);
+  }
+
+  private TipoDeAmbiente givenUnTipoDeAmbiente(String nombre) {
+    return new TipoDeAmbiente(nombre);
+  }
+
+  private Ambiente givenUnAmbiente(Double ancho, Double largo, TipoDeAmbiente tipo) {
+    return new Ambiente(ancho, largo, tipo);
+  }
+
+  private Obstaculo givenUnRadiador(Muro muro, Double posicion, Double ancho, Double profundidad) {
+    return new Obstaculo(TipoDeObstaculo.RADIADOR, muro, posicion, ancho, profundidad);
+  }
+
+  private Ambiente givenUnAmbientePersistidoConUnRadiador(Session sesion) {
+    TipoDeAmbiente living = givenUnTipoDeAmbiente("Living");
     sesion.persist(living);
-    Ambiente ambiente = new Ambiente(4.0, 3.0, living);
-    ambiente.agregarObstaculo(
-      new Obstaculo(TipoDeObstaculo.RADIADOR, Muro.DERECHO, 0.5, 0.8, 0.15)
-    );
+    Ambiente ambiente = givenUnAmbiente(4.0, 3.0, living);
+    ambiente.agregarObstaculo(givenUnRadiador(Muro.DERECHO, 0.5, 0.8, 0.15));
     sesion.persist(ambiente);
     sesion.flush();
     sesion.clear();
+    return ambiente;
+  }
 
-    Ambiente recuperado = sesion.get(Ambiente.class, ambiente.getId());
+  private Ambiente whenRecuperoElAmbiente(Session sesion, Long id) {
+    return sesion.get(Ambiente.class, id);
+  }
 
+  private void thenElAmbienteConservaElObstaculo(Ambiente recuperado) {
     assertThat(recuperado.getObstaculos(), hasSize(1));
     Obstaculo obstaculo = recuperado.getObstaculos().get(0);
     assertThat(obstaculo.getTipo(), is(TipoDeObstaculo.RADIADOR));
     assertThat(obstaculo.getMuro(), is(Muro.DERECHO));
     assertThat(
-      List.of(obstaculo.getPosicion(), obstaculo.getAncho(), obstaculo.getProfundidad()),
+      Arrays.asList(obstaculo.getPosicion(), obstaculo.getAncho(), obstaculo.getProfundidad()),
       contains(0.5, 0.8, 0.15)
     );
   }

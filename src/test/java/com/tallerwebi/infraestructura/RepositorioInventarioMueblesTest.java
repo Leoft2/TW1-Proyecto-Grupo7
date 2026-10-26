@@ -451,10 +451,10 @@ public class RepositorioInventarioMueblesTest {
   // -------------------------------------------------------------------------
 
   private void thenElMuebleTieneLasMedidas(int id, String nombre, Double ancho, Double largo) {
-    assertThat(
-      this.repositorioInventarioMueble.buscarPorId(id),
-      is(equalTo(new Mueble(nombre, ancho, largo)))
-    );
+    Mueble muebleGuardado = this.repositorioInventarioMueble.buscarPorId(id);
+    assertThat(muebleGuardado.getNombre(), is(equalTo(nombre)));
+    assertThat(muebleGuardado.getAncho(), is(equalTo(ancho)));
+    assertThat(muebleGuardado.getLargo(), is(equalTo(largo)));
   }
 
   private void thenElNombrePersiste(int id, String nombreEsperado) {
@@ -544,7 +544,12 @@ public class RepositorioInventarioMueblesTest {
     List<Mueble> inventario,
     Mueble esperado
   ) {
-    assertThat(inventario, contains(esperado));
+    assertThat(inventario, hasSize(1));
+    Mueble actual = inventario.get(0);
+    assertThat(actual.getId(), is(equalTo(esperado.getId())));
+    assertThat(actual.getNombre(), is(equalTo(esperado.getNombre())));
+    assertThat(actual.getAncho(), is(equalTo(esperado.getAncho())));
+    assertThat(actual.getLargo(), is(equalTo(esperado.getLargo())));
   }
 
   private void thenElMuebleNoTieneUbicaciones(int id) {

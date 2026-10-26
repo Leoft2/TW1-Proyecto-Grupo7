@@ -66,11 +66,9 @@ public class ControladorPlano2D {
 
   @RequestMapping(path = "/plano/ambiente", method = RequestMethod.GET)
   public ModelAndView irAConfigurarAmbiente() {
-    return new ModelAndView(
-      "ambiente-config",
-      "categorias",
-      servicioCategoriaDeMueble.obtenerCategorias()
-    );
+    Map<String, Object> modelo = new ModelMap();
+    modelo.put("categorias", servicioCategoriaDeMueble.obtenerCategorias());
+    return new ModelAndView("ambiente-config", modelo);
   }
 
   public ModelAndView generarPlano(Ambiente ambiente, List<Mueble> muebles) {

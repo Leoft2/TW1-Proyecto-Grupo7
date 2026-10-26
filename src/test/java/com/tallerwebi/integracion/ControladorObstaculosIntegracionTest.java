@@ -25,7 +25,7 @@ import org.springframework.web.context.WebApplicationContext;
 @ExtendWith(SpringExtension.class)
 @WebAppConfiguration
 @ContextConfiguration(classes = { SpringWebTestConfig.class, HibernateTestConfig.class })
-public class ControladorObstaculosTest {
+public class ControladorObstaculosIntegracionTest {
 
   @Autowired
   private WebApplicationContext wac;

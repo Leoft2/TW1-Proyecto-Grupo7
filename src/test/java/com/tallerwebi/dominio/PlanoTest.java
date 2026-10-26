@@ -2,10 +2,14 @@ package com.tallerwebi.dominio;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-/** Datos que el plano expone para resaltar los conflictos con obstáculos fijos. */
+/**
+ * Datos que el plano expone para resaltar los conflictos con obstáculos fijos.
+ */
 public class PlanoTest {
 
   private final Ambiente ambiente = new Ambiente(4.0, 3.0);
@@ -13,40 +17,69 @@ public class PlanoTest {
 
   @Test
   public void deberiaListarSoloLosMueblesEnConflicto() {
-    // preparacion
-    MuebleUbicado enConflicto = new MuebleUbicado(rack, 0.0, 0.0, true);
-    MuebleUbicado libre = new MuebleUbicado(rack, 1.0, 0.0, false);
-    Plano plano = new Plano(ambiente, List.of(enConflicto, libre), List.of(), List.of());
+    MuebleUbicado enConflicto = givenUnMuebleUbicado(0.0, 0.0, true);
+    MuebleUbicado libre = givenUnMuebleUbicado(1.0, 0.0, false);
+    Plano plano = givenUnPlanoCon(Arrays.asList(enConflicto, libre));
 
-    // ejecucion
-    List<MuebleUbicado> conflictos = plano.getMueblesEnConflicto();
+    List<MuebleUbicado> conflictos = whenListoLosMueblesEnConflicto(plano);
 
-    // validacion
-    assertEquals(List.of(enConflicto), conflictos);
+    thenLosMueblesEnConflictoSon(Arrays.asList(enConflicto), conflictos);
   }
 
   @Test
   public void deberiaDescribirLosObstaculosConLosQueChocaElMueble() {
-    // preparacion
-    ambiente.agregarObstaculo(
-      new Obstaculo(TipoDeObstaculo.RADIADOR, Muro.SUPERIOR, 0.0, 0.8, 0.15)
-    );
-    ambiente.agregarObstaculo(
-      new Obstaculo(TipoDeObstaculo.TOMA_DE_CORRIENTE, Muro.SUPERIOR, 0.9, 0.15, 0.1)
-    );
-    ambiente.agregarObstaculo(
-      new Obstaculo(TipoDeObstaculo.TOMA_DE_CORRIENTE, Muro.INFERIOR, 2.0, 0.15, 0.1)
-    );
-    MuebleUbicado enConflicto = new MuebleUbicado(rack, 0.0, 0.0, true);
-    Plano plano = new Plano(ambiente, List.of(enConflicto), List.of(), List.of());
+    givenUnRadiadorEn(Muro.SUPERIOR, 0.0, 0.8);
+    givenUnaTomaDeCorrienteEn(Muro.SUPERIOR, 0.9, 0.15);
+    givenUnaTomaDeCorrienteEn(Muro.INFERIOR, 2.0, 0.15);
+    MuebleUbicado enConflicto = givenUnMuebleUbicado(0.0, 0.0, true);
+    Plano plano = givenUnPlanoCon(Arrays.asList(enConflicto));
 
-    // ejecucion
-    String descripcion = plano.descripcionDelConflicto(enConflicto);
+    String descripcion = whenDescriboElConflicto(plano, enConflicto);
 
-    // validacion
-    assertEquals(
+    thenLaDescripcionDelConflictoEs(
       "Rack choca con Radiador (muro superior), Toma de corriente (muro superior)",
       descripcion
     );
+  }
+
+  private MuebleUbicado givenUnMuebleUbicado(
+    Double posicionX,
+    Double posicionY,
+    Boolean enConflicto
+  ) {
+    return new MuebleUbicado(rack, posicionX, posicionY, enConflicto);
+  }
+
+  private void givenUnRadiadorEn(Muro muro, Double posicion, Double ancho) {
+    ambiente.agregarObstaculo(new Obstaculo(TipoDeObstaculo.RADIADOR, muro, posicion, ancho, 0.15));
+  }
+
+  private void givenUnaTomaDeCorrienteEn(Muro muro, Double posicion, Double ancho) {
+    ambiente.agregarObstaculo(
+      new Obstaculo(TipoDeObstaculo.TOMA_DE_CORRIENTE, muro, posicion, ancho, 0.1)
+    );
+  }
+
+  private Plano givenUnPlanoCon(List<MuebleUbicado> muebles) {
+    return new Plano(ambiente, new ArrayList<>(muebles), new ArrayList<>(), new ArrayList<>());
+  }
+
+  private List<MuebleUbicado> whenListoLosMueblesEnConflicto(Plano plano) {
+    return plano.getMueblesEnConflicto();
+  }
+
+  private String whenDescriboElConflicto(Plano plano, MuebleUbicado ubicado) {
+    return plano.descripcionDelConflicto(ubicado);
+  }
+
+  private void thenLosMueblesEnConflictoSon(
+    List<MuebleUbicado> esperados,
+    List<MuebleUbicado> conflictos
+  ) {
+    assertEquals(new ArrayList<>(esperados), conflictos);
+  }
+
+  private void thenLaDescripcionDelConflictoEs(String esperada, String descripcion) {
+    assertEquals(esperada, descripcion);
   }
 }

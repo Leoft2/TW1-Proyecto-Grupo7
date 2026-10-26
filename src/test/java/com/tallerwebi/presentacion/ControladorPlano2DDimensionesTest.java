@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import com.tallerwebi.dominio.*;
 import com.tallerwebi.dominio.excepcion.ValidacionException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,9 @@ public class ControladorPlano2DDimensionesTest {
     servicioCategoriaDeMueble = mock(ServicioCategoriaDeMueble.class);
     controladorPlano2D = new ControladorPlano2D(servicioPlano2D, servicioCategoriaDeMueble);
     when(servicioPlano2D.generarPlano(any(Ambiente.class), anyList()))
-      .thenReturn(new Plano(new Ambiente(4.0, 3.0), List.of(), List.of(), List.of()));
+      .thenReturn(
+        new Plano(new Ambiente(4.0, 3.0), new ArrayList<>(), new ArrayList<>(), new ArrayList<>())
+      );
   }
 
   @Test
@@ -55,8 +58,7 @@ public class ControladorPlano2DDimensionesTest {
 
   @Test
   public void deberiaOfrecerEnElFormularioLasCategoriasDelServicio() {
-    //Review 2: cambiar List.of por Arrays.asList para sacar inmutabilidad
-    List<CategoriaDeMueble> categorias = List.of(
+    List<CategoriaDeMueble> categorias = Arrays.asList(
       new CategoriaDeMueble("Cama doble", 1.4, 1.9),
       new CategoriaDeMueble("Silla", 0.45, 0.5)
     );

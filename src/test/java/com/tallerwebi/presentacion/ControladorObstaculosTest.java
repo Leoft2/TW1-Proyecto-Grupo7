@@ -2,10 +2,7 @@ package com.tallerwebi.presentacion;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import com.tallerwebi.dominio.Ambiente;
 import com.tallerwebi.dominio.Muro;
@@ -14,13 +11,11 @@ import com.tallerwebi.dominio.TipoDeObstaculo;
 import com.tallerwebi.dominio.excepcion.ValidacionException;
 import jakarta.servlet.http.HttpSession;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.web.servlet.ModelAndView;
-
-// Se agregan tests para arreglar bugs
 
 public class ControladorObstaculosTest {
 
@@ -64,7 +59,7 @@ public class ControladorObstaculosTest {
     // preparacion
     formulario.setObstaculos(
       new ArrayList<>(
-        List.of(new DatosObstaculo(TipoDeObstaculo.RADIADOR, Muro.DERECHO, 0.5, 0.8, 0.15))
+        Arrays.asList(new DatosObstaculo(TipoDeObstaculo.RADIADOR, Muro.DERECHO, 0.5, 0.8, 0.15))
       )
     );
 
@@ -82,7 +77,7 @@ public class ControladorObstaculosTest {
     // preparacion
     formulario.setObstaculos(
       new ArrayList<>(
-        List.of(new DatosObstaculo(TipoDeObstaculo.RADIADOR, Muro.DERECHO, 0.5, 0.8, 0.15))
+        Arrays.asList(new DatosObstaculo(TipoDeObstaculo.RADIADOR, Muro.DERECHO, 0.5, 0.8, 0.15))
       )
     );
 
@@ -107,7 +102,7 @@ public class ControladorObstaculosTest {
     // preparacion
     formulario.setObstaculos(
       new ArrayList<>(
-        List.of(new DatosObstaculo(TipoDeObstaculo.RADIADOR, Muro.DERECHO, 0.5, 0.8, 0.15))
+        Arrays.asList(new DatosObstaculo(TipoDeObstaculo.RADIADOR, Muro.DERECHO, 0.5, 0.8, 0.15))
       )
     );
 

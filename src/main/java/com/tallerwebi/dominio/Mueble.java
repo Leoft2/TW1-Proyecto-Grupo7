@@ -13,7 +13,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /*
   Duda: Como le doy la vuelta al TooManyFields?...
@@ -131,30 +130,6 @@ public class Mueble {
 
   public void setEnCatalogo(Boolean enCatalogo) {
     this.enCatalogo = enCatalogo;
-  }
-
-  @Override
-  public boolean equals(Object otro) {
-    if (this == otro) {
-      return true;
-    }
-    if (!(otro instanceof Mueble)) {
-      return false;
-    }
-    Mueble otroMueble = (Mueble) otro;
-    return (
-      Objects.equals(ancho, otroMueble.ancho) &&
-      Objects.equals(largo, otroMueble.largo) &&
-      Double.compare(precio, otroMueble.precio) == 0 &&
-      Objects.equals(nombre, otroMueble.nombre) &&
-      Objects.equals(descripcion, otroMueble.descripcion) &&
-      estilo == otroMueble.estilo
-    );
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(nombre, descripcion, precio, ancho, largo, estilo);
   }
 
   public List<TipoDeAmbiente> getTiposDeAmbiente() {

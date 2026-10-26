@@ -39,117 +39,117 @@ public class ControladorPlano2DObstaculosTest {
   @Test
   public void deberiaMostrarElFormularioDeObstaculosCuandoAbroElPasoDeObstaculos()
     throws Exception {
-    String html =
-      this.mockMvc.perform(get("/plano/obstaculos"))
-        .andExpect(status().isOk())
-        .andReturn()
-        .getResponse()
-        .getContentAsString();
+    String html = whenAbroElPasoDeObstaculos();
 
-    assertThat(html, containsString("action=\"/plano/obstaculos/confirmar\""));
+    thenSeMuestraElFormularioDeObstaculos(html);
   }
 
   @Test
   public void deberiaOcultarLaTablaDeObstaculosCuandoEstoyEnElPasoDeEspacio() throws Exception {
-    String html =
-      this.mockMvc.perform(get("/plano/ambiente"))
-        .andExpect(status().isOk())
-        .andReturn()
-        .getResponse()
-        .getContentAsString();
+    String html = whenAbroElPasoDeEspacio();
 
-    assertThat(html, not(containsString("id=\"filas-obstaculos\"")));
+    thenNoSeMuestraLaTablaDeObstaculos(html);
   }
 
   @Test
   public void dadoQueRegistreUnObstaculo_cuandoGeneroElPlano_entoncesSeDibujaSuZonaNoDisponible()
     throws Exception {
-    String html =
-      this.cuandoGeneroElPlanoCon(
-          "obstaculos[0].tipo",
-          "RADIADOR",
-          "obstaculos[0].muro",
-          "SUPERIOR",
-          "obstaculos[0].posicion",
-          "0",
-          "obstaculos[0].ancho",
-          "0.8",
-          "obstaculos[0].profundidad",
-          "0.15"
-        );
+    String[] radiador = givenUnRadiador(0, "SUPERIOR", "0", "0.8");
 
-    assertThat(html, containsString("class=\"plano-obstaculo\""));
-    assertThat(html, containsString("Radiador (muro superior)"));
+    String html = whenGeneroElPlanoCon(radiador);
+
+    thenSeDibujaLaZonaNoDisponibleDelRadiador(html);
   }
 
   @Test
   public void dadoQueUnMuebleQuedaSobreUnObstaculo_cuandoGeneroElPlano_entoncesSeResaltaElConflicto()
     throws Exception {
-    String html =
-      this.cuandoGeneroElPlanoCon(
-          "muebles[0].nombre",
-          "Rack",
-          "muebles[0].ancho",
-          "1.0",
-          "muebles[0].profundidad",
-          "0.5",
-          "obstaculos[0].tipo",
-          "RADIADOR",
-          "obstaculos[0].muro",
-          "SUPERIOR",
-          "obstaculos[0].posicion",
-          "0",
-          "obstaculos[0].ancho",
-          "4",
-          "obstaculos[0].profundidad",
-          "0.15",
-          "obstaculos[1].tipo",
-          "RADIADOR",
-          "obstaculos[1].muro",
-          "DERECHO",
-          "obstaculos[1].posicion",
-          "0",
-          "obstaculos[1].ancho",
-          "3",
-          "obstaculos[1].profundidad",
-          "0.15",
-          "obstaculos[2].tipo",
-          "RADIADOR",
-          "obstaculos[2].muro",
-          "INFERIOR",
-          "obstaculos[2].posicion",
-          "0",
-          "obstaculos[2].ancho",
-          "4",
-          "obstaculos[2].profundidad",
-          "0.15",
-          "obstaculos[3].tipo",
-          "RADIADOR",
-          "obstaculos[3].muro",
-          "IZQUIERDO",
-          "obstaculos[3].posicion",
-          "0",
-          "obstaculos[3].ancho",
-          "3",
-          "obstaculos[3].profundidad",
-          "0.15"
-        );
+    String[] mueble = givenUnMueble(0, "Rack", "1.0", "0.5");
 
-    assertThat(html, containsString("plano-mueble-conflicto"));
-    assertThat(html, containsString("Rack choca con Radiador (muro superior)"));
+    String html = whenGeneroElPlanoCon(
+      mueble,
+      givenUnRadiador(0, "SUPERIOR", "0", "4"),
+      givenUnRadiador(1, "DERECHO", "0", "3"),
+      givenUnRadiador(2, "INFERIOR", "0", "4"),
+      givenUnRadiador(3, "IZQUIERDO", "0", "3")
+    );
+
+    thenSeResaltaElConflicto(html);
   }
 
-  private String cuandoGeneroElPlanoCon(String... parametros) throws Exception {
+  private String[] givenUnRadiador(int indice, String muro, String posicion, String ancho) {
+    return new String[] {
+      "obstaculos[" + indice + "].tipo",
+      "RADIADOR",
+      "obstaculos[" + indice + "].muro",
+      muro,
+      "obstaculos[" + indice + "].posicion",
+      posicion,
+      "obstaculos[" + indice + "].ancho",
+      ancho,
+      "obstaculos[" + indice + "].profundidad",
+      "0.15",
+    };
+  }
+
+  private String[] givenUnMueble(int indice, String nombre, String ancho, String profundidad) {
+    return new String[] {
+      "muebles[" + indice + "].nombre",
+      nombre,
+      "muebles[" + indice + "].ancho",
+      ancho,
+      "muebles[" + indice + "].profundidad",
+      profundidad,
+    };
+  }
+
+  private String whenAbroElPasoDeObstaculos() throws Exception {
+    return this.mockMvc.perform(get("/plano/obstaculos"))
+      .andExpect(status().isOk())
+      .andReturn()
+      .getResponse()
+      .getContentAsString();
+  }
+
+  private String whenAbroElPasoDeEspacio() throws Exception {
+    return this.mockMvc.perform(get("/plano/ambiente"))
+      .andExpect(status().isOk())
+      .andReturn()
+      .getResponse()
+      .getContentAsString();
+  }
+
+  private String whenGeneroElPlanoCon(String[]... bloques) throws Exception {
     MockHttpServletRequestBuilder pedido = post("/plano/generar")
       .param("ancho", "4")
       .param("largo", "3");
-    for (int indice = 0; indice < parametros.length; indice += 2) {
-      pedido = pedido.param(parametros[indice], parametros[indice + 1]);
+    for (String[] bloque : bloques) {
+      for (int indice = 0; indice < bloque.length; indice += 2) {
+        pedido = pedido.param(bloque[indice], bloque[indice + 1]);
+      }
     }
     return this.mockMvc.perform(pedido)
       .andExpect(status().isOk())
       .andReturn()
       .getResponse()
       .getContentAsString();
+  }
+
+  private void thenSeMuestraElFormularioDeObstaculos(String html) {
+    assertThat(html, containsString("action=\"/plano/obstaculos/confirmar\""));
+  }
+
+  private void thenNoSeMuestraLaTablaDeObstaculos(String html) {
+    assertThat(html, not(containsString("id=\"filas-obstaculos\"")));
+  }
+
+  private void thenSeDibujaLaZonaNoDisponibleDelRadiador(String html) {
+    assertThat(html, containsString("class=\"plano-obstaculo\""));
+    assertThat(html, containsString("Radiador (muro superior)"));
+  }
+
+  private void thenSeResaltaElConflicto(String html) {
+    assertThat(html, containsString("plano-mueble-conflicto"));
+    assertThat(html, containsString("Rack choca con Radiador (muro superior)"));
   }
 }

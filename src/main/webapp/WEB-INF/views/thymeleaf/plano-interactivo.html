@@ -42,6 +42,15 @@
             </ul>
         </div>
 
+        <div th:if="${not #lists.isEmpty(tramosEstrechos)}" class="alert alert-warning" role="alert">
+            <strong>Algunos tramos no cumplen el ancho mínimo de pasillo.</strong>
+            Quedaron marcados en el plano:
+            <ul class="mb-0">
+                <li th:each="tramo : ${tramosEstrechos}"
+                    th:text="${'Pasillo de ' + #numbers.formatDecimal(tramo.anchoLibre, 1, 2) + ' m'}">Pasillo de 0,40 m</li>
+            </ul>
+        </div>
+
         <section class="hb-plano-section mb-4">
             <div class="hb-section-heading">
                 <div>
@@ -133,6 +142,13 @@
                         <rect fill="url(#plano-rejilla-apertura)" stroke="#7f8c85"
                               th:attr="x=${zona.posicionX}, y=${zona.posicionY},
                                        width=${zona.ancho}, height=${zona.profundidad}, stroke-width=${0.02}"></rect>
+                    </g>
+
+                    <!-- Tramos de circulacion que no cumplen el ancho minimo de pasillo. -->
+                    <g th:each="tramo : ${tramosEstrechos}" class="plano-tramo-estrecho">
+                        <title th:text="${'Pasillo estrecho: ' + #numbers.formatDecimal(tramo.anchoLibre, 1, 2) + ' m libres'}">Pasillo estrecho</title>
+                        <rect th:attr="x=${tramo.posicionX}, y=${tramo.posicionY},
+                                       width=${tramo.ancho}, height=${tramo.largo}"></rect>
                     </g>
 
                     <!-- Marca de la abertura sobre el muro: el hueco que deja y, si es una puerta,
@@ -244,6 +260,7 @@
                     <span><i class="hb-legend-no-disponible"></i> Zona no disponible</span>
                     <span><i class="hb-legend-zona-apertura"></i> Zona de exclusión por apertura</span>
                     <span><i class="hb-legend-conflicto"></i> Mueble en conflicto</span>
+                    <span><i class="hb-legend-tramo-estrecho"></i> Pasillo menor al mínimo</span>
                     <span><i class="hb-legend-grid"></i> Cada cuadrícula representa 0,5 m</span>
                 </div>
             </div>

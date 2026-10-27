@@ -421,7 +421,7 @@ h1, h2, h3, h4, h5, h6,
 
 .plano-mueble-nombre {
   fill: #86391f;
-  font-family: var(--hb-fuente-texto);
+  font-family: var(--hb-fuente-texto), sans-serif;
   font-weight: 600;
   pointer-events: none;
 }
@@ -524,6 +524,23 @@ h1, h2, h3, h4, h5, h6,
 .hb-legend-conflicto {
   border: 2px solid #b42318;
   background: #f8d7d3;
+}
+
+.plano-tramo-estrecho rect {
+  fill: rgba(217, 119, 6, 0.35);
+  stroke: #b45309;
+  stroke-width: 0.02;
+  stroke-dasharray: 0.06 0.04;
+  pointer-events: none;
+}
+
+.hb-legend-tramo-estrecho {
+  display: inline-block;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 0.15rem;
+  border: 2px dashed #b45309;
+  background: rgba(217, 119, 6, 0.35);
 }
 
 @media (max-width: 576px) {

@@ -27,6 +27,9 @@ public class ControladorInventarioMuebles {
   private static final String ATRIBUTO_AMBIENTE = "ambiente";
   private static final String ATRIBUTO_PLANO = "plano";
   private static final String ATRIBUTO_ZONAS_DE_EXCLUSION = "zonasDeExclusion";
+  private static final String ATRIBUTO_TRAMOS_ESTRECHOS = "tramosEstrechos";
+
+  private final ServicioCirculacion servicioCirculacion = new ServicioCirculacionImpl();
 
   private final ServicioEdicionInventarioMuebles servicioEdicionInventarioMuebles;
   private final ServicioPlano2D servicioPlano2D;
@@ -208,6 +211,7 @@ public class ControladorInventarioMuebles {
       sesion.setAttribute(ATRIBUTO_PLANO, plano);
       model.put(ATRIBUTO_PLANO, plano);
       model.put(ATRIBUTO_ZONAS_DE_EXCLUSION, servicioZonaExclusion.calcularZonas(ambiente));
+      model.put(ATRIBUTO_TRAMOS_ESTRECHOS, servicioCirculacion.calcularTramosEstrechos(plano));
       return new ModelAndView("plano-interactivo", model);
     } catch (ValidacionException e) {
       return new ModelAndView("redirect:/plano/ambiente");

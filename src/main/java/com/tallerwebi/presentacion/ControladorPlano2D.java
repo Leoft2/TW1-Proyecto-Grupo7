@@ -24,7 +24,10 @@ public class ControladorPlano2D {
 
   private static final String ATRIBUTO_PLANO = "plano";
   private static final String ATRIBUTO_ZONAS_DE_EXCLUSION = "zonasDeExclusion";
+  private static final String ATRIBUTO_TRAMOS_ESTRECHOS = "tramosEstrechos";
   private static final String VISTA_PLANO_INTERACTIVO = "plano-interactivo";
+
+  private final ServicioCirculacion servicioCirculacion = new ServicioCirculacionImpl();
 
   private ServicioPlano2D servicioPlano2D;
   private ServicioCategoriaDeMueble servicioCategoriaDeMueble;
@@ -77,6 +80,7 @@ public class ControladorPlano2D {
       Map<String, Object> modelo = new ModelMap();
       modelo.put(ATRIBUTO_PLANO, plano);
       modelo.put(ATRIBUTO_ZONAS_DE_EXCLUSION, servicioZonaExclusion.calcularZonas(ambiente));
+      modelo.put(ATRIBUTO_TRAMOS_ESTRECHOS, servicioCirculacion.calcularTramosEstrechos(plano));
       return new ModelAndView("plano-interactivo", modelo);
     } catch (ValidacionException e) {
       return planoConError(e);
@@ -203,6 +207,7 @@ public class ControladorPlano2D {
       ATRIBUTO_ZONAS_DE_EXCLUSION,
       servicioZonaExclusion.calcularZonas(plano.getAmbiente())
     );
+    modelo.put(ATRIBUTO_TRAMOS_ESTRECHOS, servicioCirculacion.calcularTramosEstrechos(plano));
     return new ModelAndView(VISTA_PLANO_INTERACTIVO, modelo);
   }
 
@@ -218,6 +223,7 @@ public class ControladorPlano2D {
       ATRIBUTO_ZONAS_DE_EXCLUSION,
       servicioZonaExclusion.calcularZonas(plano.getAmbiente())
     );
+    modelo.put(ATRIBUTO_TRAMOS_ESTRECHOS, servicioCirculacion.calcularTramosEstrechos(plano));
     return new ModelAndView(VISTA_PLANO_INTERACTIVO, modelo);
   }
 

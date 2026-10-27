@@ -13,6 +13,7 @@ public class DatosPlano {
 
   private Double ancho;
   private Double largo;
+  private Double anchoMinimoDePasillo;
   private List<DatosMueble> muebles = new ArrayList<>();
   private List<DatosObstaculo> obstaculos = new ArrayList<>();
   private List<DatosAbertura> aberturas = new ArrayList<>();
@@ -22,6 +23,7 @@ public class DatosPlano {
   /** Arma el ambiente con sus obstáculos, salteando las filas de obstáculo sin medidas. */
   public Ambiente aAmbiente() {
     Ambiente ambiente = new Ambiente(ancho, largo);
+    ambiente.setAnchoMinimoDePasillo(anchoMinimoDePasillo);
     for (DatosObstaculo datosObstaculo : obstaculos) {
       if (!datosObstaculo.estaVacio()) {
         ambiente.agregarObstaculo(datosObstaculo.aObstaculo());
@@ -67,6 +69,14 @@ public class DatosPlano {
 
   public void setLargo(Double largo) {
     this.largo = largo;
+  }
+
+  public Double getAnchoMinimoDePasillo() {
+    return anchoMinimoDePasillo;
+  }
+
+  public void setAnchoMinimoDePasillo(Double anchoMinimoDePasillo) {
+    this.anchoMinimoDePasillo = anchoMinimoDePasillo;
   }
 
   public List<DatosMueble> getMuebles() {

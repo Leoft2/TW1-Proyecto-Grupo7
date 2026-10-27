@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 public class ServicioReglasDeUbicacionImpl implements ServicioReglasDeUbicacion {
 
   // Valor provisorio hasta que se defina la configuracion del pasillo minimo (FU14)
-  private static final double PASILLO_MINIMO = 0.6;
+
   private static final String CATEGORIA_CAMA = "Cama";
 
   private final ServicioZonaExclusion servicioZonaExclusion;
@@ -84,24 +84,29 @@ public class ServicioReglasDeUbicacionImpl implements ServicioReglasDeUbicacion 
     double arriba = candidato.getPosicionY();
     double derecha = izquierda + candidato.getMueble().getAncho();
     double abajo = arriba + candidato.getMueble().getLargo();
+    double minimo = ambiente.getAnchoMinimoDePasillo();
 
     if (
-      esPasilloEstrecho(izquierda) ||
-      esPasilloEstrecho(arriba) ||
-      esPasilloEstrecho(ambiente.getAncho() - derecha) ||
-      esPasilloEstrecho(ambiente.getLargo() - abajo)
+      esPasilloEstrecho(izquierda, minimo) ||
+      esPasilloEstrecho(arriba, minimo) ||
+      esPasilloEstrecho(ambiente.getAncho() - derecha, minimo) ||
+      esPasilloEstrecho(ambiente.getLargo() - abajo, minimo)
     ) {
       return true;
     }
     for (MuebleUbicado otro : mueblesUbicados) {
-      if (dejaUnPasilloEstrechoCon(candidato, otro)) {
+      if (dejaUnPasilloEstrechoCon(candidato, otro, minimo)) {
         return true;
       }
     }
     return false;
   }
 
-  private boolean dejaUnPasilloEstrechoCon(MuebleUbicado candidato, MuebleUbicado otro) {
+  private boolean dejaUnPasilloEstrechoCon(
+    MuebleUbicado candidato,
+    MuebleUbicado otro,
+    double minimo
+  ) {
     double izquierda = candidato.getPosicionX();
     double arriba = candidato.getPosicionY();
     double derecha = izquierda + candidato.getMueble().getAncho();
@@ -111,18 +116,17 @@ public class ServicioReglasDeUbicacionImpl implements ServicioReglasDeUbicacion 
     double otroDerecha = otroIzquierda + otro.getMueble().getAncho();
     double otroAbajo = otroArriba + otro.getMueble().getLargo();
     if (seSuperponen(izquierda, derecha, otroIzquierda, otroDerecha)) {
-      return esPasilloEstrecho(Math.max(otroArriba - abajo, arriba - otroAbajo));
+      return esPasilloEstrecho(Math.max(otroArriba - abajo, arriba - otroAbajo), minimo);
     }
     if (seSuperponen(arriba, abajo, otroArriba, otroAbajo)) {
-      return esPasilloEstrecho(Math.max(otroIzquierda - derecha, izquierda - otroDerecha));
+      return esPasilloEstrecho(Math.max(otroIzquierda - derecha, izquierda - otroDerecha), minimo);
     }
     return false;
   }
 
-  private boolean esPasilloEstrecho(double separacion) {
+  private boolean esPasilloEstrecho(double separacion, double minimo) {
     return (
-      separacion > ZonaNoDisponible.TOLERANCIA &&
-      separacion < PASILLO_MINIMO - ZonaNoDisponible.TOLERANCIA
+      separacion > ZonaNoDisponible.TOLERANCIA && separacion < minimo - ZonaNoDisponible.TOLERANCIA
     );
   }
 

@@ -30,6 +30,7 @@
     <form th:action="@{/plano/aberturas/confirmar}" method="post">
         <input type="hidden" name="ancho" th:value="${datosPlano.ancho}">
         <input type="hidden" name="largo" th:value="${datosPlano.largo}">
+        <input type="hidden" name="anchoMinimoDePasillo" th:value="${datosPlano.anchoMinimoDePasillo}">
         <th:block th:each="mueble, fila : ${datosPlano.muebles}">
             <input type="hidden" th:name="|muebles[${fila.index}].nombre|" th:value="${mueble.nombre}">
             <input type="hidden" th:name="|muebles[${fila.index}].categoria|" th:value="${mueble.categoria}">

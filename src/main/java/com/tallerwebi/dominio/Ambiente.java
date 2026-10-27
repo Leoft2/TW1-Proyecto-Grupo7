@@ -11,8 +11,11 @@ public class Ambiente {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  public static final double ANCHO_MINIMO_DE_PASILLO_POR_DEFECTO = 0.6;
+
   private Double ancho;
   private Double largo;
+  private Double anchoMinimoDePasillo;
 
   @ManyToOne(optional = false)
   @JoinColumn(name = "tipo_de_ambiente_id", nullable = false)
@@ -61,6 +64,17 @@ public class Ambiente {
 
   public Double getLargo() {
     return largo;
+  }
+
+  public Double getAnchoMinimoDePasillo() {
+    if (anchoMinimoDePasillo == null) {
+      return ANCHO_MINIMO_DE_PASILLO_POR_DEFECTO;
+    }
+    return anchoMinimoDePasillo;
+  }
+
+  public void setAnchoMinimoDePasillo(Double anchoMinimoDePasillo) {
+    this.anchoMinimoDePasillo = anchoMinimoDePasillo;
   }
 
   public TipoDeAmbiente getTipoDeAmbiente() {

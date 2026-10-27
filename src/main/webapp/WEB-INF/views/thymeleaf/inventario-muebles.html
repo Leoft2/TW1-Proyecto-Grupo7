@@ -103,7 +103,7 @@
 
         <div class="d-flex justify-content-between align-items-center mt-3">
           <a th:href="@{/plano/obstaculos}" class="btn btn-outline-secondary">Atrás</a>
-          <form th:action="@{/inventario-muebles/plano}" method="post" class="d-inline">
+          <form th:action="@{/plano/ranking/generar}" method="post" class="d-inline">
             <input type="hidden" name="ancho" th:value="${ancho}">
             <input type="hidden" name="largo" th:value="${largo}">
             <button type="submit" class="btn btn-dark">Generar plano →</button>

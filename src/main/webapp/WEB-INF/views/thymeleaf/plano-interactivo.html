@@ -27,6 +27,10 @@
         Las dimensiones deben ser mayores a 0
     </div>
 
+    <p class="text-end">
+        <a th:href="@{/plano/historial}" class="btn btn-outline-secondary btn-sm">Historial de versiones</a>
+    </p>
+
     <div th:if="${plano != null}">
 
         <p th:if="${plano.mensaje}" class="alert alert-info" th:text="${plano.mensaje}">

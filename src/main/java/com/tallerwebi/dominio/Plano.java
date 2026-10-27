@@ -1,6 +1,7 @@
 package com.tallerwebi.dominio;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,6 +34,10 @@ public class Plano {
   private List<String> motivosDeExclusion;
 
   private String mensaje;
+
+  private LocalDateTime fechaDeCreacion;
+
+  private Boolean activa;
 
   public Plano() {}
 
@@ -96,5 +101,21 @@ public class Plano {
 
   public void setMensaje(String mensaje) {
     this.mensaje = mensaje;
+  }
+
+  public LocalDateTime getFechaDeCreacion() {
+    return fechaDeCreacion;
+  }
+
+  public void setFechaDeCreacion(LocalDateTime fechaDeCreacion) {
+    this.fechaDeCreacion = fechaDeCreacion;
+  }
+
+  public boolean isActiva() {
+    return Boolean.TRUE.equals(activa);
+  }
+
+  public void setActiva(boolean activa) {
+    this.activa = activa;
   }
 }

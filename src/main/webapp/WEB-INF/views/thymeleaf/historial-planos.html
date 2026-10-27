@@ -1,0 +1,58 @@
+<!DOCTYPE HTML>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/layout :: head('Historial de versiones')}"></head>
+
+<body>
+<nav th:replace="~{fragments/layout :: navbar('ambientes')}"></nav>
+
+<main class="container">
+    <header class="hb-page-header">
+        <div>
+            <span class="hb-eyebrow">Distribución automática</span>
+            <h1>Historial de versiones</h1>
+            <p>Cada distribución que generás queda guardada. Podés volver a una anterior.</p>
+        </div>
+    </header>
+
+    <p th:if="${#lists.isEmpty(versiones)}" class="alert alert-info">
+        Todavía no generaste ninguna distribución.
+    </p>
+
+    <table th:if="${not #lists.isEmpty(versiones)}" class="table align-middle">
+        <thead>
+        <tr>
+            <th>Versión</th>
+            <th>Fecha</th>
+            <th>Ambiente</th>
+            <th>Muebles ubicados</th>
+            <th>Estado</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="version, fila : ${versiones}">
+            <td th:text="${'V' + (#lists.size(versiones) - fila.index)}">V1</td>
+            <td th:text="${version.fechaDeCreacion != null} ? ${#temporals.format(version.fechaDeCreacion, 'dd/MM/yyyy HH:mm')} : '-'">01/01/2026 10:00</td>
+            <td th:text="${version.ambiente.ancho + ' x ' + version.ambiente.largo + ' m'}">4.0 x 3.0 m</td>
+            <td th:text="${#lists.size(version.muebles)}">3</td>
+            <td>
+                <span th:if="${version.activa}" class="badge bg-success">Activa</span>
+            </td>
+            <td>
+                <form th:unless="${version.activa}" th:action="@{/plano/historial/restaurar}" method="post">
+                    <input type="hidden" name="id" th:value="${version.id}">
+                    <button type="submit" class="btn btn-sm btn-primary">Restaurar</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <a th:href="@{/plano/actual}" class="btn btn-secondary">Ver plano activo</a>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+
+</html>

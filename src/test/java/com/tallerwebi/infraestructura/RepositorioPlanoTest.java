@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 import com.tallerwebi.dominio.Ambiente;
 import com.tallerwebi.dominio.Mueble;
@@ -57,6 +58,66 @@ public class RepositorioPlanoTest {
     assertThat(recuperado.getUsuario().getEmail(), is(equalTo(usuario.getEmail())));
     assertThat(recuperado.getMuebles().get(0).getPosicionX(), is(equalTo(1.0)));
     assertThat(recuperado.getMuebles().get(0).getPosicionY(), is(equalTo(1.5)));
+  }
+
+  /*
+   * HU-12: Historial de versiones de distribucion
+   * - Dado que genero una nueva distribucion, cuando se guarda, queda como version nueva sin borrar las anteriores.
+   * - Dado un historial de versiones, cuando selecciono una anterior, el sistema la restaura como la activa.
+   */
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaGuardarUnaNuevaDistribucionComoVersionNuevaSinBorrarLasAnteriores() {
+    //Given
+    Usuario usuario = givenTengoUnUsuario("historial@unlam.edu.ar");
+    givenTengoUnPlanoGuardadoPara(usuario);
+
+    //When
+    givenTengoUnPlanoGuardadoPara(usuario);
+    List<Plano> historial = repositorioPlano.buscarHistorialDe(usuario.getEmail());
+
+    //Then
+    assertThat(historial.size(), is(equalTo(2)));
+    assertThat(historial.get(0).isActiva(), is(equalTo(true)));
+    assertThat(historial.get(1).isActiva(), is(equalTo(false)));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaRestaurarUnaVersionAnteriorComoLaActiva() {
+    //Given
+    Usuario usuario = givenTengoUnUsuario("restaurar@unlam.edu.ar");
+    givenTengoUnPlanoGuardadoPara(usuario);
+    givenTengoUnPlanoGuardadoPara(usuario);
+    List<Plano> historial = repositorioPlano.buscarHistorialDe(usuario.getEmail());
+    Long versionAnterior = historial.get(1).getId();
+
+    //When
+    repositorioPlano.activar(versionAnterior, usuario.getEmail());
+    flushYClear();
+    Plano activa = repositorioPlano.buscarUltimoDe(usuario.getEmail());
+
+    //Then
+    assertThat(activa.getId(), is(equalTo(versionAnterior)));
+    assertThat(repositorioPlano.buscarHistorialDe(usuario.getEmail()).size(), is(equalTo(2)));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void noDeberiaRestaurarUnaVersionDeOtroUsuario() {
+    //Given
+    Usuario usuario = givenTengoUnUsuario("dueno@unlam.edu.ar");
+    givenTengoUnPlanoGuardadoPara(usuario);
+    Long planoId = repositorioPlano.buscarUltimoDe(usuario.getEmail()).getId();
+
+    //When
+    Plano restaurado = repositorioPlano.activar(planoId, "otro@unlam.edu.ar");
+
+    //Then
+    assertThat(restaurado, is(nullValue()));
   }
 
   private Usuario givenTengoUnUsuario(String email) {

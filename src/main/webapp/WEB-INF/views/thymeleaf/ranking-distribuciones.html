@@ -1,0 +1,71 @@
+<!DOCTYPE HTML>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/layout :: head('Mejores distribuciones')}"></head>
+
+<body>
+<nav th:replace="~{fragments/layout :: navbar('ambientes')}"></nav>
+
+<main class="container">
+    <header class="hb-page-header">
+        <div>
+            <span class="hb-eyebrow">Rediseño automático</span>
+            <h1>Mejores distribuciones</h1>
+            <p>Elegí una opción según su puntaje y las reglas de ubicación que cumple.</p>
+        </div>
+    </header>
+
+    <div th:if="${mensaje}" class="alert alert-warning" role="alert" th:text="${mensaje}">
+        No fue posible generar una distribución válida.
+    </div>
+
+    <section th:each="opcion, estado : ${opciones}" class="hb-plano-section mb-4">
+        <div class="hb-section-heading">
+            <div>
+                <span class="hb-eyebrow" th:text="${'Opción ' + (estado.index + 1)}">Opción 1</span>
+                <h2 class="h4 mb-1" th:text="${'Puntaje: ' + opcion.puntajeTotal}">Puntaje: 1</h2>
+            </div>
+            <form th:action="@{/plano/ranking/confirmar}" method="post">
+                <input type="hidden" name="indice" th:value="${estado.index}">
+                <button type="submit" class="btn btn-primary">Elegir esta distribución</button>
+            </form>
+        </div>
+
+        <ul th:if="${not #lists.isEmpty(opcion.desglose)}" class="mb-3">
+            <li th:each="regla : ${opcion.desglose}" th:text="${regla}">Cama opuesta a la ventana (+1)</li>
+        </ul>
+        <p th:if="${#lists.isEmpty(opcion.desglose)}" class="text-muted">
+            No se aplicaron reglas preferenciales puntuables a esta opción.
+        </p>
+        <ul th:if="${not #lists.isEmpty(opcion.avisos)}" class="alert alert-info">
+            <li th:each="aviso : ${opcion.avisos}" th:text="${aviso}">Falta asignar categoría</li>
+        </ul>
+
+        <div class="hb-plano-card p-3">
+            <svg th:attr="viewBox=${'0 0 ' + opcion.plano.ambiente.ancho + ' ' + opcion.plano.ambiente.largo}"
+                 class="plano-svg w-100" preserveAspectRatio="xMidYMid meet"
+                 role="img" aria-label="Vista previa de la distribución">
+                <rect x="0" y="0" th:attr="width=${opcion.plano.ambiente.ancho},
+                                          height=${opcion.plano.ambiente.largo}"
+                      fill="#f3eee6" stroke="#5d6259" stroke-width="0.04"></rect>
+                <g th:each="ubicado : ${opcion.plano.muebles}">
+                    <title th:text="${ubicado.mueble.nombre}">Mueble</title>
+                    <rect th:attr="x=${ubicado.posicionX}, y=${ubicado.posicionY},
+                                   width=${ubicado.mueble.ancho}, height=${ubicado.mueble.largo}"
+                          fill="#d6e2d7" stroke="#536657" stroke-width="0.03"></rect>
+                    <text th:attr="x=${ubicado.posicionX + ubicado.mueble.ancho / 2},
+                                  y=${ubicado.posicionY + ubicado.mueble.largo / 2}"
+                          text-anchor="middle" dominant-baseline="middle"
+                          font-size="0.16" th:text="${ubicado.mueble.nombre}">Cama</text>
+                </g>
+            </svg>
+        </div>
+    </section>
+
+    <a th:href="@{/inventario-muebles}" class="btn btn-secondary">Volver al inventario</a>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+
+</html>

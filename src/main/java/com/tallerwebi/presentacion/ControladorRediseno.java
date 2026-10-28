@@ -83,10 +83,8 @@ public class ControladorRediseno {
     modelo.put(AMBIENTE, ambiente);
     modelo.put("tipoDeAmbiente", tipo == null ? null : tipo.getNombre());
     modelo.put("recomendacion", this.servicioRediseño.recomendar(propuesta.getEstilo()));
-    try {
-      RecomendacionPintura recomendacionPintura = this.servicioRediseño.recomendarPintura(ambiente);
-      modelo.put("recomendacionPintura", recomendacionPintura);
-    } catch (Exception ignored) {}
+    RecomendacionPintura recomendacionPintura = this.servicioRediseño.recomendarPintura(ambiente);
+    modelo.put("recomendacionPintura", recomendacionPintura);
     modelo.put("soloSostenibles", propuesta.getSoloSostenibles());
 
     List<Mueble> muebles = null;

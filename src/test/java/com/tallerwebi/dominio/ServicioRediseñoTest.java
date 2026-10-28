@@ -166,15 +166,15 @@ public class ServicioRediseñoTest {
   }
 
   @Test
-  void dimensionesInvalidasNoGeneranColoresPeroSiLaForma() {
+  void dimensionesInvalidasPintanTodoDeBlancoRoto() {
     RecomendacionPintura r = servicio.recomendarPintura(ambiente(0.0, 0.0, 2.7));
     ColorSuperficie c = r.getColorSuperficie();
 
     assertEquals(FormaPintura.PINTAR_TODO_DE_UN_COLOR_PARA_COMPACTAR, r.getFormaPintura());
-    assertNull(c.getTecho());
-    assertNull(c.getParedIzquierda());
-    assertNull(c.getParedFondo());
-    assertNull(c.getParedDerecha());
+    assertEquals(BLANCO_ROTO, c.getTecho());
+    assertEquals(BLANCO_ROTO, c.getParedIzquierda());
+    assertEquals(BLANCO_ROTO, c.getParedFondo());
+    assertEquals(BLANCO_ROTO, c.getParedDerecha());
   }
 
   @Test

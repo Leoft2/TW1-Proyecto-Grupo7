@@ -137,13 +137,12 @@ public class ServicioRediseñoImpl implements ServicioRediseño {
 
     Double area = 2.0 * (ancho + largo) * altura + ancho * largo;
 
-    agregarItemRecomendado(
-      recomendacion,
-      "Todo el ambiente",
-      area,
-      COLOR_BLANCO_ROTO,
-      HEX_BLANCO_ROTO
-    );
+    RecomendacionPintura.ItemPintura item = new RecomendacionPintura.ItemPintura();
+    item.setZona(ZONA_TODO_AMBIENTE);
+    item.setColorNombre(COLOR_BLANCO_ROTO);
+    item.setHex(HEX_BLANCO_ROTO);
+    item.setMetrosCuadrados(Math.max(0.0, area));
+    recomendacion.agregarItem(item);
 
     return recomendacion;
   }

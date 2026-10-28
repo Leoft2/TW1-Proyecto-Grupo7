@@ -80,6 +80,67 @@
       </div>
     </div>
 
+    <h2 class="hb-section-title">Recomendación de pintura</h2>
+    <div class="card" th:if="${recomendacionPintura != null}"
+     th:with="cs=${recomendacionPintura.colorSuperficie}">
+      <div id="ambiente-pintura" class="ambiente-pintura">
+
+        <div class="ambiente-svg ambiente-svg-techo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115.52 59.08" class="svg-superficie">
+            <polygon
+              points="0 7.65 25.32 15.82 90.2 15.82 115.52 7.65"
+              th:style="|fill:${cs != null and cs.techo != null ? cs.techo : '#E5E5E5'}|"/>
+          </svg>
+        </div>
+
+        <div class="ambiente-svg ambiente-svg-izquierda">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115.52 59.08" class="svg-superficie">
+            <polygon
+              points="0 59.08 25.32 42.2 25.32 15.82 0 7.65"
+              th:style="|fill:${cs != null and cs.paredIzquierda != null ? cs.paredIzquierda : '#E5E5E5'}|"/>
+          </svg>
+        </div>
+
+        <div class="ambiente-svg ambiente-svg-fondo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115.52 59.08" class="svg-superficie">
+            <rect x="25.32" y="15.82" width="64.88" height="26.37"
+              th:style="|fill:${cs != null and cs.paredFondo != null ? cs.paredFondo : '#E5E5E5'}|"/>
+          </svg>
+        </div>
+
+        <div class="ambiente-svg ambiente-svg-derecha">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115.52 59.08" class="svg-superficie">
+            <polygon
+              points="115.52 59.08 90.2 42.2 90.2 15.82 115.52 7.65"
+              th:style="|fill:${cs != null and cs.paredDerecha != null ? cs.paredDerecha : '#E5E5E5'}|"/>
+          </svg>
+        </div>
+      </div>
+      </div>
+        <div th:if="${recomendacionPintura.items != null and !#lists.isEmpty(recomendacionPintura.items)}">
+          <h5 class="mb-2">Colores recomendados</h5>
+          <div th:each="item : ${recomendacionPintura.items}" class="d-flex align-items-center justify-content-between border rounded p-2 mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <span class="rounded-circle border flex-shrink-0" th:style="'width: 2rem; height: 2rem; background-color: ' + ${item.hex}"></span>
+              <div>
+                <div><strong th:text="${item.colorNombre}"></strong> <span class="text-muted">- <span th:text="${item.zona}"></span></span></div>
+                <div class="text-muted small">Baldes necesarios: <span th:text="${item.cantidadBaldes}"></span> | Superficie: <span th:text="${#numbers.formatDecimal(item.metrosCuadrados,1,'COMMA',2,'POINT')}"></span> m2</div>
+              </div>
+            </div>
+            <div class="text-end">
+              <div><strong th:text="${'$ ' + #numbers.formatDecimal(item.precioTotal,1,'COMMA',0,'POINT')}"></strong></div>
+            </div>
+          </div>
+          <div class="d-flex justify-content-end mt-3">
+            <div><strong>Precio total pintura: </strong><span th:text="${'$ ' + #numbers.formatDecimal(recomendacionPintura.precioTotal,1,'COMMA',0,'POINT')}"></span></div>
+          </div>
+        </div>
+        <div th:if="${recomendacionPintura.items == null or #lists.isEmpty(recomendacionPintura.items)}" class="alert alert-info mb-0">
+          No hay baldes cargados en la base de datos para calcular cantidades.
+        </div>
+      </div>
+    </div>
+
     <h2 class="hb-section-title">Muebles sugeridos</h2>
 
     <div th:if="${muebles != null and #lists.isEmpty(muebles)}" class="alert alert-info">

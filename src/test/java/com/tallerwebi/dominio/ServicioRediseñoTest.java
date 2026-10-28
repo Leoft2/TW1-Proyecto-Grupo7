@@ -5,14 +5,36 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class ServicioRediseñoTest {
 
   private final ServicioRediseño servicioRediseño = new ServicioRediseñoImpl();
+  private static final String BLANCO_ROTO = "#F2F0EB";
+  private static final String CELESTE = "#A8C3D1";
+  private static final String SALVIA = "#9CAF94";
+  private static final String TERRACOTA = "#C1663F";
+  private ServicioRediseño servicio;
+
+  @BeforeEach
+  void setUp() {
+    servicio = new ServicioRediseñoImpl();
+  }
+
+  private Ambiente ambiente(Double ancho, Double largo, Double altura) {
+    Ambiente a = new Ambiente();
+    a.setAncho(ancho);
+    a.setLargo(largo);
+    a.setAltura(altura);
+    return a;
+  }
 
   @Test
   public void dadoCadaEstilo_cuandoPidoUnaRecomendacion_enternoUnaPaletaYUnaIluminacion() {
@@ -85,5 +107,111 @@ public class ServicioRediseñoTest {
     List<Color> boho = this.servicioRediseño.recomendar(Estilo.Boho).getColores();
 
     assertThat(retro, is(not(boho)));
+  }
+
+  @Test
+  void ambienteAnchoPintaParedesIzquierdaYDerecha() {
+    RecomendacionPintura r = servicio.recomendarPintura(ambiente(6.0, 3.0, 2.7));
+    ColorSuperficie c = r.getColorSuperficie();
+
+    assertEquals(FormaPintura.PINTAR_PAREDES_OPUESTAS_PARA_ESTRECHAR_AMBIENTE, r.getFormaPintura());
+    assertNull(c.getTecho());
+    assertEquals(CELESTE, c.getParedIzquierda());
+    assertNull(c.getParedFondo());
+    assertEquals(CELESTE, c.getParedDerecha());
+  }
+
+  @Test
+  void ambienteAlargadoPintaTechoYFondo() {
+    RecomendacionPintura r = servicio.recomendarPintura(ambiente(3.0, 6.0, 2.7));
+    ColorSuperficie c = r.getColorSuperficie();
+
+    assertEquals(
+      FormaPintura.PINTAR_TECHO_Y_PARED_OPUESTA_DE_UN_AMBIENTE_PARA_ALARGARLO,
+      r.getFormaPintura()
+    );
+    assertEquals(BLANCO_ROTO, c.getTecho());
+    assertNull(c.getParedIzquierda());
+    assertEquals(SALVIA, c.getParedFondo());
+    assertNull(c.getParedDerecha());
+  }
+
+  @Test
+  void ambienteCuadradoDestacaElFondoYPintaElRestoDeBlancoRoto() {
+    RecomendacionPintura r = servicio.recomendarPintura(ambiente(4.0, 4.0, 2.7));
+    ColorSuperficie c = r.getColorSuperficie();
+
+    assertEquals(FormaPintura.PINTAR_TODO_MENOS_UNA_PARED_PARA_DESTACARLA, r.getFormaPintura());
+    assertEquals(BLANCO_ROTO, c.getTecho());
+    assertEquals(BLANCO_ROTO, c.getParedIzquierda());
+    assertEquals(TERRACOTA, c.getParedFondo());
+    assertEquals(BLANCO_ROTO, c.getParedDerecha());
+  }
+
+  @Test
+  void dimensionesInvalidasPintanTodoDeUnColor() {
+    RecomendacionPintura r = servicio.recomendarPintura(ambiente(0.0, 0.0, 2.7));
+    ColorSuperficie c = r.getColorSuperficie();
+
+    assertEquals(FormaPintura.PINTAR_TODO_DE_UN_COLOR_PARA_COMPACTAR, r.getFormaPintura());
+    assertEquals(BLANCO_ROTO, c.getTecho());
+    assertEquals(BLANCO_ROTO, c.getParedIzquierda());
+    assertEquals(BLANCO_ROTO, c.getParedFondo());
+    assertEquals(BLANCO_ROTO, c.getParedDerecha());
+  }
+
+  @Test
+  void ambienteNuloDevuelveRecomendacionVacia() {
+    assertNotNull(servicio.recomendarPintura(null));
+  }
+
+  @Test
+  void dimensionesInvalidasPintanTodoDeBlancoRoto() {
+    RecomendacionPintura r = servicio.recomendarPintura(ambiente(0.0, 0.0, 2.7));
+    ColorSuperficie c = r.getColorSuperficie();
+
+    assertEquals(FormaPintura.PINTAR_TODO_DE_UN_COLOR_PARA_COMPACTAR, r.getFormaPintura());
+    assertEquals(BLANCO_ROTO, c.getTecho());
+    assertEquals(BLANCO_ROTO, c.getParedIzquierda());
+    assertEquals(BLANCO_ROTO, c.getParedFondo());
+    assertEquals(BLANCO_ROTO, c.getParedDerecha());
+  }
+
+  @Test
+  void ambiente3x6DaAlargadoYSoloEseCaso() {
+    assertEquals(
+      FormaPintura.PINTAR_TECHO_Y_PARED_OPUESTA_DE_UN_AMBIENTE_PARA_ALARGARLO,
+      servicio.recomendarPintura(ambiente(3.0, 6.0, 2.8)).getFormaPintura()
+    );
+    assertEquals(
+      FormaPintura.PINTAR_PAREDES_OPUESTAS_PARA_ESTRECHAR_AMBIENTE,
+      servicio.recomendarPintura(ambiente(6.0, 3.0, 2.8)).getFormaPintura()
+    );
+  }
+
+  @Test
+  void todaSuperficieActivaEnLaFormaTieneColor() {
+    double[][] casos = { { 6, 3 }, { 3, 6 }, { 4, 4 } };
+
+    for (double[] caso : casos) {
+      RecomendacionPintura r = servicio.recomendarPintura(ambiente(caso[0], caso[1], 2.7));
+      int[] flags = r.getFormaPintura().getSuperficies();
+      ColorSuperficie c = r.getColorSuperficie();
+      String[] colores = {
+        c.getTecho(),
+        c.getParedIzquierda(),
+        c.getParedFondo(),
+        c.getParedDerecha(),
+      };
+
+      for (int i = 0; i < 4; i++) {
+        if (flags[i] == 1) {
+          assertNotNull(
+            colores[i],
+            "Superficie " + i + " activa sin color en " + r.getFormaPintura()
+          );
+        }
+      }
+    }
   }
 }

@@ -38,7 +38,6 @@ INSERT INTO Material(id, nombre, sostenible) VALUES
   (7, 'Plástico', false),
   (8, 'Otro', false);
 
--- Hacer datos mas realistas... Scraping de muebles
 INSERT INTO Mueble(id, nombre, descripcion, precio, ancho, largo, estilo, material_id, categoria_de_mueble_id, enCatalogo) VALUES
   (1, 'Sillón Retró', 'Sillón de voluteadas tapizado en terciopelo color mostaza, con patas de madera maciza.', 85000.0, 85.0, 80.0, 'Retro', 4, 12, true),
   (2, 'Lámpara de Pie Retro', 'Lámpara de pie con pantalla de tela y base de metal esmaltado, para rincón de lectura.', 25000.0, 40.0, 40.0, 'Retro', 5, 14, true),
@@ -87,9 +86,12 @@ INSERT INTO mueble_tipos_de_ambiente(mueble_id, tipo_de_ambiente_id) VALUES
   (17, 2),
   (18, 4);
 
-INSERT INTO Ambiente(id, ancho, largo, tipo_de_ambiente_id, usuario_id) VALUES
-  (1, 4.0, 3.0, 2, 1),
-  (2, 5.0, 3.0, 4, 1);
+INSERT INTO Ambiente(id, ancho, largo, altura, tipo_de_ambiente_id, usuario_id) VALUES
+  (1, 4.0, 3.0, 4.0, 2, 1),
+  (2, 5.0, 3.0, 4.0, 4, 1),
+  (3, 6.1, 4.0, 2.8, 1, 1),
+  (4, 6.0, 3.0, 2.8, 3, 1),
+  (5, 6.1, 4.0, 2.8, 5, 1);
 
 INSERT INTO ambiente_muebles(ambiente_id, mueble_id) VALUES
   (1, 8),
@@ -98,3 +100,22 @@ INSERT INTO ambiente_muebles(ambiente_id, mueble_id) VALUES
   (2, 11),
   (2, 18),
   (2, 16);
+
+-- Baldes randoms para tener una entidad con que testear. Luego reescribo esto e implemento scraping
+INSERT INTO BaldePintura(id, nombre, colorNombre, hex, cantidadLitros, precio) VALUES
+  -- Colores de recomendarPintura
+  (4, 'Balde Blanco roto', 'Blanco roto', '#F2F0EB', 4.0, 8700.0),
+  (5, 'Balde Celeste', 'Celeste', '#A8C3D1', 4.0, 9300.0),
+  (6, 'Balde Salvia', 'Salvia', '#9CAF94', 4.0, 9400.0),
+  -- Paletas de estilos
+  (7, 'Balde Mostaza', 'Mostaza', '#D4A017', 4.0, 9600.0),
+  (8, 'Balde Oliva', 'Oliva', '#6B7B3A', 4.0, 9500.0),
+  (9, 'Balde Carbón', 'Carbón', '#2B2B2B', 4.0, 9800.0),
+  (10, 'Balde Arena', 'Arena', '#D9CBB8', 4.0, 8900.0),
+  (11, 'Balde Madera clara', 'Madera clara', '#C8A87C', 4.0, 9200.0),
+  (12, 'Balde Cemento', 'Cemento', '#8C8C86', 4.0, 9100.0),
+  (13, 'Balde Hierro', 'Hierro', '#33322E', 4.0, 9700.0),
+  (14, 'Balde Ladrillo', 'Ladrillo', '#A0522D', 4.0, 9500.0),
+  (15, 'Balde Mostaza arena', 'Mostaza arena', '#E0B252', 4.0, 9400.0),
+  (16, 'Balde Turquesa', 'Turquesa', '#4FA3A5', 4.0, 9600.0),
+  (17, 'Balde Gris cálido', 'Gris cálido', '#C4B8A8', 4.0, 8900.0);

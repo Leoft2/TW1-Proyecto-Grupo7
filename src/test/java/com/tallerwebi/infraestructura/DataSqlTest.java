@@ -174,7 +174,7 @@ public class DataSqlTest {
   public void dadoQueArrancaLaAplicacion_cuandoConsultoLosAmbientes_entoncesElUsuarioDeTestTieneAmbientesConTipo() {
     List<Ambiente> ambientes = this.obtenerAmbientes();
 
-    assertThat(ambientes, hasSize(2));
+    assertThat(ambientes, hasSize(5));
     List<String> tipos = new ArrayList<>();
     for (Ambiente ambiente : ambientes) {
       assertThat(ambiente.getUsuario(), is(notNullValue()));
@@ -183,7 +183,7 @@ public class DataSqlTest {
       tipos.add(ambiente.getTipoDeAmbiente().getNombre());
     }
 
-    assertThat(tipos, containsInAnyOrder("Habitación", "Cocina"));
+    assertThat(tipos, containsInAnyOrder("Living", "Habitación", "Pasillo", "Cocina", "Comedor"));
   }
 
   @Test
@@ -193,7 +193,7 @@ public class DataSqlTest {
 
     List<Ambiente> ambientes = repositorioAmbiente.obtenerAmbientesDe("test@unlam.edu.ar");
 
-    assertThat(ambientes, hasSize(2));
+    assertThat(ambientes, hasSize(5));
     assertThat(
       nombresDeMueblesDe(ambientes.get(0)),
       containsInAnyOrder("Cama Boho", "Escritorio Minimalista", "Lámpara de Mesa Japandi")

@@ -3,6 +3,7 @@ package com.tallerwebi.presentacion;
 import com.tallerwebi.dominio.Ambiente;
 import com.tallerwebi.dominio.Estilo;
 import com.tallerwebi.dominio.Mueble;
+import com.tallerwebi.dominio.RecomendacionPintura;
 import com.tallerwebi.dominio.ServicioAmbiente;
 import com.tallerwebi.dominio.ServicioCatalogo;
 import com.tallerwebi.dominio.ServicioRediseño;
@@ -82,6 +83,8 @@ public class ControladorRediseno {
     modelo.put(AMBIENTE, ambiente);
     modelo.put("tipoDeAmbiente", tipo == null ? null : tipo.getNombre());
     modelo.put("recomendacion", this.servicioRediseño.recomendar(propuesta.getEstilo()));
+    RecomendacionPintura recomendacionPintura = this.servicioRediseño.recomendarPintura(ambiente);
+    modelo.put("recomendacionPintura", recomendacionPintura);
     modelo.put("soloSostenibles", propuesta.getSoloSostenibles());
 
     List<Mueble> muebles = null;

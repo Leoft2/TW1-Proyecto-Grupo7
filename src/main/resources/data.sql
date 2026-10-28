@@ -38,7 +38,6 @@ INSERT INTO Material(id, nombre, sostenible) VALUES
   (7, 'Plástico', false),
   (8, 'Otro', false);
 
--- Hacer datos mas realistas... Scraping de muebles
 INSERT INTO Mueble(id, nombre, descripcion, precio, ancho, largo, estilo, material_id, categoria_de_mueble_id, enCatalogo) VALUES
   (1, 'Sillón Retró', 'Sillón de voluteadas tapizado en terciopelo color mostaza, con patas de madera maciza.', 85000.0, 85.0, 80.0, 'Retro', 4, 12, true),
   (2, 'Lámpara de Pie Retro', 'Lámpara de pie con pantalla de tela y base de metal esmaltado, para rincón de lectura.', 25000.0, 40.0, 40.0, 'Retro', 5, 14, true),
@@ -87,9 +86,12 @@ INSERT INTO mueble_tipos_de_ambiente(mueble_id, tipo_de_ambiente_id) VALUES
   (17, 2),
   (18, 4);
 
-INSERT INTO Ambiente(id, ancho, largo, tipo_de_ambiente_id, usuario_id) VALUES
-  (1, 4.0, 3.0, 2, 1),
-  (2, 5.0, 3.0, 4, 1);
+INSERT INTO Ambiente(id, ancho, largo, altura, tipo_de_ambiente_id, usuario_id) VALUES
+  (1, 4.0, 3.0, 4.0, 2, 1),
+  (2, 5.0, 3.0, 4.0, 4, 1),
+  (3, 3.0, 6.0, 2.8, 1, 1),
+  (4, 6.0, 3.0, 2.8, 3, 1),
+  (5, 4.0, 4.0, 2.8, 5, 1);
 
 INSERT INTO ambiente_muebles(ambiente_id, mueble_id) VALUES
   (1, 8),
@@ -98,3 +100,9 @@ INSERT INTO ambiente_muebles(ambiente_id, mueble_id) VALUES
   (2, 11),
   (2, 18),
   (2, 16);
+
+-- Baldes randoms para tener una entidad con que testear. Luego reescribo esto e implemento scraping
+INSERT INTO BaldePintura(id, nombre, colorNombre, hex, cantidadLitros, precio) VALUES 
+  (1, 'Balde Blanco', 'Blanco', '#F5F5F2', 4.0, 8500.0), 
+  (2, 'Balde Gris', 'Gris perla', '#C9C9C4', 4.0, 9000.0), 
+  (3, 'Balde Terracota', 'Terracota', '#C1663F', 4.0, 9500.0);

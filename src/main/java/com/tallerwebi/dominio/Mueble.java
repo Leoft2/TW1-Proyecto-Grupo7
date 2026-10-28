@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
-  Duda: Como le doy la vuelta al TooManyFields?...
+  Cambiar para evitar el PMD TooManyFields
 */
 @Entity
 @SuppressWarnings("PMD.TooManyFields")

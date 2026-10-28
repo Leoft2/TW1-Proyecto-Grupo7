@@ -15,6 +15,7 @@ public class Ambiente {
 
   private Double ancho;
   private Double largo;
+  private Double altura;
   private Double anchoMinimoDePasillo;
 
   @ManyToOne(optional = false)
@@ -48,9 +49,22 @@ public class Ambiente {
     this.largo = largo;
   }
 
+  public Ambiente(Double ancho, Double largo, Double altura) {
+    this.ancho = ancho;
+    this.largo = largo;
+    this.altura = altura;
+  }
+
   public Ambiente(Double ancho, Double largo, TipoDeAmbiente tipoDeAmbiente) {
     this.ancho = ancho;
     this.largo = largo;
+    this.tipoDeAmbiente = tipoDeAmbiente;
+  }
+
+  public Ambiente(Double ancho, Double largo, Double altura, TipoDeAmbiente tipoDeAmbiente) {
+    this.ancho = ancho;
+    this.largo = largo;
+    this.altura = altura;
     this.tipoDeAmbiente = tipoDeAmbiente;
   }
 
@@ -64,6 +78,14 @@ public class Ambiente {
 
   public Double getLargo() {
     return largo;
+  }
+
+  public Double getAltura() {
+    return altura;
+  }
+
+  public void setAltura(Double altura) {
+    this.altura = altura;
   }
 
   public Double getAnchoMinimoDePasillo() {
@@ -115,5 +137,13 @@ public class Ambiente {
 
   public void agregarMueble(Mueble mueble) {
     this.muebles.add(mueble);
+  }
+
+  public void setAncho(Double ancho) {
+    this.ancho = ancho;
+  }
+
+  public void setLargo(Double largo) {
+    this.largo = largo;
   }
 }

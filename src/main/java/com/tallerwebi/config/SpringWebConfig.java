@@ -38,6 +38,7 @@ public class SpringWebConfig implements WebMvcConfigurer {
       .addResourceHandler("/js/**")
       .addResourceLocations("/resources/core/js/")
       .setCacheControl(CacheControl.noCache());
+    registry.addResourceHandler("/SVGs/**").addResourceLocations("/resources/core/SVGs/");
     registry.addResourceHandler("/webjars/**").addResourceLocations("/webjars/");
   }
 

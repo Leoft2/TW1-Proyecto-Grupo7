@@ -89,9 +89,9 @@ INSERT INTO mueble_tipos_de_ambiente(mueble_id, tipo_de_ambiente_id) VALUES
 INSERT INTO Ambiente(id, ancho, largo, altura, tipo_de_ambiente_id, usuario_id) VALUES
   (1, 4.0, 3.0, 4.0, 2, 1),
   (2, 5.0, 3.0, 4.0, 4, 1),
-  (3, 3.0, 6.0, 2.8, 1, 1),
+  (3, 6.1, 4.0, 2.8, 1, 1),
   (4, 6.0, 3.0, 2.8, 3, 1),
-  (5, 4.0, 4.0, 2.8, 5, 1);
+  (5, 6.1, 4.0, 2.8, 5, 1);
 
 INSERT INTO ambiente_muebles(ambiente_id, mueble_id) VALUES
   (1, 8),

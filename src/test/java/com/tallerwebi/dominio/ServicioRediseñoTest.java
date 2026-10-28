@@ -178,6 +178,18 @@ public class ServicioRediseñoTest {
   }
 
   @Test
+  void ambiente3x6DaAlargadoYSoloEseCaso() {
+    assertEquals(
+      FormaPintura.PINTAR_TECHO_Y_PARED_OPUESTA_DE_UN_AMBIENTE_PARA_ALARGARLO,
+      servicio.recomendarPintura(ambiente(3.0, 6.0, 2.8)).getFormaPintura()
+    );
+    assertEquals(
+      FormaPintura.PINTAR_PAREDES_OPUESTAS_PARA_ESTRECHAR_AMBIENTE,
+      servicio.recomendarPintura(ambiente(6.0, 3.0, 2.8)).getFormaPintura()
+    );
+  }
+
+  @Test
   void todaSuperficieActivaEnLaFormaTieneColor() {
     double[][] casos = { { 6, 3 }, { 3, 6 }, { 4, 4 } };
 

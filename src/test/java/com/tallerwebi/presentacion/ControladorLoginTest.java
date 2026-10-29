@@ -156,11 +156,11 @@ public class ControladorLoginTest {
   }
 
   @Test
-  public void inicioDeberiaRedirigirALogin() {
+  public void deberiaMostrarLaLandingDeHabitatCuandoSeSolicitaLaPaginaDeInicio() {
     // ejecucion
     ModelAndView modelAndView = controladorLogin.inicio();
 
     // validacion
-    assertThat(modelAndView.getViewName(), equalToIgnoringCase("redirect:/login"));
+    assertThat(modelAndView.getViewName(), equalToIgnoringCase("landing-habitat"));
   }
 }

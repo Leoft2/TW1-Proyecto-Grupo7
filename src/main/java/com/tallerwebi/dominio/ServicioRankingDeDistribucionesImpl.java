@@ -12,6 +12,8 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
   private static final int PUNTOS_POR_CUMPLIR_REGLA = 1;
   private static final int PUNTOS_POR_INCUMPLIR_REGLA = -1;
   private static final int CANTIDAD_MAXIMA_DE_OPCIONES = 3;
+  private static final int CANTIDAD_MAXIMA_DE_DESPLAZAMIENTOS = 8;
+  private static final double DESPLAZAMIENTO_MINIMO = 0.25;
   private static final String CATEGORIA_CAMA = "Cama";
 
   private final ServicioPlano2D servicioPlano2D;
@@ -48,6 +50,7 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
         reflejarVerticalmente
       );
       agregarSiEsUnaOpcionNueva(ranking, puntuar(plano, ambiente));
+      agregarVariantes(ranking, plano, ambiente);
     }
     ranking.sort(Comparator.comparingInt(OpcionDeDistribucion::getPuntajeTotal).reversed());
     while (ranking.size() > CANTIDAD_MAXIMA_DE_OPCIONES) {
@@ -183,6 +186,8 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
     for (MuebleUbicado ubicado : plano.getMuebles()) {
       if (
         ubicado.isEnConflicto() ||
+        !servicioPlano2D.estaDentroDelPerimetro(ubicado, ambiente) ||
+        seSuperponeConAlguno(ubicado, mueblesValidados) ||
         !servicioReglasDeUbicacion.esUbicacionValida(ubicado, ambiente, mueblesValidados)
       ) {
         return false;
@@ -190,6 +195,102 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
       mueblesValidados.add(ubicado);
     }
     return true;
+  }
+
+  private void agregarVariantes(
+    List<OpcionDeDistribucion> ranking,
+    Plano plano,
+    Ambiente ambiente
+  ) {
+    double desplazamiento = Math.max(ambiente.getAnchoMinimoDePasillo(), DESPLAZAMIENTO_MINIMO);
+    for (int indiceMueble = 0; indiceMueble < plano.getMuebles().size(); indiceMueble++) {
+      for (int eje = 0; eje < 2; eje++) {
+        for (int sentido = -1; sentido <= 1; sentido += 2) {
+          agregarVariantesEnEje(
+            ranking,
+            plano,
+            ambiente,
+            indiceMueble,
+            eje,
+            sentido,
+            desplazamiento
+          );
+        }
+      }
+    }
+  }
+
+  private void agregarVariantesEnEje(
+    List<OpcionDeDistribucion> ranking,
+    Plano plano,
+    Ambiente ambiente,
+    int indiceMueble,
+    int eje,
+    int sentido,
+    double desplazamiento
+  ) {
+    double anchoDelEje = eje == 0 ? ambiente.getAncho() : ambiente.getLargo();
+    for (
+      int indiceDesplazamiento = 1;
+      indiceDesplazamiento <= CANTIDAD_MAXIMA_DE_DESPLAZAMIENTOS;
+      indiceDesplazamiento++
+    ) {
+      double distancia = desplazamiento * indiceDesplazamiento * sentido;
+      Plano variante = desplazarMueble(plano, indiceMueble, eje, distancia);
+      if (esDistribucionValida(variante, obtenerMuebles(variante), ambiente)) {
+        agregarSiEsUnaOpcionNueva(ranking, puntuar(variante, ambiente));
+      }
+      if (Math.abs(distancia) >= anchoDelEje) {
+        break;
+      }
+    }
+  }
+
+  private Plano desplazarMueble(Plano plano, int indiceMueble, int eje, double distancia) {
+    List<MuebleUbicado> muebles = new ArrayList<>();
+    for (int indice = 0; indice < plano.getMuebles().size(); indice++) {
+      MuebleUbicado ubicado = plano.getMuebles().get(indice);
+      double posicionX = ubicado.getPosicionX();
+      double posicionY = ubicado.getPosicionY();
+      if (indice == indiceMueble && eje == 0) {
+        posicionX += distancia;
+      }
+      if (indice == indiceMueble && eje == 1) {
+        posicionY += distancia;
+      }
+      muebles.add(new MuebleUbicado(ubicado.getMueble(), posicionX, posicionY));
+    }
+    return new Plano(plano.getAmbiente(), muebles, new ArrayList<>(), new ArrayList<>());
+  }
+
+  private List<Mueble> obtenerMuebles(Plano plano) {
+    List<Mueble> muebles = new ArrayList<>();
+    for (MuebleUbicado ubicado : plano.getMuebles()) {
+      muebles.add(ubicado.getMueble());
+    }
+    return muebles;
+  }
+
+  private boolean seSuperponeConAlguno(
+    MuebleUbicado candidato,
+    List<MuebleUbicado> mueblesUbicados
+  ) {
+    for (MuebleUbicado otro : mueblesUbicados) {
+      boolean seSuperponeEnX =
+        candidato.getPosicionX() <
+          otro.getPosicionX() + otro.getMueble().getAncho() - ZonaNoDisponible.TOLERANCIA &&
+        candidato.getPosicionX() + candidato.getMueble().getAncho() >
+          otro.getPosicionX() + ZonaNoDisponible.TOLERANCIA;
+      boolean seSuperponeEnY =
+        candidato.getPosicionY() <
+          otro.getPosicionY() + otro.getMueble().getLargo() - ZonaNoDisponible.TOLERANCIA &&
+        candidato.getPosicionY() + candidato.getMueble().getLargo() >
+          otro.getPosicionY() + ZonaNoDisponible.TOLERANCIA;
+      if (seSuperponeEnX && seSuperponeEnY) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private Plano transformarPlanoAlAmbienteOriginal(

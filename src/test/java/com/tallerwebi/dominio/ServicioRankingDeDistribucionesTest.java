@@ -57,7 +57,7 @@ public class ServicioRankingDeDistribucionesTest {
     assertThat(ranking.size(), is(equalTo(3)));
     assertThat(ranking.get(0).getPuntajeTotal(), is(equalTo(1)));
     assertThat(ranking.get(1).getPuntajeTotal(), is(equalTo(1)));
-    assertThat(ranking.get(2).getPuntajeTotal(), is(equalTo(-1)));
+    thenRankingOrdenado(ranking);
     assertThat(
       ranking.get(0).getDesglose().get(0),
       is(equalTo("Cama: cama opuesta a la ventana (+1)"))
@@ -98,7 +98,7 @@ public class ServicioRankingDeDistribucionesTest {
   }
 
   @Test
-  public void deberiaEliminarOpcionesEspejadasConElMismoPuntaje() {
+  public void deberiaMostrarVariasOpcionesDistintasCuandoHayEspacioSuficiente() {
     //Given
     givenCuatroOpcionesEspejadas();
     when(
@@ -113,7 +113,34 @@ public class ServicioRankingDeDistribucionesTest {
     List<OpcionDeDistribucion> ranking = whenGeneroElRanking();
 
     //Then
-    assertThat(ranking.size(), is(equalTo(1)));
+    assertThat(ranking.size(), is(equalTo(3)));
+    assertThat(ranking.get(0).getPuntajeTotal(), is(equalTo(ranking.get(1).getPuntajeTotal())));
+    assertThat(ranking.get(1).getPuntajeTotal(), is(equalTo(ranking.get(2).getPuntajeTotal())));
+    thenNoHayOpcionesEspejadasConElMismoPuntaje(ranking);
+  }
+
+  @Test
+  public void deberiaGenerarTresOpcionesConElAlgoritmoRealCuandoHayEspacioSuficiente() {
+    //Given
+    ServicioZonaExclusion servicioZonaExclusion = new ServicioZonaExclusionImpl();
+    ServicioPlano2D servicioPlanoReal = new ServicioPlano2DImpl(servicioZonaExclusion);
+    ServicioReglasDeUbicacion reglasReales = new ServicioReglasDeUbicacionImpl(
+      servicioZonaExclusion
+    );
+    ServicioRankingDeDistribuciones servicioReal = new ServicioRankingDeDistribucionesImpl(
+      servicioPlanoReal,
+      reglasReales
+    );
+    List<Mueble> muebles = new ArrayList<>();
+    muebles.add(cama);
+
+    //When
+    List<OpcionDeDistribucion> ranking = servicioReal.generarRanking(ambiente, muebles);
+
+    //Then
+    assertThat(ranking.size(), is(equalTo(3)));
+    thenRankingOrdenado(ranking);
+    thenNoHayOpcionesEspejadasConElMismoPuntaje(ranking);
   }
 
   private Mueble givenUnaCama() {
@@ -127,6 +154,8 @@ public class ServicioRankingDeDistribucionesTest {
   }
 
   private void givenCuatroOpcionesValidas() {
+    when(servicioPlano2D.estaDentroDelPerimetro(any(MuebleUbicado.class), any(Ambiente.class)))
+      .thenReturn(true);
     when(
       servicioReglasDeUbicacion.esUbicacionValida(
         any(MuebleUbicado.class),
@@ -145,6 +174,8 @@ public class ServicioRankingDeDistribucionesTest {
   }
 
   private void givenCuatroOpcionesEspejadas() {
+    when(servicioPlano2D.estaDentroDelPerimetro(any(MuebleUbicado.class), any(Ambiente.class)))
+      .thenReturn(true);
     when(
       servicioReglasDeUbicacion.esUbicacionValida(
         any(MuebleUbicado.class),
@@ -173,5 +204,66 @@ public class ServicioRankingDeDistribucionesTest {
     List<Mueble> muebles = new ArrayList<>();
     muebles.add(cama);
     return servicioRankingDeDistribuciones.generarRanking(ambiente, muebles);
+  }
+
+  private void thenRankingOrdenado(List<OpcionDeDistribucion> ranking) {
+    for (int indice = 1; indice < ranking.size(); indice++) {
+      assertThat(
+        ranking.get(indice - 1).getPuntajeTotal() >= ranking.get(indice).getPuntajeTotal(),
+        is(equalTo(true))
+      );
+    }
+  }
+
+  private void thenNoHayOpcionesEspejadasConElMismoPuntaje(List<OpcionDeDistribucion> ranking) {
+    for (int primero = 0; primero < ranking.size(); primero++) {
+      for (int segundo = primero + 1; segundo < ranking.size(); segundo++) {
+        OpcionDeDistribucion una = ranking.get(primero);
+        OpcionDeDistribucion otra = ranking.get(segundo);
+        if (una.getPuntajeTotal() == otra.getPuntajeTotal()) {
+          assertThat(sonEspejadas(una.getPlano(), otra.getPlano()), is(equalTo(false)));
+        }
+      }
+    }
+  }
+
+  private boolean sonEspejadas(Plano uno, Plano otro) {
+    MuebleUbicado muebleUno = uno.getMuebles().get(0);
+    MuebleUbicado muebleOtro = otro.getMuebles().get(0);
+    double ancho = ambiente.getAncho();
+    double largo = ambiente.getLargo();
+    boolean espejoHorizontal =
+      Math.abs(
+          ancho -
+          muebleUno.getPosicionX() -
+          muebleUno.getMueble().getAncho() -
+          muebleOtro.getPosicionX()
+        ) <
+        0.0001 &&
+      Math.abs(muebleUno.getPosicionY() - muebleOtro.getPosicionY()) < 0.0001;
+    boolean espejoVertical =
+      Math.abs(largo -
+          muebleUno.getPosicionY() -
+          muebleUno.getMueble().getLargo() -
+          muebleOtro.getPosicionY()
+        ) <
+        0.0001 &&
+      Math.abs(muebleUno.getPosicionX() - muebleOtro.getPosicionX()) < 0.0001;
+    boolean espejoAmbos =
+      Math.abs(
+          ancho -
+          muebleUno.getPosicionX() -
+          muebleUno.getMueble().getAncho() -
+          muebleOtro.getPosicionX()
+        ) <
+        0.0001 &&
+      Math.abs(
+          largo -
+          muebleUno.getPosicionY() -
+          muebleUno.getMueble().getLargo() -
+          muebleOtro.getPosicionY()
+        ) <
+        0.0001;
+    return espejoHorizontal || espejoVertical || espejoAmbos;
   }
 }

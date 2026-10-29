@@ -2,18 +2,14 @@ package com.tallerwebi.presentacion;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 import static org.mockito.Mockito.*;
 
-import com.tallerwebi.dominio.ServicioAmbiente;
 import com.tallerwebi.dominio.ServicioLogin;
 import com.tallerwebi.dominio.Usuario;
 import com.tallerwebi.dominio.excepcion.UsuarioExistente;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import java.util.ArrayList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.servlet.ModelAndView;
@@ -26,7 +22,6 @@ public class ControladorLoginTest {
   private HttpServletRequest requestMock;
   private HttpSession sessionMock;
   private ServicioLogin servicioLoginMock;
-  private ServicioAmbiente servicioAmbienteMock;
 
   @BeforeEach
   public void init() {
@@ -36,8 +31,7 @@ public class ControladorLoginTest {
     requestMock = mock(HttpServletRequest.class);
     sessionMock = mock(HttpSession.class);
     servicioLoginMock = mock(ServicioLogin.class);
-    servicioAmbienteMock = mock(ServicioAmbiente.class);
-    controladorLogin = new ControladorLogin(servicioLoginMock, servicioAmbienteMock);
+    controladorLogin = new ControladorLogin(servicioLoginMock);
   }
 
   @Test
@@ -139,28 +133,5 @@ public class ControladorLoginTest {
     // validacion
     assertThat(modelAndView.getViewName(), equalToIgnoringCase("nuevo-usuario"));
     assertThat(modelAndView.getModel().get("usuario"), instanceOf(Usuario.class));
-  }
-
-  @Test
-  public void irAHomeDeberiaRetornarVistaHomeConLosAmbientesDelUsuario() {
-    when(requestMock.getSession()).thenReturn(sessionMock);
-    when(sessionMock.getAttribute("USUARIO_EMAIL")).thenReturn("dami@unlam.com");
-    when(servicioAmbienteMock.obtenerAmbientesDe("dami@unlam.com")).thenReturn(new ArrayList<>());
-
-    // ejecucion
-    ModelAndView modelAndView = controladorLogin.irAHome(requestMock);
-
-    // validacion
-    assertThat(modelAndView.getViewName(), equalToIgnoringCase("home"));
-    assertThat(modelAndView.getModel().get("ambientes"), is(notNullValue()));
-  }
-
-  @Test
-  public void deberiaMostrarLaLandingDeHabitatCuandoSeSolicitaLaPaginaDeInicio() {
-    // ejecucion
-    ModelAndView modelAndView = controladorLogin.inicio();
-
-    // validacion
-    assertThat(modelAndView.getViewName(), equalToIgnoringCase("landing-habitat"));
   }
 }

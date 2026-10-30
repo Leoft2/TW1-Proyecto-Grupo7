@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Diseñá tu espacio')}"></head>
+<body>
+  <style>
+    .comparison {
+      max-width: 850px;
+      margin: 2.6rem auto 0;
+    }
+
+    .comparison-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 220px;
+      aspect-ratio: 1.48 / 1;
+      border: 1px solid var(--hb-borde);
+      border-radius: var(--hb-radio-lg);
+      background: var(--hb-arena);
+      box-shadow: var(--hb-sombra);
+    }
+
+    .comparison-card img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 220px;
+      object-fit: cover;
+      transition: transform .35s ease;
+    }
+
+    .comparison-card:hover img { transform: scale(1.035); }
+
+    .comparison-card.before img {
+      filter: saturate(.62) brightness(.82);
+    }
+
+    .comparison-card::after {
+      position: absolute;
+      inset: 0;
+      content: '';
+      background: linear-gradient(180deg, rgba(43, 38, 34, .26), transparent 42%, rgba(43, 38, 34, .1));
+      pointer-events: none;
+    }
+
+    .comparison-label {
+      position: absolute;
+      z-index: 1;
+      top: 1rem;
+      left: 1rem;
+      padding: .42rem .75rem;
+      border: 1px solid rgba(255, 255, 255, .75);
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(43, 38, 34, .58);
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      backdrop-filter: blur(5px);
+    }
+
+    .after .comparison-label {
+      background: rgba(163, 78, 48, .9);
+      border-color: rgba(255, 255, 255, .35);
+    }
+
+    @media (max-width: 767.98px) {
+      .comparison { max-width: 480px; margin-top: 2rem; }
+      .comparison-card, .comparison-card img { min-height: 190px; }
+    }
+
+    @media (max-width: 420px) {
+      .comparison-card, .comparison-card img { min-height: 165px; }
+    }
+  </style>
+
+  <nav th:replace="~{fragments/layout :: navbar('publico')}"></nav>
+
+  <main class="container">
+    <section class="hb-hero text-center">
+      <span class="hb-eyebrow">Tu espacio, a tu manera</span>
+      <h1 class="mb-3">Rediseñá tu espacio, <span class="text-nowrap">sin esfuerzo.</span></h1>
+      <p class="lead mx-auto mb-4">
+        Distribución automática, presupuesto y estilo en un solo lugar.
+        Creá ambientes que se adapten a vos y a tu forma de vivir.
+      </p>
+
+      <div class="comparison row g-3 g-md-4">
+        <div class="col-12 col-md-6">
+          <article class="comparison-card before">
+            <img
+              src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1000&q=85"
+              alt="Interior de un ambiente antes de renovar"
+              loading="lazy">
+            <span class="comparison-label">Antes</span>
+          </article>
+        </div>
+        <div class="col-12 col-md-6">
+          <article class="comparison-card after">
+            <img
+              src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1000&q=85"
+              alt="Ambiente luminoso con una propuesta de diseño interior"
+              loading="lazy">
+            <span class="comparison-label">Después</span>
+          </article>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-center mt-4">
+        <a class="btn btn-lg btn-primary" th:href="@{/nuevo-usuario}">
+          Registrarse gratis <i class="bi bi-arrow-right ms-2" aria-hidden="true"></i>
+        </a>
+      </div>
+      <p class="text-secondary small mt-3 mb-0">Empezá a diseñar tu próximo ambiente.</p>
+    </section>
+  </main>
+
+  <footer th:replace="~{fragments/layout :: footer}"></footer>
+  <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

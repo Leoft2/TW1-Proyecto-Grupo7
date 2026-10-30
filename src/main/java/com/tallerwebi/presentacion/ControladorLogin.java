@@ -1,6 +1,5 @@
 package com.tallerwebi.presentacion;
 
-import com.tallerwebi.dominio.ServicioAmbiente;
 import com.tallerwebi.dominio.ServicioLogin;
 import com.tallerwebi.dominio.Usuario;
 import com.tallerwebi.dominio.excepcion.UsuarioExistente;
@@ -18,12 +17,10 @@ import org.springframework.web.servlet.ModelAndView;
 public class ControladorLogin {
 
   private ServicioLogin servicioLogin;
-  private ServicioAmbiente servicioAmbiente;
 
   @Autowired
-  public ControladorLogin(ServicioLogin servicioLogin, ServicioAmbiente servicioAmbiente) {
+  public ControladorLogin(ServicioLogin servicioLogin) {
     this.servicioLogin = servicioLogin;
-    this.servicioAmbiente = servicioAmbiente;
   }
 
   @RequestMapping("/login")
@@ -73,18 +70,5 @@ public class ControladorLogin {
     Map<String, Object> model = new ModelMap();
     model.put("usuario", new Usuario());
     return new ModelAndView("nuevo-usuario", model);
-  }
-
-  @RequestMapping(path = "/home", method = RequestMethod.GET)
-  public ModelAndView irAHome(HttpServletRequest request) {
-    Map<String, Object> modelo = new ModelMap();
-    String email = (String) request.getSession().getAttribute("USUARIO_EMAIL");
-    modelo.put("ambientes", servicioAmbiente.obtenerAmbientesDe(email));
-    return new ModelAndView("home", modelo);
-  }
-
-  @RequestMapping(path = "/", method = RequestMethod.GET)
-  public ModelAndView inicio() {
-    return new ModelAndView("redirect:/login");
   }
 }

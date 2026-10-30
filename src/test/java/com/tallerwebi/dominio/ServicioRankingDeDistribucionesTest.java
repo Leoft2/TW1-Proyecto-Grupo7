@@ -242,7 +242,8 @@ public class ServicioRankingDeDistribucionesTest {
         0.0001 &&
       Math.abs(muebleUno.getPosicionY() - muebleOtro.getPosicionY()) < 0.0001;
     boolean espejoVertical =
-      Math.abs(largo -
+      Math.abs(
+          largo -
           muebleUno.getPosicionY() -
           muebleUno.getMueble().getLargo() -
           muebleOtro.getPosicionY()

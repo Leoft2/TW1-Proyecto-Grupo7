@@ -24,15 +24,14 @@ hs_err_pid*
 
 # Reportes de codigo limpio y cobertura de pruebas
 .calidad-de-codigo/
+
+.env
+
+#IA
 /.agents
-
-AGENTS.md
-CONTEXT.md
-integracion-home-habitat.md
-
-
-
 /.claude
 skills-lock.json
-.env
+.opencode/
+
+
 

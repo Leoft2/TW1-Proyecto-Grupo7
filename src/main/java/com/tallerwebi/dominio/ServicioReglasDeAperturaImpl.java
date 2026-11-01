@@ -2,17 +2,37 @@ package com.tallerwebi.dominio;
 
 import org.springframework.stereotype.Service;
 
+/***
+Servicio que determina las reglas de apertura de una puerta según su posición y el ambiente en el que se encuentra.
+ */
+
 @Service
 public class ServicioReglasDeAperturaImpl implements ServicioReglasDeApertura {
 
   @Override
   public ReglaDeApertura determinarApertura(Abertura abertura, Ambiente ambiente) {
+    // Este servicio calcula reglas únicamente para puertas, no para ventanas.
     if (abertura.getTipo() != TipoAbertura.PUERTA) {
       throw new IllegalArgumentException("La abertura debe ser una puerta");
     }
-    LadoDeLaHoja ladoElegido = elegirLadoLibre(abertura, ambiente);
+
+    // Se mide cuánto espacio queda antes y después de la abertura sobre su muro.
+    Double radio = radioEfectivo(abertura);
+    Double distanciaInicio = abertura.getPosicion();
+    Double distanciaFin =
+      abertura.getMuro().largoEn(ambiente) - (abertura.getPosicion() + abertura.getAncho());
+
+    // Un lado es libre cuando puede contener el giro completo de la puerta.
+    boolean inicioLibre = distanciaInicio >= radio;
+    boolean finLibre = distanciaFin >= radio;
+    boolean hayParedLibre = inicioLibre || finLibre;
+
+    // Se elige el lado de la bisagra según el espacio disponible.
+    LadoDeLaHoja ladoElegido = elegirLado(distanciaInicio, distanciaFin, inicioLibre, finLibre);
     Muro sentido = sentidoDeApertura(abertura, ladoElegido);
     LadoDeLaHoja ladoDeLaManilla = ladoOpuesto(ladoElegido);
+
+    // La zona de barrido representa el sector de 90 grados que ocupa la hoja al abrirse.
     Double centroX = centroX(abertura, ambiente, ladoElegido);
     Double anguloInicial = anguloInicial(abertura, ladoElegido);
     Double anguloFinal = anguloInicial + 90.0;
@@ -23,7 +43,7 @@ public class ServicioReglasDeAperturaImpl implements ServicioReglasDeApertura {
       anguloInicial,
       anguloFinal
     );
-    return new ReglaDeApertura(sentido, ladoElegido, ladoDeLaManilla, zona);
+    return new ReglaDeApertura(sentido, ladoElegido, ladoDeLaManilla, zona, hayParedLibre);
   }
 
   private Double centroX(Abertura abertura, Ambiente ambiente, LadoDeLaHoja lado) {
@@ -70,23 +90,28 @@ public class ServicioReglasDeAperturaImpl implements ServicioReglasDeApertura {
     return lado == LadoDeLaHoja.INICIO ? LadoDeLaHoja.FIN : LadoDeLaHoja.INICIO;
   }
 
-  private LadoDeLaHoja elegirLadoLibre(Abertura abertura, Ambiente ambiente) {
-    Double radio = radioEfectivo(abertura);
-    Double distanciaInicio = abertura.getPosicion();
-    Double largoDelMuro = abertura.getMuro().largoEn(ambiente);
-    Double distanciaFin = largoDelMuro - (abertura.getPosicion() + abertura.getAncho());
-    boolean inicioLibre = distanciaInicio >= radio;
-    boolean finLibre = distanciaFin >= radio;
+  private LadoDeLaHoja elegirLado(
+    Double distanciaInicio,
+    Double distanciaFin,
+    boolean inicioLibre,
+    boolean finLibre
+  ) {
+    // Si ningún lado alcanza el radio, se elige el que tenga más espacio como alternativa.
     if (!inicioLibre && !finLibre) {
-      throw new IllegalArgumentException("La puerta no tiene ninguna pared libre para abrir");
+      return distanciaInicio >= distanciaFin ? LadoDeLaHoja.INICIO : LadoDeLaHoja.FIN;
     }
+
+    // Si ambos lados son posibles, se deja libre el lado con más espacio.
     if (inicioLibre && finLibre) {
       return distanciaInicio <= distanciaFin ? LadoDeLaHoja.INICIO : LadoDeLaHoja.FIN;
     }
+
+    // Si solo un lado es posible, la bisagra se coloca en ese lado.
     return inicioLibre ? LadoDeLaHoja.INICIO : LadoDeLaHoja.FIN;
   }
 
   private Double radioEfectivo(Abertura abertura) {
+    // El radio configurado tiene prioridad; si falta, se toma el ancho de la puerta.
     if (abertura.getRadioDeGiro() != null) {
       return abertura.getRadioDeGiro();
     }

@@ -476,15 +476,43 @@ public class ServicioReglasDeAperturaTest {
   }
 
   @Test
-  public void deberiaLanzarExcepcionCuandoNoHayNingunaParedLibre() {
+  public void deberiaMarcarQueHayParedLibreCuandoAlMenosUnaDistanciaAlcanzaElRadio() {
+    Ambiente ambiente = givenAmbiente(4.0, 5.0);
+    Abertura puerta = givenPuerta(Muro.SUPERIOR, 0.2, 0.9, 0.9);
+
+    ReglaDeApertura regla = whenDeterminoLaApertura(puerta, ambiente);
+
+    thenHayParedLibre(regla);
+  }
+
+  @Test
+  public void deberiaMarcarQueNoHayParedLibreCuandoNingunaDistanciaAlcanzaElRadio() {
     Ambiente ambiente = givenAmbiente(1.6, 5.0);
     Abertura puerta = givenPuerta(Muro.SUPERIOR, 0.4, 0.9, 0.9);
 
-    // assertThrows envuelve el When y el Then porque el resultado esperado es la excepcion.
-    assertThrows(
-      IllegalArgumentException.class,
-      () -> servicioReglasDeApertura.determinarApertura(puerta, ambiente)
-    );
+    ReglaDeApertura regla = whenDeterminoLaApertura(puerta, ambiente);
+
+    thenNoHayParedLibre(regla);
+  }
+
+  @Test
+  public void deberiaElegirElLadoConMasEspacioCuandoNoHayParedLibre() {
+    Ambiente ambiente = givenAmbiente(1.6, 5.0);
+    Abertura puerta = givenPuerta(Muro.SUPERIOR, 0.2, 0.9, 0.9);
+
+    ReglaDeApertura regla = whenDeterminoLaApertura(puerta, ambiente);
+
+    thenElLadoDeLaBisagraEs(LadoDeLaHoja.FIN, regla);
+  }
+
+  @Test
+  public void deberiaElegirInicioCuandoLasDistanciasSinParedLibreSonIguales() {
+    Ambiente ambiente = givenAmbiente(2.0, 5.0);
+    Abertura puerta = givenPuerta(Muro.SUPERIOR, 0.5, 1.0, 1.0);
+
+    ReglaDeApertura regla = whenDeterminoLaApertura(puerta, ambiente);
+
+    thenElLadoDeLaBisagraEs(LadoDeLaHoja.INICIO, regla);
   }
 
   @Test
@@ -517,6 +545,14 @@ public class ServicioReglasDeAperturaTest {
 
   private ZonaDeBarrido whenDeterminoLaZona(Abertura puerta, Ambiente ambiente) {
     return servicioReglasDeApertura.determinarApertura(puerta, ambiente).getZonaDeExclusion();
+  }
+
+  private void thenHayParedLibre(ReglaDeApertura regla) {
+    assertThat(regla.getHayParedLibre(), is(equalTo(true)));
+  }
+
+  private void thenNoHayParedLibre(ReglaDeApertura regla) {
+    assertThat(regla.getHayParedLibre(), is(equalTo(false)));
   }
 
   private void thenElSentidoDeAperturaEs(Muro sentidoEsperado, ReglaDeApertura regla) {

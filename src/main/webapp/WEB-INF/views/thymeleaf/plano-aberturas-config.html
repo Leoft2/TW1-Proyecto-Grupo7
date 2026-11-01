@@ -27,6 +27,13 @@
         Error
     </div>
 
+    <div th:each="advertencia : ${advertenciasDeApertura}"
+         class="alert alert-warning"
+         role="alert"
+         th:text="${advertencia}">
+        La puerta no tiene pared libre para abrir.
+    </div>
+
     <form th:action="@{/plano/aberturas/confirmar}" method="post">
         <input type="hidden" name="ancho" th:value="${datosPlano.ancho}">
         <input type="hidden" name="largo" th:value="${datosPlano.largo}">
@@ -114,6 +121,13 @@
 
         <button type="button" class="btn btn-secondary" onclick="history.back()">Atrás</button>
         <button type="submit" class="btn btn-primary">Siguiente →</button>
+        <button th:if="${not #lists.isEmpty(advertenciasDeApertura)}"
+                type="submit"
+                name="confirmarAdvertencias"
+                value="true"
+                class="btn btn-warning">
+            Continuar igual
+        </button>
     </form>
 </main>
 

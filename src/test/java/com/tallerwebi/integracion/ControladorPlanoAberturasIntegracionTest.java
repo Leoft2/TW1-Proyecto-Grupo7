@@ -374,4 +374,135 @@ public class ControladorPlanoAberturasIntegracionTest {
   private void thenElAsistenteMuestraElPasoDeAberturas(String html) {
     assertThat(html, containsString("2 · Aberturas"));
   }
+
+  @Test
+  public void deberiaMostrarLaAdvertenciaCuandoConfirmoUnaPuertaSinParedLibre() throws Exception {
+    // Given: el usuario cargo una puerta que no tiene pared libre para abrir.
+
+    // When
+    String html = whenConfirmoUnaPuertaSinParedLibre();
+
+    // Then
+    thenSeMuestraLaAdvertenciaDeParedLibre(html);
+  }
+
+  private String whenConfirmoUnaPuertaSinParedLibre() throws Exception {
+    return this.mockMvc.perform(
+        post("/plano/aberturas/confirmar")
+          .param("ancho", "2.0")
+          .param("largo", "5.0")
+          .param("aberturas[0].tipo", "PUERTA")
+          .param("aberturas[0].muro", "SUPERIOR")
+          .param("aberturas[0].posicion", "0.6")
+          .param("aberturas[0].ancho", "0.9")
+          .param("aberturas[0].radioDeGiro", "0.9")
+      )
+      .andExpect(status().isOk())
+      .andReturn()
+      .getResponse()
+      .getContentAsString();
+  }
+
+  private void thenSeMuestraLaAdvertenciaDeParedLibre(String html) {
+    assertThat(
+      html,
+      containsString(
+        "La puerta del muro superior en la posición 0.6 m no tiene pared libre para abrir"
+      )
+    );
+  }
+
+  @Test
+  public void deberiaMostrarElBotonContinuarIgualCuandoHayUnaAdvertencia() throws Exception {
+    // Given: el usuario cargo una puerta que no tiene pared libre para abrir.
+
+    // When
+    String html = whenConfirmoUnaPuertaSinParedLibre();
+
+    // Then
+    thenSeMuestraElBotonContinuarIgual(html);
+  }
+
+  private void thenSeMuestraElBotonContinuarIgual(String html) {
+    assertThat(html, containsString("Continuar igual"));
+  }
+
+  @Test
+  public void deberiaPermitirAvanzarAlPasoDeObstaculosCuandoElUsuarioConfirmaLaAdvertencia()
+    throws Exception {
+    // Given: el usuario cargo una puerta sin pared libre y decide continuar igual.
+
+    // When
+    String redireccion = whenConfirmoLaAdvertencia();
+
+    // Then
+    thenElAsistenteAvanzaAlPasoDeObstaculos(redireccion);
+  }
+
+  private String whenConfirmoLaAdvertencia() throws Exception {
+    return this.mockMvc.perform(
+        post("/plano/aberturas/confirmar")
+          .param("ancho", "2.0")
+          .param("largo", "5.0")
+          .param("aberturas[0].tipo", "PUERTA")
+          .param("aberturas[0].muro", "SUPERIOR")
+          .param("aberturas[0].posicion", "0.6")
+          .param("aberturas[0].ancho", "0.9")
+          .param("aberturas[0].radioDeGiro", "0.9")
+          .param("confirmarAdvertencias", "true")
+      )
+      .andExpect(status().is3xxRedirection())
+      .andReturn()
+      .getResponse()
+      .getRedirectedUrl();
+  }
+
+  @Test
+  public void deberiaQuitarLaAdvertenciaCuandoReubicoLaPuertaEnUnaPosicionConParedLibre()
+    throws Exception {
+    // Given: el usuario habia cargado una puerta sin pared libre.
+
+    // When
+    String html = whenReubicoLaPuertaYEnvioElFormulario();
+
+    // Then
+    thenNoSeMuestraLaAdvertenciaDeParedLibre(html);
+  }
+
+  private String whenReubicoLaPuertaYEnvioElFormulario() throws Exception {
+    whenEnvioElFormularioDeAberturas("PUERTA", "0.6");
+    return whenEnvioElFormularioDeAberturas("PUERTA", "0.1");
+  }
+
+  private String whenEnvioElFormularioDeAberturas(String tipo, String posicion) throws Exception {
+    return this.mockMvc.perform(
+        post("/plano/aberturas")
+          .param("ancho", "2.0")
+          .param("largo", "5.0")
+          .param("aberturas[0].tipo", tipo)
+          .param("aberturas[0].muro", "SUPERIOR")
+          .param("aberturas[0].posicion", posicion)
+          .param("aberturas[0].ancho", "0.9")
+          .param("aberturas[0].radioDeGiro", "0.9")
+      )
+      .andExpect(status().isOk())
+      .andReturn()
+      .getResponse()
+      .getContentAsString();
+  }
+
+  private void thenNoSeMuestraLaAdvertenciaDeParedLibre(String html) {
+    assertThat(html, not(containsString("no tiene pared libre para abrir")));
+  }
+
+  @Test
+  public void deberiaNoMostrarLaAdvertenciaCuandoLaAberturaEsUnaVentana() throws Exception {
+    // Given: el usuario cargo una ventana en una posicion sin espacio para una puerta.
+
+    // When
+    String html = whenEnvioElFormularioDeAberturas("VENTANA", "0.6");
+
+    // Then
+    thenNoSeMuestraLaAdvertenciaDeParedLibre(html);
+  }
 }

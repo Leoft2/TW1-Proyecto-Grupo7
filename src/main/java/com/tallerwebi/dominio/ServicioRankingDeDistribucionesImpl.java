@@ -18,39 +18,60 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
 
   private final ServicioPlano2D servicioPlano2D;
   private final ServicioReglasDeUbicacion servicioReglasDeUbicacion;
+  private final ServicioZonaExclusion servicioZonaExclusion;
+  private final SimetriaDeAmbiente simetria = new SimetriaDeAmbiente();
 
   @Autowired
   public ServicioRankingDeDistribucionesImpl(
     ServicioPlano2D servicioPlano2D,
-    ServicioReglasDeUbicacion servicioReglasDeUbicacion
+    ServicioReglasDeUbicacion servicioReglasDeUbicacion,
+    ServicioZonaExclusion servicioZonaExclusion
   ) {
     this.servicioPlano2D = servicioPlano2D;
     this.servicioReglasDeUbicacion = servicioReglasDeUbicacion;
+    this.servicioZonaExclusion = servicioZonaExclusion;
+  }
+
+  public ServicioRankingDeDistribucionesImpl(
+    ServicioPlano2D servicioPlano2D,
+    ServicioReglasDeUbicacion servicioReglasDeUbicacion
+  ) {
+    this(servicioPlano2D, servicioReglasDeUbicacion, ambiente -> null);
   }
 
   @Override
   public List<OpcionDeDistribucion> generarRanking(Ambiente ambiente, List<Mueble> muebles) {
     List<OpcionDeDistribucion> ranking = new ArrayList<>();
+    List<ZonaExclusion> zonasAmbienteOriginal = calcularZonas(ambiente);
+    int puntajeMaximo = calcularPuntajeMaximo(muebles);
     for (int indiceSimetria = 0; indiceSimetria < 4; indiceSimetria++) {
       boolean reflejarHorizontalmente = indiceSimetria == 1 || indiceSimetria == 3;
       boolean reflejarVerticalmente = indiceSimetria == 2 || indiceSimetria == 3;
-      Ambiente ambienteTransformado = transformarAmbiente(
+      Ambiente ambienteTransformado = simetria.transformarAmbiente(
         ambiente,
         reflejarHorizontalmente,
         reflejarVerticalmente
       );
+      List<ZonaExclusion> zonasAmbienteTransformado = calcularZonas(ambienteTransformado);
       Plano planoTransformado = servicioPlano2D.generarPlano(ambienteTransformado, muebles);
-      if (!esDistribucionValida(planoTransformado, muebles, ambienteTransformado)) {
+      if (
+        !esDistribucionValida(
+          planoTransformado,
+          muebles.size(),
+          ambienteTransformado,
+          zonasAmbienteTransformado
+        )
+      ) {
         continue;
       }
-      Plano plano = transformarPlanoAlAmbienteOriginal(
+      Plano plano = simetria.transformarPlanoAlAmbienteOriginal(
         planoTransformado,
         ambiente,
         reflejarHorizontalmente,
         reflejarVerticalmente
       );
       agregarSiEsUnaOpcionNueva(ranking, puntuar(plano, ambiente));
-      agregarVariantes(ranking, plano, ambiente);
+      agregarVariantes(ranking, plano, ambiente, zonasAmbienteOriginal, puntajeMaximo);
     }
     ranking.sort(Comparator.comparingInt(OpcionDeDistribucion::getPuntajeTotal).reversed());
     while (ranking.size() > CANTIDAD_MAXIMA_DE_OPCIONES) {
@@ -59,127 +80,17 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
     return ranking;
   }
 
-  private Ambiente transformarAmbiente(
+  private List<ZonaExclusion> calcularZonas(Ambiente ambiente) {
+    return servicioZonaExclusion.calcularZonas(ambiente);
+  }
+
+  private boolean esDistribucionValida(
+    Plano plano,
+    int cantidadMuebles,
     Ambiente ambiente,
-    boolean reflejarHorizontalmente,
-    boolean reflejarVerticalmente
+    List<ZonaExclusion> zonas
   ) {
-    Ambiente transformado = new Ambiente(
-      ambiente.getAncho(),
-      ambiente.getLargo(),
-      ambiente.getTipoDeAmbiente()
-    );
-    transformado.setAnchoMinimoDePasillo(ambiente.getAnchoMinimoDePasillo());
-    for (Obstaculo obstaculo : ambiente.getObstaculos()) {
-      transformado.agregarObstaculo(
-        transformarObstaculo(ambiente, obstaculo, reflejarHorizontalmente, reflejarVerticalmente)
-      );
-    }
-    for (Abertura abertura : ambiente.getAberturas()) {
-      transformado.agregarAbertura(
-        transformarAbertura(ambiente, abertura, reflejarHorizontalmente, reflejarVerticalmente)
-      );
-    }
-    return transformado;
-  }
-
-  private Obstaculo transformarObstaculo(
-    Ambiente ambiente,
-    Obstaculo obstaculo,
-    boolean reflejarHorizontalmente,
-    boolean reflejarVerticalmente
-  ) {
-    Muro muro = transformarMuro(
-      obstaculo.getMuro(),
-      reflejarHorizontalmente,
-      reflejarVerticalmente
-    );
-    double posicion = transformarPosicionEnMuro(
-      ambiente,
-      obstaculo.getMuro(),
-      obstaculo.getPosicion(),
-      obstaculo.getAncho(),
-      reflejarHorizontalmente,
-      reflejarVerticalmente
-    );
-    return new Obstaculo(
-      obstaculo.getTipo(),
-      muro,
-      posicion,
-      obstaculo.getAncho(),
-      obstaculo.getProfundidad()
-    );
-  }
-
-  private Abertura transformarAbertura(
-    Ambiente ambiente,
-    Abertura abertura,
-    boolean reflejarHorizontalmente,
-    boolean reflejarVerticalmente
-  ) {
-    Muro muro = transformarMuro(abertura.getMuro(), reflejarHorizontalmente, reflejarVerticalmente);
-    double posicion = transformarPosicionEnMuro(
-      ambiente,
-      abertura.getMuro(),
-      abertura.getPosicion(),
-      abertura.getAncho(),
-      reflejarHorizontalmente,
-      reflejarVerticalmente
-    );
-    return new Abertura(
-      abertura.getTipo(),
-      muro,
-      posicion,
-      abertura.getAncho(),
-      abertura.getRadioDeGiro()
-    );
-  }
-
-  private Muro transformarMuro(
-    Muro muro,
-    boolean reflejarHorizontalmente,
-    boolean reflejarVerticalmente
-  ) {
-    Muro resultado = muro;
-    if (reflejarHorizontalmente) {
-      resultado =
-        switch (resultado) {
-          case DERECHO -> Muro.IZQUIERDO;
-          case IZQUIERDO -> Muro.DERECHO;
-          default -> resultado;
-        };
-    }
-    if (reflejarVerticalmente) {
-      resultado =
-        switch (resultado) {
-          case SUPERIOR -> Muro.INFERIOR;
-          case INFERIOR -> Muro.SUPERIOR;
-          default -> resultado;
-        };
-    }
-    return resultado;
-  }
-
-  private double transformarPosicionEnMuro(
-    Ambiente ambiente,
-    Muro muro,
-    Double posicion,
-    Double ancho,
-    boolean reflejarHorizontalmente,
-    boolean reflejarVerticalmente
-  ) {
-    double resultado = posicion;
-    if (reflejarHorizontalmente && (muro == Muro.SUPERIOR || muro == Muro.INFERIOR)) {
-      resultado = ambiente.getAncho() - resultado - ancho;
-    }
-    if (reflejarVerticalmente && (muro == Muro.DERECHO || muro == Muro.IZQUIERDO)) {
-      resultado = ambiente.getLargo() - resultado - ancho;
-    }
-    return resultado;
-  }
-
-  private boolean esDistribucionValida(Plano plano, List<Mueble> muebles, Ambiente ambiente) {
-    if (plano.getMuebles().size() != muebles.size() || !plano.getMueblesExcluidos().isEmpty()) {
+    if (plano.getMuebles().size() != cantidadMuebles || !plano.getMueblesExcluidos().isEmpty()) {
       return false;
     }
     List<MuebleUbicado> mueblesValidados = new ArrayList<>();
@@ -188,7 +99,14 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
         ubicado.isEnConflicto() ||
         !servicioPlano2D.estaDentroDelPerimetro(ubicado, ambiente) ||
         seSuperponeConAlguno(ubicado, mueblesValidados) ||
-        !servicioReglasDeUbicacion.esUbicacionValida(ubicado, ambiente, mueblesValidados)
+        !(zonas == null
+            ? servicioReglasDeUbicacion.esUbicacionValida(ubicado, ambiente, mueblesValidados)
+            : servicioReglasDeUbicacion.esUbicacionValida(
+              ubicado,
+              ambiente,
+              mueblesValidados,
+              zonas
+            ))
       ) {
         return false;
       }
@@ -200,12 +118,17 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
   private void agregarVariantes(
     List<OpcionDeDistribucion> ranking,
     Plano plano,
-    Ambiente ambiente
+    Ambiente ambiente,
+    List<ZonaExclusion> zonas,
+    int puntajeMaximo
   ) {
     double desplazamiento = Math.max(ambiente.getAnchoMinimoDePasillo(), DESPLAZAMIENTO_MINIMO);
     for (int indiceMueble = 0; indiceMueble < plano.getMuebles().size(); indiceMueble++) {
       for (int eje = 0; eje < 2; eje++) {
         for (int sentido = -1; sentido <= 1; sentido += 2) {
+          if (estaCompleto(ranking, puntajeMaximo)) {
+            return;
+          }
           agregarVariantesEnEje(
             ranking,
             plano,
@@ -213,7 +136,8 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
             indiceMueble,
             eje,
             sentido,
-            desplazamiento
+            desplazamiento,
+            zonas
           );
         }
       }
@@ -227,7 +151,8 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
     int indiceMueble,
     int eje,
     int sentido,
-    double desplazamiento
+    double desplazamiento,
+    List<ZonaExclusion> zonas
   ) {
     double anchoDelEje = eje == 0 ? ambiente.getAncho() : ambiente.getLargo();
     for (
@@ -237,13 +162,58 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
     ) {
       double distancia = desplazamiento * indiceDesplazamiento * sentido;
       Plano variante = desplazarMueble(plano, indiceMueble, eje, distancia);
-      if (esDistribucionValida(variante, obtenerMuebles(variante), ambiente)) {
+      if (esVarianteValida(variante, indiceMueble, ambiente, zonas)) {
         agregarSiEsUnaOpcionNueva(ranking, puntuar(variante, ambiente));
       }
       if (Math.abs(distancia) >= anchoDelEje) {
         break;
       }
     }
+  }
+
+  // El resto de la distribucion ya era valida: solo se revisa el mueble desplazado.
+  private boolean esVarianteValida(
+    Plano variante,
+    int indiceMueble,
+    Ambiente ambiente,
+    List<ZonaExclusion> zonas
+  ) {
+    MuebleUbicado desplazado = variante.getMuebles().get(indiceMueble);
+    List<MuebleUbicado> otros = new ArrayList<>();
+    for (int indice = 0; indice < variante.getMuebles().size(); indice++) {
+      if (indice != indiceMueble) {
+        otros.add(variante.getMuebles().get(indice));
+      }
+    }
+    if (
+      !servicioPlano2D.estaDentroDelPerimetro(desplazado, ambiente) ||
+      seSuperponeConAlguno(desplazado, otros)
+    ) {
+      return false;
+    }
+    return zonas == null
+      ? servicioReglasDeUbicacion.esUbicacionValida(desplazado, ambiente, otros)
+      : servicioReglasDeUbicacion.esUbicacionValida(desplazado, ambiente, otros, zonas);
+  }
+
+  private int calcularPuntajeMaximo(List<Mueble> muebles) {
+    int puntajeMaximo = 0;
+    for (Mueble mueble : muebles) {
+      if (mueble.getCategoriaDeMueble() != null && esCama(mueble)) {
+        puntajeMaximo += PUNTOS_POR_CUMPLIR_REGLA;
+      }
+    }
+    return puntajeMaximo;
+  }
+
+  private boolean estaCompleto(List<OpcionDeDistribucion> ranking, int puntajeMaximo) {
+    int cantidadConPuntajeMaximo = 0;
+    for (OpcionDeDistribucion opcion : ranking) {
+      if (opcion.getPuntajeTotal() >= puntajeMaximo) {
+        cantidadConPuntajeMaximo++;
+      }
+    }
+    return cantidadConPuntajeMaximo >= CANTIDAD_MAXIMA_DE_OPCIONES;
   }
 
   private Plano desplazarMueble(Plano plano, int indiceMueble, int eje, double distancia) {
@@ -261,14 +231,6 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
       muebles.add(new MuebleUbicado(ubicado.getMueble(), posicionX, posicionY));
     }
     return new Plano(plano.getAmbiente(), muebles, new ArrayList<>(), new ArrayList<>());
-  }
-
-  private List<Mueble> obtenerMuebles(Plano plano) {
-    List<Mueble> muebles = new ArrayList<>();
-    for (MuebleUbicado ubicado : plano.getMuebles()) {
-      muebles.add(ubicado.getMueble());
-    }
-    return muebles;
   }
 
   private boolean seSuperponeConAlguno(
@@ -291,29 +253,6 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
       }
     }
     return false;
-  }
-
-  private Plano transformarPlanoAlAmbienteOriginal(
-    Plano planoTransformado,
-    Ambiente ambienteOriginal,
-    boolean reflejarHorizontalmente,
-    boolean reflejarVerticalmente
-  ) {
-    List<MuebleUbicado> muebles = new ArrayList<>();
-    for (MuebleUbicado ubicado : planoTransformado.getMuebles()) {
-      double posicionX = ubicado.getPosicionX();
-      double posicionY = ubicado.getPosicionY();
-      if (reflejarHorizontalmente) {
-        posicionX = ambienteOriginal.getAncho() - posicionX - ubicado.getMueble().getAncho();
-      }
-      if (reflejarVerticalmente) {
-        posicionY = ambienteOriginal.getLargo() - posicionY - ubicado.getMueble().getLargo();
-      }
-      muebles.add(new MuebleUbicado(ubicado.getMueble(), posicionX, posicionY));
-    }
-    Plano plano = new Plano(ambienteOriginal, muebles, new ArrayList<>(), new ArrayList<>());
-    plano.setMensaje(planoTransformado.getMensaje());
-    return plano;
   }
 
   private OpcionDeDistribucion puntuar(Plano plano, Ambiente ambiente) {

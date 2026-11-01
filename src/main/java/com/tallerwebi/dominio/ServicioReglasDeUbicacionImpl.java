@@ -26,8 +26,23 @@ public class ServicioReglasDeUbicacionImpl implements ServicioReglasDeUbicacion 
     Ambiente ambiente,
     List<MuebleUbicado> mueblesUbicados
   ) {
+    return esUbicacionValida(
+      candidato,
+      ambiente,
+      mueblesUbicados,
+      servicioZonaExclusion.calcularZonas(ambiente)
+    );
+  }
+
+  @Override
+  public boolean esUbicacionValida(
+    MuebleUbicado candidato,
+    Ambiente ambiente,
+    List<MuebleUbicado> mueblesUbicados,
+    List<ZonaExclusion> zonas
+  ) {
     return (
-      !tapaUnaPuerta(candidato, ambiente) &&
+      !tapaUnaPuerta(candidato, zonas) &&
       !tapaUnObstaculo(candidato, ambiente) &&
       !dejaUnPasilloMenorAlMinimo(candidato, ambiente, mueblesUbicados)
     );
@@ -53,8 +68,8 @@ public class ServicioReglasDeUbicacionImpl implements ServicioReglasDeUbicacion 
     );
   }
 
-  private boolean tapaUnaPuerta(MuebleUbicado candidato, Ambiente ambiente) {
-    for (ZonaExclusion zona : servicioZonaExclusion.calcularZonas(ambiente)) {
+  private boolean tapaUnaPuerta(MuebleUbicado candidato, List<ZonaExclusion> zonas) {
+    for (ZonaExclusion zona : zonas) {
       if (zona.getTipo() == TipoAbertura.PUERTA && zona.seSolapaCon(candidato)) {
         return true;
       }

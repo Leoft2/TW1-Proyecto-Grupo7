@@ -9,6 +9,13 @@ public interface ServicioReglasDeUbicacion {
     List<MuebleUbicado> mueblesUbicados
   );
 
+  boolean esUbicacionValida(
+    MuebleUbicado candidato,
+    Ambiente ambiente,
+    List<MuebleUbicado> mueblesUbicados,
+    List<ZonaExclusion> zonas
+  );
+
   boolean cumpleReglasDeCategoria(MuebleUbicado candidato, Ambiente ambiente);
 
   String avisoDeCategoria(Mueble mueble);

@@ -136,7 +136,9 @@ public class RepositorioPlanoImpl implements RepositorioPlano {
     Hibernate.initialize(plano.getAmbiente().getObstaculos());
     Hibernate.initialize(plano.getAmbiente().getAberturas());
     for (MuebleUbicado muebleUbicado : plano.getMuebles()) {
-      Hibernate.initialize(muebleUbicado.getMueble());
+      if (muebleUbicado != null) {
+        Hibernate.initialize(muebleUbicado.getMueble());
+      }
     }
   }
 }

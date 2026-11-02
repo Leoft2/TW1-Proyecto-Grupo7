@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.SessionAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.ModelAndView;
 
 @Controller
@@ -26,6 +28,7 @@ public class ControladorPlano2D {
   private static final String ATRIBUTO_ZONAS_DE_EXCLUSION = "zonasDeExclusion";
   private static final String ATRIBUTO_TRAMOS_ESTRECHOS = "tramosEstrechos";
   private static final String VISTA_PLANO_INTERACTIVO = "plano-interactivo";
+  private static final String ATRIBUTO_DATOS = "datosPlano";
 
   private final ServicioCirculacion servicioCirculacion = new ServicioCirculacionImpl();
 
@@ -71,6 +74,21 @@ public class ControladorPlano2D {
   public ModelAndView irAConfigurarAmbiente() {
     Map<String, Object> modelo = new ModelMap();
     modelo.put("categorias", servicioCategoriaDeMueble.obtenerCategorias());
+    DatosPlano datos = null;
+    if (RequestContextHolder.getRequestAttributes() != null) {
+      ServletRequestAttributes attr =
+        (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+      if (attr != null && attr.getRequest() != null) {
+        HttpSession sesion = attr.getRequest().getSession(false);
+        if (sesion != null) {
+          datos = (DatosPlano) sesion.getAttribute(ATRIBUTO_DATOS);
+        }
+      }
+    }
+    if (datos == null) {
+      datos = new DatosPlano();
+    }
+    modelo.put(ATRIBUTO_DATOS, datos);
     return new ModelAndView("ambiente-config", modelo);
   }
 
@@ -110,13 +128,13 @@ public class ControladorPlano2D {
   ) {
     DatosPlano datos = datosDelFormulario;
     if (datos == null && sesion != null) {
-      datos = (DatosPlano) sesion.getAttribute("datosPlano");
+      datos = (DatosPlano) sesion.getAttribute(ATRIBUTO_DATOS);
     }
     if (datos == null) {
       datos = new DatosPlano();
     }
     if (sesion != null) {
-      sesion.setAttribute("datosPlano", datos);
+      sesion.setAttribute(ATRIBUTO_DATOS, datos);
     }
     Ambiente ambiente = datos.aAmbiente();
     List<Mueble> muebles = new ArrayList<>();

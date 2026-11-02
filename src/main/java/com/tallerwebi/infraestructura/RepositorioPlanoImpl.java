@@ -1,6 +1,10 @@
 package com.tallerwebi.infraestructura;
 
+import com.tallerwebi.dominio.Abertura;
+import com.tallerwebi.dominio.Ambiente;
+import com.tallerwebi.dominio.Mueble;
 import com.tallerwebi.dominio.MuebleUbicado;
+import com.tallerwebi.dominio.Obstaculo;
 import com.tallerwebi.dominio.Plano;
 import com.tallerwebi.dominio.RepositorioPlano;
 import com.tallerwebi.dominio.TipoDeAmbiente;
@@ -50,9 +54,11 @@ public class RepositorioPlanoImpl implements RepositorioPlano {
     }
 
     plano.setUsuario(usuario);
-    plano.getAmbiente().setUsuario(usuario);
-    plano.getAmbiente().setTipoDeAmbiente(tipoDeAmbiente);
     if (plano.getId() == null) {
+      // Cada version del plano necesita su propio ambiente por la relacion @OneToOne. --> si no se provoca un error de "detached entity passed to persist".
+      plano.setAmbiente(copiarAmbiente(plano.getAmbiente()));
+      plano.getAmbiente().setUsuario(usuario);
+      plano.getAmbiente().setTipoDeAmbiente(tipoDeAmbiente);
       sessionFactory
         .getCurrentSession()
         .createMutationQuery("update Plano set activa = false where usuario = :usuario")
@@ -62,8 +68,52 @@ public class RepositorioPlanoImpl implements RepositorioPlano {
       plano.setFechaDeCreacion(LocalDateTime.now());
       sessionFactory.getCurrentSession().persist(plano);
     } else {
+      plano.getAmbiente().setUsuario(usuario);
+      plano.getAmbiente().setTipoDeAmbiente(tipoDeAmbiente);
       sessionFactory.getCurrentSession().merge(plano);
     }
+  }
+
+  private Ambiente copiarAmbiente(Ambiente ambiente) {
+    Ambiente ambienteOrigen = ambiente;
+    if (ambiente.getId() != null) {
+      // El ambiente de la sesion HTTP puede estar detached; se recupera en la sesion actual.
+      ambienteOrigen = sessionFactory.getCurrentSession().get(Ambiente.class, ambiente.getId());
+    }
+    // Se crea una entidad nueva para que persist(plano) no intente persistir una entidad detached.
+    Ambiente copia = new Ambiente(
+      ambienteOrigen.getAncho(),
+      ambienteOrigen.getLargo(),
+      ambienteOrigen.getAltura(),
+      ambienteOrigen.getTipoDeAmbiente()
+    );
+    copia.setAnchoMinimoDePasillo(ambienteOrigen.getAnchoMinimoDePasillo());
+    for (Obstaculo obstaculo : ambienteOrigen.getObstaculos()) {
+      copia.agregarObstaculo(
+        new Obstaculo(
+          obstaculo.getTipo(),
+          obstaculo.getMuro(),
+          obstaculo.getPosicion(),
+          obstaculo.getAncho(),
+          obstaculo.getProfundidad()
+        )
+      );
+    }
+    for (Abertura abertura : ambienteOrigen.getAberturas()) {
+      copia.agregarAbertura(
+        new Abertura(
+          abertura.getTipo(),
+          abertura.getMuro(),
+          abertura.getPosicion(),
+          abertura.getAncho(),
+          abertura.getRadioDeGiro()
+        )
+      );
+    }
+    for (Mueble mueble : ambienteOrigen.getMuebles()) {
+      copia.agregarMueble(mueble);
+    }
+    return copia;
   }
 
   @Override

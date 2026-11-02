@@ -6,12 +6,16 @@ import static org.mockito.Mockito.*;
 
 import com.tallerwebi.dominio.*;
 import com.tallerwebi.dominio.excepcion.ValidacionException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.ModelAndView;
 
 public class ControladorPlano2DDimensionesTest {
@@ -100,5 +104,29 @@ public class ControladorPlano2DDimensionesTest {
     ArgumentCaptor<List<Mueble>> muebles = ArgumentCaptor.forClass(List.class);
     verify(servicioPlano2D).generarPlano(any(Ambiente.class), muebles.capture());
     assertSame(muebleEsperado, muebles.getValue().get(0));
+  }
+
+  @Test
+  public void deberiaRecuperarDatosPlanoDeLaSesionAlConfigurarAmbiente() {
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    HttpSession sesion = mock(HttpSession.class);
+    DatosPlano datosGuardados = new DatosPlano();
+    datosGuardados.setAncho(5.0);
+    datosGuardados.setLargo(4.0);
+    datosGuardados.setAnchoMinimoDePasillo(0.8);
+
+    when(request.getSession(false)).thenReturn(sesion);
+    when(sesion.getAttribute("datosPlano")).thenReturn(datosGuardados);
+    RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+
+    try {
+      ModelAndView mav = controladorPlano2D.irAConfigurarAmbiente();
+      DatosPlano datosRecuperados = (DatosPlano) mav.getModel().get("datosPlano");
+      assertEquals(5.0, datosRecuperados.getAncho());
+      assertEquals(4.0, datosRecuperados.getLargo());
+      assertEquals(0.8, datosRecuperados.getAnchoMinimoDePasillo());
+    } finally {
+      RequestContextHolder.resetRequestAttributes();
+    }
   }
 }

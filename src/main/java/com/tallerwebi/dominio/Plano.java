@@ -83,6 +83,10 @@ public class Plano {
     return ambiente;
   }
 
+  public void setAmbiente(Ambiente ambiente) {
+    this.ambiente = ambiente;
+  }
+
   public Long getId() {
     return id;
   }

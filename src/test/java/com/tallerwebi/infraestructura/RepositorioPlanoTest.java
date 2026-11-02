@@ -60,6 +60,33 @@ public class RepositorioPlanoTest {
     assertThat(recuperado.getMuebles().get(0).getPosicionY(), is(equalTo(1.5)));
   }
 
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaGuardarUnPlanoConUnAmbienteDesconectado() {
+    //Given
+    Usuario usuario = givenTengoUnUsuario("ambiente-desconectado@unlam.edu.ar");
+    givenTengoUnPlanoGuardadoPara(usuario);
+    Ambiente ambiente = sessionFactory
+      .getCurrentSession()
+      .createQuery("from Ambiente", Ambiente.class)
+      .setMaxResults(1)
+      .uniqueResult();
+    flushYClear();
+    Mueble mueble = new Mueble("Mesa", 1.0, 1.0);
+    sessionFactory.getCurrentSession().persist(mueble);
+    List<MuebleUbicado> muebles = new ArrayList<>();
+    muebles.add(new MuebleUbicado(mueble, 0.0, 0.0));
+    Plano plano = new Plano(ambiente, muebles, new ArrayList<>(), new ArrayList<>());
+
+    //When
+    repositorioPlano.guardar(plano, usuario.getEmail());
+    flushYClear();
+
+    //Then
+    assertThat(repositorioPlano.buscarHistorialDe(usuario.getEmail()).size(), is(equalTo(2)));
+  }
+
   /*
    * HU-12: Historial de versiones de distribucion
    * - Dado que genero una nueva distribucion, cuando se guarda, queda como version nueva sin borrar las anteriores.

@@ -12,6 +12,7 @@ import com.tallerwebi.dominio.Usuario;
 import com.tallerwebi.dominio.excepcion.UsuarioNoEncontrado;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import org.hibernate.Hibernate;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,15 +129,7 @@ public class RepositorioPlanoImpl implements RepositorioPlano {
       .setMaxResults(1)
       .uniqueResult();
     if (plano != null) {
-      Hibernate.initialize(plano.getMuebles());
-      Hibernate.initialize(plano.getMueblesExcluidos());
-      Hibernate.initialize(plano.getMotivosDeExclusion());
-      Hibernate.initialize(plano.getAmbiente().getMuebles());
-      Hibernate.initialize(plano.getAmbiente().getObstaculos());
-      Hibernate.initialize(plano.getAmbiente().getAberturas());
-      for (MuebleUbicado muebleUbicado : plano.getMuebles()) {
-        Hibernate.initialize(muebleUbicado.getMueble());
-      }
+      inicializar(plano);
     }
     return plano;
   }
@@ -192,5 +185,11 @@ public class RepositorioPlanoImpl implements RepositorioPlano {
         Hibernate.initialize(muebleUbicado.getMueble());
       }
     }
+    quitarHuecos(plano);
+  }
+
+  // Los planos viejos pueden tener posiciones vacias en la lista de muebles
+  private void quitarHuecos(Plano plano) {
+    plano.getMuebles().removeIf(Objects::isNull);
   }
 }

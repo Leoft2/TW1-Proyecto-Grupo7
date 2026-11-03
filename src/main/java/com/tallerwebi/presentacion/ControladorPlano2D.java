@@ -31,6 +31,7 @@ public class ControladorPlano2D {
   private static final String ATRIBUTO_DATOS = "datosPlano";
 
   private final ServicioCirculacion servicioCirculacion = new ServicioCirculacionImpl();
+  private final ServicioColisiones servicioColisiones = new ServicioColisionesImpl();
 
   private ServicioPlano2D servicioPlano2D;
   private ServicioCategoriaDeMueble servicioCategoriaDeMueble;
@@ -199,6 +200,14 @@ public class ControladorPlano2D {
         );
     }
 
+    if (servicioColisiones.hayColision(candidato, otrosMuebles(plano, indice))) {
+      return ResponseEntity
+        .status(HttpStatus.CONFLICT)
+        .body(
+          "El mueble no puede ocupar el mismo espacio que otro. Se mantuvo su posición anterior."
+        );
+    }
+
     muebleUbicado.moverA(posicionX, posicionY);
     String usuarioEmail = (String) sesion.getAttribute("USUARIO_EMAIL");
     if (usuarioEmail != null) {
@@ -206,6 +215,16 @@ public class ControladorPlano2D {
     }
     sesion.setAttribute(ATRIBUTO_PLANO, plano);
     return ResponseEntity.ok("La posición del mueble se guardó correctamente.");
+  }
+
+  private List<MuebleUbicado> otrosMuebles(Plano plano, Integer indice) {
+    List<MuebleUbicado> otros = new ArrayList<>();
+    for (int i = 0; i < plano.getMuebles().size(); i++) {
+      if (i != indice) {
+        otros.add(plano.getMuebles().get(i));
+      }
+    }
+    return otros;
   }
 
   @RequestMapping(path = "/plano/ultimo", method = RequestMethod.GET)

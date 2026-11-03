@@ -131,6 +131,7 @@ public class RepositorioPlanoImpl implements RepositorioPlano {
       Hibernate.initialize(plano.getMuebles());
       Hibernate.initialize(plano.getMueblesExcluidos());
       Hibernate.initialize(plano.getMotivosDeExclusion());
+      Hibernate.initialize(plano.getAmbiente().getMuebles());
       Hibernate.initialize(plano.getAmbiente().getObstaculos());
       Hibernate.initialize(plano.getAmbiente().getAberturas());
       for (MuebleUbicado muebleUbicado : plano.getMuebles()) {
@@ -183,6 +184,7 @@ public class RepositorioPlanoImpl implements RepositorioPlano {
     Hibernate.initialize(plano.getMuebles());
     Hibernate.initialize(plano.getMueblesExcluidos());
     Hibernate.initialize(plano.getMotivosDeExclusion());
+    Hibernate.initialize(plano.getAmbiente().getMuebles());
     Hibernate.initialize(plano.getAmbiente().getObstaculos());
     Hibernate.initialize(plano.getAmbiente().getAberturas());
     for (MuebleUbicado muebleUbicado : plano.getMuebles()) {

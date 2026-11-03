@@ -44,7 +44,12 @@ public class ControladorHistorialDePlanos {
     if (usuarioEmail == null) {
       return new ModelAndView(REDIRECCION_LOGIN);
     }
-    Plano plano = servicioHistorialDePlanos.restaurarVersion(id, usuarioEmail);
+    Plano plano;
+    try {
+      plano = servicioHistorialDePlanos.restaurarVersion(id, usuarioEmail);
+    } catch (RuntimeException e) {
+      return new ModelAndView("redirect:/plano/historial");
+    }
     if (plano == null) {
       return new ModelAndView("redirect:/plano/historial");
     }

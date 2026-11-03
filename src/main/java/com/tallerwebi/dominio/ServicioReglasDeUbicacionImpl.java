@@ -11,6 +11,7 @@ public class ServicioReglasDeUbicacionImpl implements ServicioReglasDeUbicacion 
   private static final String CATEGORIA_CAMA = "Cama";
 
   private final ServicioZonaExclusion servicioZonaExclusion;
+  private final ServicioColisiones servicioColisiones = new ServicioColisionesImpl();
 
   public ServicioReglasDeUbicacionImpl(ServicioZonaExclusion servicioZonaExclusion) {
     this.servicioZonaExclusion = servicioZonaExclusion;
@@ -44,6 +45,7 @@ public class ServicioReglasDeUbicacionImpl implements ServicioReglasDeUbicacion 
     return (
       !tapaUnaPuerta(candidato, zonas) &&
       !tapaUnObstaculo(candidato, ambiente) &&
+      !servicioColisiones.hayColision(candidato, mueblesUbicados) &&
       !dejaUnPasilloMenorAlMinimo(candidato, ambiente, mueblesUbicados)
     );
   }

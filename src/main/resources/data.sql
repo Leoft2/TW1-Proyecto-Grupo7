@@ -86,12 +86,22 @@ INSERT INTO mueble_tipos_de_ambiente(mueble_id, tipo_de_ambiente_id) VALUES
   (17, 2),
   (18, 4);
 
+-- Ambientes del usuario test: uno por cada forma de recomendación de pintura.
+-- 1: paredes por la mitad, 2: todas las paredes de un color, 3: techo de un color,
+-- 4: pared opuesta a la puerta, 5: paredes opuestas, 6: techo y pared opuesta,
+-- 7: todo de un color, 8: todo menos una pared.
 INSERT INTO Ambiente(id, ancho, largo, altura, tipo_de_ambiente_id, usuario_id) VALUES
-  (1, 4.0, 3.0, 4.0, 2, 1),
-  (2, 5.0, 3.0, 4.0, 4, 1),
-  (3, 6.1, 4.0, 2.8, 1, 1),
-  (4, 6.0, 3.0, 2.8, 3, 1),
-  (5, 6.1, 4.0, 2.8, 5, 1);
+  (1, 4.0, 4.0, 3.3, 2, 1),
+  (2, 5.0, 3.0, 2.7, 4, 1),
+  (3, 4.0, 4.0, 3.0, 1, 1),
+  (4, 2.0, 6.0, 2.7, 3, 1),
+  (5, 6.0, 3.0, 2.7, 5, 1),
+  (6, 3.0, 6.0, 2.7, 2, 1),
+  (7, 2.5, 2.5, 2.7, 4, 1),
+  (8, 4.0, 4.0, 2.7, 1, 1);
+
+INSERT INTO ambiente_aberturas(ambiente_id, tipo, muro, posicion, ancho, radioDeGiro) VALUES
+  (4, 'PUERTA', 'INFERIOR', 0.5, 0.8, 0.8);
 
 INSERT INTO ambiente_muebles(ambiente_id, mueble_id) VALUES
   (1, 8),
@@ -99,11 +109,24 @@ INSERT INTO ambiente_muebles(ambiente_id, mueble_id) VALUES
   (1, 15),
   (2, 11),
   (2, 18),
-  (2, 16);
+  (2, 16),
+  (3, 1),
+  (3, 2),
+  (3, 4),
+  (4, 16),
+  (4, 7),
+  (5, 5),
+  (5, 10),
+  (6, 13),
+  (6, 9),
+  (7, 11),
+  (7, 18),
+  (8, 6),
+  (8, 14);
 
 -- Baldes randoms para tener una entidad con que testear. Luego reescribo esto e implemento scraping
 INSERT INTO BaldePintura(id, nombre, colorNombre, hex, cantidadLitros, precio) VALUES
-  -- Colores de recomendarPintura
+  -- Colores de la recomendación de pintura
   (4, 'Balde Blanco roto', 'Blanco roto', '#F2F0EB', 4.0, 8700.0),
   (5, 'Balde Celeste', 'Celeste', '#A8C3D1', 4.0, 9300.0),
   (6, 'Balde Salvia', 'Salvia', '#9CAF94', 4.0, 9400.0),
@@ -118,4 +141,5 @@ INSERT INTO BaldePintura(id, nombre, colorNombre, hex, cantidadLitros, precio) V
   (14, 'Balde Ladrillo', 'Ladrillo', '#A0522D', 4.0, 9500.0),
   (15, 'Balde Mostaza arena', 'Mostaza arena', '#E0B252', 4.0, 9400.0),
   (16, 'Balde Turquesa', 'Turquesa', '#4FA3A5', 4.0, 9600.0),
-  (17, 'Balde Gris cálido', 'Gris cálido', '#C4B8A8', 4.0, 8900.0);
+  (17, 'Balde Gris cálido', 'Gris cálido', '#C4B8A8', 4.0, 8900.0),
+  (18, 'Balde Terracota', 'Terracota', '#C1663F', 4.0, 9600.0);

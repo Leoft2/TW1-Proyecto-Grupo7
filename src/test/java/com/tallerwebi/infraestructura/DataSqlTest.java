@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -13,17 +14,24 @@ import com.tallerwebi.datos.HsqldbConDatosTestConfig;
 import com.tallerwebi.dominio.Ambiente;
 import com.tallerwebi.dominio.CategoriaDeMueble;
 import com.tallerwebi.dominio.Estilo;
+import com.tallerwebi.dominio.FormaPintura;
 import com.tallerwebi.dominio.Material;
 import com.tallerwebi.dominio.Mueble;
+import com.tallerwebi.dominio.RecomendacionPintura;
 import com.tallerwebi.dominio.RepositorioAmbiente;
 import com.tallerwebi.dominio.ServicioCatalogo;
 import com.tallerwebi.dominio.ServicioCatalogoImpl;
+import com.tallerwebi.dominio.ServicioRecomendacionPintura;
+import com.tallerwebi.dominio.ServicioRecomendacionPinturaImpl;
 import com.tallerwebi.dominio.TipoDeAmbiente;
 import com.tallerwebi.dominio.Usuario;
 import com.tallerwebi.dominio.excepcion.PresupuestoNegativoException;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
+import org.hibernate.Hibernate;
 import org.hibernate.SessionFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -174,7 +182,7 @@ public class DataSqlTest {
   public void dadoQueArrancaLaAplicacion_cuandoConsultoLosAmbientes_entoncesElUsuarioDeTestTieneAmbientesConTipo() {
     List<Ambiente> ambientes = this.obtenerAmbientes();
 
-    assertThat(ambientes, hasSize(5));
+    assertThat(ambientes, hasSize(8));
     List<String> tipos = new ArrayList<>();
     for (Ambiente ambiente : ambientes) {
       assertThat(ambiente.getUsuario(), is(notNullValue()));
@@ -183,7 +191,7 @@ public class DataSqlTest {
       tipos.add(ambiente.getTipoDeAmbiente().getNombre());
     }
 
-    assertThat(tipos, containsInAnyOrder("Living", "Habitación", "Pasillo", "Cocina", "Comedor"));
+    assertThat(tipos, hasItems("Living", "Habitación", "Pasillo", "Cocina", "Comedor"));
   }
 
   @Test
@@ -193,7 +201,7 @@ public class DataSqlTest {
 
     List<Ambiente> ambientes = repositorioAmbiente.obtenerAmbientesDe("test@unlam.edu.ar");
 
-    assertThat(ambientes, hasSize(5));
+    assertThat(ambientes, hasSize(8));
     assertThat(
       nombresDeMueblesDe(ambientes.get(0)),
       containsInAnyOrder("Cama Boho", "Escritorio Minimalista", "Lámpara de Mesa Japandi")
@@ -206,6 +214,24 @@ public class DataSqlTest {
         "Zapatero Escandinavo"
       )
     );
+  }
+
+  @Test
+  @Transactional
+  public void dadoQueArrancaLaAplicacion_cuandoConsultoLosAmbientesDelUsuarioTest_entoncesEstanRepresentadasTodasLasFormasDePintura() {
+    RepositorioAmbiente repositorioAmbiente = new RepositorioAmbienteImpl(this.sessionFactory);
+    List<Ambiente> ambientes = repositorioAmbiente.obtenerAmbientesDe("test@unlam.edu.ar");
+    ServicioRecomendacionPintura servicioRecomendacion = new ServicioRecomendacionPinturaImpl();
+
+    Set<FormaPintura> formas = EnumSet.noneOf(FormaPintura.class);
+    for (Ambiente ambiente : ambientes) {
+      Hibernate.initialize(ambiente.getAberturas());
+      RecomendacionPintura recomendacion = servicioRecomendacion.recomendar(ambiente);
+      assertThat(recomendacion.getFormaPintura(), is(notNullValue()));
+      formas.add(recomendacion.getFormaPintura());
+    }
+
+    assertThat(formas, is(EnumSet.allOf(FormaPintura.class)));
   }
 
   @Test

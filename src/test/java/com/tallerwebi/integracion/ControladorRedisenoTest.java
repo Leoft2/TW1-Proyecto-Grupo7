@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -17,8 +18,10 @@ import com.tallerwebi.dominio.Estilo;
 import com.tallerwebi.dominio.Iluminacion;
 import com.tallerwebi.dominio.Mueble;
 import com.tallerwebi.dominio.Recomendacion;
+import com.tallerwebi.dominio.RecomendacionPintura;
 import com.tallerwebi.dominio.ServicioAmbiente;
 import com.tallerwebi.dominio.ServicioCatalogo;
+import com.tallerwebi.dominio.ServicioRecomendacionPintura;
 import com.tallerwebi.dominio.ServicioRediseño;
 import com.tallerwebi.dominio.TipoDeAmbiente;
 import com.tallerwebi.dominio.excepcion.PresupuestoNegativoException;
@@ -40,6 +43,7 @@ public class ControladorRedisenoTest {
 
   private ServicioCatalogo servicioCatalogo;
   private ServicioRediseño servicioRediseño;
+  private ServicioRecomendacionPintura servicioRecomendacionPintura;
   private ServicioAmbiente servicioAmbiente;
   private ControladorRediseno controladorRediseno;
 
@@ -47,9 +51,15 @@ public class ControladorRedisenoTest {
   public void init() {
     this.servicioCatalogo = mock(ServicioCatalogo.class);
     this.servicioRediseño = mock(ServicioRediseño.class);
+    this.servicioRecomendacionPintura = mock(ServicioRecomendacionPintura.class);
     this.servicioAmbiente = mock(ServicioAmbiente.class);
     this.controladorRediseno =
-      new ControladorRediseno(this.servicioCatalogo, this.servicioRediseño, this.servicioAmbiente);
+      new ControladorRediseno(
+        this.servicioCatalogo,
+        this.servicioRediseño,
+        this.servicioRecomendacionPintura,
+        this.servicioAmbiente
+      );
   }
 
   @Test
@@ -197,6 +207,22 @@ public class ControladorRedisenoTest {
   }
 
   @Test
+  public void dadoQueEnvioElFormulario_cuandoLoHago_entoncesElModeloTraeLaRecomendacionDePintura()
+    throws Exception {
+    this.dadoQueElAmbienteNoTieneTipo();
+    RecomendacionPintura recomendacionPintura = new RecomendacionPintura();
+    when(this.servicioRecomendacionPintura.recomendar(any(Ambiente.class)))
+      .thenReturn(recomendacionPintura);
+    List<Mueble> muebles = new ArrayList<>();
+    this.dadoQueElCatalogoCumpleCon(ESTILO, PRESUPUESTO, muebles);
+
+    ModelAndView modelAndView = this.cuandoEnvioElFormulario(ESTILO, PRESUPUESTO);
+
+    assertThat(modelAndView.getModel().get("recomendacionPintura"), is(recomendacionPintura));
+    verify(this.servicioRecomendacionPintura).recomendar(any(Ambiente.class));
+  }
+
+  @Test
   public void dadoQueElCatalogoRechazaElPresupuesto_cuandoVeoElResultado_entoncesVeoElErrorYNoLosMuebles()
     throws Exception {
     this.dadoQueElAmbienteNoTieneTipo();
@@ -266,7 +292,11 @@ public class ControladorRedisenoTest {
 
   private void entoncesVuelvoAlFormulario(ModelAndView modelAndView) {
     assertThat(modelAndView.getViewName(), is(FORMULARIO));
-    verifyNoInteractions(this.servicioCatalogo, this.servicioRediseño);
+    verifyNoInteractions(
+      this.servicioCatalogo,
+      this.servicioRediseño,
+      this.servicioRecomendacionPintura
+    );
   }
 
   private ModelAndView cuandoEnvioElFormularioConTexto(String estilo, String presupuesto) {

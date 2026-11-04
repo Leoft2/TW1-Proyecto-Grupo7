@@ -1,6 +1,7 @@
 package com.tallerwebi.dominio;
 
 import java.util.List;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +32,13 @@ public class ServicioAmbienteImpl implements ServicioAmbiente {
     if (id == null) {
       return null;
     }
-    return repositorioAmbiente.buscarPorId(id);
+
+    Ambiente ambiente = repositorioAmbiente.buscarPorId(id);
+    if (ambiente != null) {
+      // La recomendación de pintura necesita las aberturas fuera de esta transacción.
+      Hibernate.initialize(ambiente.getAberturas());
+    }
+    return ambiente;
   }
 
   @Override

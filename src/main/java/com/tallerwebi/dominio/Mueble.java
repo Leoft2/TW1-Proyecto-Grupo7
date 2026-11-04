@@ -1,6 +1,9 @@
 package com.tallerwebi.dominio;
 
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -14,11 +17,7 @@ import jakarta.persistence.OrderBy;
 import java.util.ArrayList;
 import java.util.List;
 
-/*
-  Cambiar para evitar el PMD TooManyFields
-*/
 @Entity
-@SuppressWarnings("PMD.TooManyFields")
 public class Mueble {
 
   @Id
@@ -28,9 +27,12 @@ public class Mueble {
   private String nombre;
   private String descripcion;
   private double precio;
-  private Double ancho;
-  private Double largo;
   private Boolean enCatalogo = false;
+
+  @Embedded
+  @AttributeOverride(name = "ancho", column = @Column(name = "ancho"))
+  @AttributeOverride(name = "largo", column = @Column(name = "largo"))
+  private Dimensiones dimensiones;
 
   @Enumerated(EnumType.STRING)
   private Estilo estilo;
@@ -64,8 +66,7 @@ public class Mueble {
 
   public Mueble(String nombre, Double ancho, Double largo) {
     this.nombre = nombre;
-    this.ancho = ancho;
-    this.largo = largo;
+    this.dimensiones = new Dimensiones(ancho, largo);
   }
 
   public void setPrecio(double _precio) {
@@ -77,19 +78,25 @@ public class Mueble {
   }
 
   public Double getAncho() {
-    return ancho;
+    return dimensiones != null ? dimensiones.getAncho() : null;
   }
 
   public void setAncho(Double ancho) {
-    this.ancho = ancho;
+    if (this.dimensiones == null) {
+      this.dimensiones = new Dimensiones();
+    }
+    this.dimensiones.setAncho(ancho);
   }
 
   public Double getLargo() {
-    return largo;
+    return dimensiones != null ? dimensiones.getLargo() : null;
   }
 
   public void setLargo(Double largo) {
-    this.largo = largo;
+    if (this.dimensiones == null) {
+      this.dimensiones = new Dimensiones();
+    }
+    this.dimensiones.setLargo(largo);
   }
 
   public void setEstilo(Estilo estilo) {

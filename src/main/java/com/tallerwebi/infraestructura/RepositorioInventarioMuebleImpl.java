@@ -36,7 +36,7 @@ public class RepositorioInventarioMuebleImpl implements RepositorioInventarioMue
   public List<Mueble> listarTodos() {
     String query =
       "FROM Mueble WHERE (enCatalogo = false OR enCatalogo IS NULL) " +
-      "AND ancho IS NOT NULL AND largo IS NOT NULL";
+      "AND dimensiones.ancho IS NOT NULL AND dimensiones.largo IS NOT NULL";
     return sessionFactory.getCurrentSession().createQuery(query, Mueble.class).getResultList();
   }
 

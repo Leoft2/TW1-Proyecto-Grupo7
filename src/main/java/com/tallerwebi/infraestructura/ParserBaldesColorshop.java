@@ -7,18 +7,20 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 public class ParserBaldesColorshop {
 
   public static final String SELECTOR_TARJETA = ".vtex-product-summary-2-x-container";
   private static final String SELECTOR_NOMBRE = "h3";
   private static final String SELECTOR_PRECIO = ".vtex-product-price-1-x-sellingPrice";
+  private static final String SELECTOR_ENLACE = "a[href]";
 
   private static final Pattern PATRON_LITROS = Pattern.compile("(\\d+)\\s*[Ll](?:itros)?\\b");
 
-  public List<BaldePintura> parsear(Document doc) {
+  public List<BaldeScrapeado> parsear(Document doc) {
     List<Element> tarjetas = doc.select(SELECTOR_TARJETA);
-    List<BaldePintura> baldes = new ArrayList<>();
+    List<BaldeScrapeado> baldes = new ArrayList<>();
 
     for (Element tarjeta : tarjetas) {
       String nombre = extraerTexto(tarjeta, SELECTOR_NOMBRE);
@@ -26,10 +28,15 @@ public class ParserBaldesColorshop {
         continue;
       }
 
+      String href = extraerHref(tarjeta, SELECTOR_ENLACE);
+      if (href == null) {
+        continue;
+      }
+
       Double precio = extraerPrecio(tarjeta, SELECTOR_PRECIO);
       Double litros = extraerLitrosDelNombre(nombre);
 
-      baldes.add(new BaldePintura(nombre, null, null, litros, precio));
+      baldes.add(new BaldeScrapeado(href, nombre, precio, litros));
     }
 
     return baldes;
@@ -38,6 +45,22 @@ public class ParserBaldesColorshop {
   private String extraerTexto(Element contenedor, String selector) {
     Element el = contenedor.selectFirst(selector);
     return el != null ? el.text().trim() : null;
+  }
+
+  private String extraerHref(Element contenedor, String selector) {
+    Element enlace = contenedor.selectFirst(selector);
+    if (enlace == null) {
+      return null;
+    }
+    String href = enlace.attr("href");
+    if (href == null || href.isBlank()) {
+      return null;
+    }
+    int queryIndex = href.indexOf('?');
+    if (queryIndex >= 0) {
+      href = href.substring(0, queryIndex);
+    }
+    return href;
   }
 
   private Double extraerPrecio(Element contenedor, String selector) {

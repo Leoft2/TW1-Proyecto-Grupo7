@@ -39,9 +39,8 @@ public class RepositorioBaldePinturaImpl implements RepositorioBaldePintura {
 
   @Override
   public void eliminarTodos() {
-    String query = "DELETE FROM BaldePintura";
     this.sessionFactory.getCurrentSession()
-      .createQuery(query, BaldePintura.class)
+      .createMutationQuery("DELETE FROM BaldePintura")
       .executeUpdate();
   }
 }

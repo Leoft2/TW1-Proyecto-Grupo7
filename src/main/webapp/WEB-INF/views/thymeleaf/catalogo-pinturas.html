@@ -1,0 +1,53 @@
+<!DOCTYPE HTML>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/layout :: head('Catálogo de pinturas')}"></head>
+
+<body>
+  <nav th:replace="~{fragments/layout :: navbar('pinturas')}"></nav>
+
+  <main class="container">
+    <header class="hb-page-header">
+      <div>
+        <span class="hb-eyebrow">Catálogo de pinturas</span>
+        <h1>Baldes de pintura</h1>
+        <p th:text="'Total de baldes disponibles: ' + ${totalBaldes}">Total de baldes disponibles: 0</p>
+      </div>
+      <a th:href="@{/home}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Volver al inicio</a>
+    </header>
+
+    <div th:if="${#lists.isEmpty(baldes)}" class="alert alert-info">
+      Todavía no hay baldes de pintura cargados.
+      <div th:if="${session.ROL == 'ADMIN'}" class="mt-2">
+        <a th:href="@{/pinturas/baldes/actualizar}" class="btn btn-info btn-sm">Actualizar desde Colorshop</a>
+      </div>
+    </div>
+
+    <div th:if="${!#lists.isEmpty(baldes)}" class="row g-4">
+      <div th:each="balde : ${baldes}" class="col-md-6 col-lg-4 col-xl-3">
+        <div class="card h-100 hb-card-hover">
+          <div class="card-body d-flex flex-column">
+            <div class="mb-2">
+              <span th:if="${balde.hex != null}" class="badge" th:style="'background-color: #' + ${balde.hex} + '; color: #000; border: 1px solid #999; box-shadow: 0 1px 2px rgba(0,0,0,0.15);'" th:text="${balde.colorNombre}">Sin color</span>
+              <span th:text="${balde.colorNombre}" class="badge bg-secondary" th:if="${balde.colorNombre == null}">Sin color</span>
+            </div>
+            <h5 class="card-title" th:text="${balde.nombre}">Nombre del balde</h5>
+            <p class="card-text text-muted small">
+              <span th:if="${balde.cantidadLitros != null}" th:text="'${balde.cantidadLitros} L'">4 L</span>
+            </p>
+            <div class="mt-auto">
+              <span th:if="${balde.precio != null}" class="h3 text-success fw-bold" th:text="'$ ' + ${#numbers.formatDecimal(balde.precio, 0, 2)}">$ 0,00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <a th:href="@{/home}" class="btn btn-secondary mt-4"><i class="bi bi-arrow-left"></i> Volver al inicio</a>
+  </main>
+
+  <footer th:replace="~{fragments/layout :: footer}"></footer>
+  <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+
+</html>

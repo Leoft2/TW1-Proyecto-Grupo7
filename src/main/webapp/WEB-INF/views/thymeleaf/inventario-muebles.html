@@ -25,6 +25,8 @@
 
     <div th:if="${error != null}" class="alert alert-danger" role="alert" th:text="${error}"></div>
 
+    <div th:if="${actualizado != null}" class="alert alert-success" role="alert" th:text="'Baldes de pintura actualizados desde Colorshop (${actualizado} ítems)'"></div>
+
     <div class="row g-4">
       <div class="col-md-4">
         <h2 class="h5">Agregar mueble</h2>
@@ -99,6 +101,20 @@
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <div th:if="${session.ROL == 'ADMIN'}" class="card mt-4 border-info">
+          <div class="card-body p-4">
+            <h2 class="h5">Actualizar baldes de pintura</h2>
+            <p class="text-muted">
+              Importá los baldes de pintura desde Colorshop. Esto reemplazará todos los baldes actuales.
+            </p>
+            <form th:action="@{/pinturas/baldes/actualizar}" method="post" class="d-inline">
+              <button type="submit" class="btn btn-info">
+                <i class="bi bi-arrow-repeat"></i> Actualizar baldes de pintura
+              </button>
+            </form>
+          </div>
         </div>
 
         <div class="d-flex justify-content-between align-items-center mt-3">

@@ -36,4 +36,11 @@ public class RepositorioBaldePinturaImpl implements RepositorioBaldePintura {
   public void guardar(BaldePintura baldePintura) {
     this.sessionFactory.getCurrentSession().persist(baldePintura);
   }
+
+  @Override
+  public void eliminarTodos() {
+    this.sessionFactory.getCurrentSession()
+      .createMutationQuery("DELETE FROM BaldePintura")
+      .executeUpdate();
+  }
 }

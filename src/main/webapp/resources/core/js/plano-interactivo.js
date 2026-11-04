@@ -1,5 +1,8 @@
 const plano = document.querySelector(".plano-svg");
 const alerta = document.getElementById("plano-alerta-movimiento");
+const botonQuitarMueble = document.getElementById("boton-quitar-mueble");
+const indiceMuebleSeleccionado = document.getElementById("indice-mueble-seleccionado");
+const ayudaSeleccionMueble = document.getElementById("ayuda-seleccion-mueble");
 
 if (plano && alerta) {
   const anchoAmbiente = Number(plano.dataset.ancho);
@@ -21,6 +24,19 @@ if (plano && alerta) {
   function limpiarAdvertencia() {
     alerta.textContent = "";
     alerta.classList.add("d-none");
+  }
+
+  function seleccionarMueble(mueble) {
+    plano.querySelectorAll(".plano-mueble-seleccionado").forEach((seleccionado) => {
+      seleccionado.classList.remove("plano-mueble-seleccionado");
+      seleccionado.setAttribute("aria-pressed", "false");
+    });
+    mueble.classList.add("plano-mueble-seleccionado");
+    mueble.setAttribute("aria-pressed", "true");
+    indiceMuebleSeleccionado.value = mueble.dataset.indice;
+    botonQuitarMueble.disabled = false;
+    ayudaSeleccionMueble.textContent = "Mueble seleccionado: " +
+      mueble.querySelector(".plano-mueble-nombre").textContent.trim();
   }
 
   function estaDentroDelAmbiente(x, y, mueble) {
@@ -82,6 +98,14 @@ if (plano && alerta) {
   }
 
   plano.querySelectorAll(".plano-mueble-arrastrable").forEach((mueble) => {
+    mueble.addEventListener("click", () => seleccionarMueble(mueble));
+    mueble.addEventListener("keydown", (evento) => {
+      if (evento.key === "Enter" || evento.key === " ") {
+        evento.preventDefault();
+        seleccionarMueble(mueble);
+      }
+    });
+
     mueble.addEventListener("pointerdown", (evento) => {
       if (mueble.dataset.anclado === "true") {
         mostrarAdvertencia("El mueble está anclado. Desanclalo antes de moverlo.");
@@ -149,6 +173,12 @@ if (plano && alerta) {
           x: posicionInicial.x + desplazamiento.x,
           y: posicionInicial.y + desplazamiento.y,
         };
+
+        if (Math.abs(desplazamiento.x) < 0.005 && Math.abs(desplazamiento.y) < 0.005) {
+          mueble.removeAttribute("transform");
+          muebleEnMovimiento = null;
+          return;
+        }
 
         if (!estaDentroDelAmbiente(posicionNueva.x, posicionNueva.y, mueble)) {
           mueble.removeAttribute("transform");

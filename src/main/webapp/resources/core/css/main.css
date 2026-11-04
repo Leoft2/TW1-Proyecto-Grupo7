@@ -413,6 +413,11 @@ h1, h2, h3, h4, h5, h6,
   rx: 0.08;
 }
 
+.plano-mueble-seleccionado .plano-mueble-cuerpo {
+  stroke: #1d4ed8;
+  stroke-width: 0.09;
+}
+
 .plano-mueble-borde {
   stroke: rgba(163, 78, 48, 0.5);
   stroke-width: 0.018;

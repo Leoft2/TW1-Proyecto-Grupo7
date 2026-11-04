@@ -33,6 +33,13 @@
 
     <div th:if="${plano != null}">
 
+        <p th:if="${param.muebleQuitado != null}" class="alert alert-success" role="status">
+            Mueble quitado correctamente
+        </p>
+        <p th:if="${param.errorQuitarMueble != null}" class="alert alert-danger" role="alert">
+            No se pudo quitar el mueble. Seleccioná un mueble del plano e intentá nuevamente.
+        </p>
+
         <p th:if="${plano.mensaje}" class="alert alert-info" th:text="${plano.mensaje}">
             No hay mobiliario para distribuir
         </p>
@@ -92,6 +99,16 @@
                     <span><i class="bi bi-compass"></i> Vista superior</span>
                     <span class="hb-plano-toolbar-help">Arrastrá los muebles para ajustar su posición. Las medidas están expresadas en metros</span>
                 </div>
+
+                <form id="form-quitar-mueble" th:action="@{/plano/quitar-mueble}" method="post" class="p-3 pb-0">
+                    <input id="indice-mueble-seleccionado" type="hidden" name="indice">
+                    <button id="boton-quitar-mueble" type="submit" class="btn btn-outline-danger btn-sm" disabled>
+                        Quitar mueble seleccionado
+                    </button>
+                    <span id="ayuda-seleccion-mueble" class="text-muted ms-2">
+                        Seleccioná un mueble del plano para quitarlo.
+                    </span>
+                </form>
 
                 <div id="plano-alerta-movimiento" class="alert alert-warning m-3 d-none"
                      role="alert" aria-live="assertive"></div>
@@ -221,7 +238,9 @@
 
                     <g th:each="ubicado, i : ${plano.muebles}" class="plano-mueble plano-mueble-arrastrable"
                        th:attr="data-indice=${i.index},data-posicion-x=${ubicado.posicionX},
-                                data-posicion-y=${ubicado.posicionY},data-anclado=${ubicado.anclado}"
+                                data-posicion-y=${ubicado.posicionY},data-anclado=${ubicado.anclado},
+                                aria-label=${'Seleccionar ' + ubicado.mueble.nombre}"
+                       tabindex="0" role="button" aria-pressed="false"
                        th:classappend="${ubicado.enConflicto} ? 'plano-mueble-conflicto'">
                         <title th:if="${ubicado.enConflicto}"
                                th:text="${plano.descripcionDelConflicto(ubicado)}">Sofa choca con Radiador (muro derecho)</title>

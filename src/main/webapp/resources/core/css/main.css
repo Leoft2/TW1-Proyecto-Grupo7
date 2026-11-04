@@ -885,9 +885,10 @@ h1, h2, h3, h4, h5, h6,
 
 .ambiente-pintura {
     position: relative;
-    width: 500px;
-    height: 400px;
-    margin: 2rem auto;
+    width: 100%;
+    max-width: 500px;
+    aspect-ratio: 500 / 400;
+    margin: 1rem auto;
 }
 
 .ambiente-svg {
@@ -901,4 +902,66 @@ h1, h2, h3, h4, h5, h6,
     width: 100%;
     height: 100%;
     display: block;
+}
+
+.hb-leyenda-superficie {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.6rem;
+}
+
+.hb-leyenda-superficie li {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 0.5rem;
+    background: #fff;
+}
+
+.hb-swatch {
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 0.35rem;
+    border: 1px solid rgba(0, 0, 0, 0.18);
+    flex-shrink: 0;
+    display: inline-block;
+    background-color: #fff;
+}
+
+.hb-leyenda-nombre {
+    flex: 1;
+    font-weight: 500;
+}
+
+.hb-leyenda-estado {
+    font-size: 0.8rem;
+    color: var(--hb-texto-suave);
+}
+
+.hb-leyenda-estado-pintada {
+    color: var(--hb-salvia-oscuro);
+    font-weight: 600;
+}
+
+.hb-tabla-pintura thead th {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--hb-texto-suave);
+    border-bottom-width: 1px;
+}
+
+.hb-tabla-pintura td {
+    vertical-align: middle;
+}
+
+@media (max-width: 575.98px) {
+    .hb-leyenda-superficie li {
+        padding: 0.4rem 0.5rem;
+    }
 }

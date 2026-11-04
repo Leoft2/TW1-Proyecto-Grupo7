@@ -6,6 +6,7 @@ import com.tallerwebi.dominio.Mueble;
 import com.tallerwebi.dominio.RecomendacionPintura;
 import com.tallerwebi.dominio.ServicioAmbiente;
 import com.tallerwebi.dominio.ServicioCatalogo;
+import com.tallerwebi.dominio.ServicioRecomendacionPintura;
 import com.tallerwebi.dominio.ServicioRediseño;
 import com.tallerwebi.dominio.TipoDeAmbiente;
 import com.tallerwebi.dominio.excepcion.PresupuestoNegativoException;
@@ -26,6 +27,7 @@ public class ControladorRediseno {
 
   private final ServicioCatalogo servicioCatalogo;
   private final ServicioRediseño servicioRediseño;
+  private final ServicioRecomendacionPintura servicioRecomendacionPintura;
   private final ServicioAmbiente servicioAmbiente;
 
   private static final String PRESUPUESTO = "presupuesto";
@@ -36,10 +38,12 @@ public class ControladorRediseno {
   public ControladorRediseno(
     ServicioCatalogo servicioCatalogo,
     ServicioRediseño servicioRediseño,
+    ServicioRecomendacionPintura servicioRecomendacionPintura,
     ServicioAmbiente servicioAmbiente
   ) {
     this.servicioCatalogo = servicioCatalogo;
     this.servicioRediseño = servicioRediseño;
+    this.servicioRecomendacionPintura = servicioRecomendacionPintura;
     this.servicioAmbiente = servicioAmbiente;
   }
 
@@ -83,7 +87,8 @@ public class ControladorRediseno {
     modelo.put(AMBIENTE, ambiente);
     modelo.put("tipoDeAmbiente", tipo == null ? null : tipo.getNombre());
     modelo.put("recomendacion", this.servicioRediseño.recomendar(propuesta.getEstilo()));
-    RecomendacionPintura recomendacionPintura = this.servicioRediseño.recomendarPintura(ambiente);
+    RecomendacionPintura recomendacionPintura =
+      this.servicioRecomendacionPintura.recomendar(ambiente);
     modelo.put("recomendacionPintura", recomendacionPintura);
     modelo.put("soloSostenibles", propuesta.getSoloSostenibles());
 

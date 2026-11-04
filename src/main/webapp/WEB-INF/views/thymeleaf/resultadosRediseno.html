@@ -81,62 +81,147 @@
     </div>
 
     <h2 class="hb-section-title">Recomendación de pintura</h2>
+
     <div class="card" th:if="${recomendacionPintura != null}"
-     th:with="cs=${recomendacionPintura.colorSuperficie}">
-      <div id="ambiente-pintura" class="ambiente-pintura">
-
-        <div class="ambiente-svg ambiente-svg-techo">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115.52 59.08" class="svg-superficie">
-            <polygon
-              points="0 7.65 25.32 15.82 90.2 15.82 115.52 7.65"
-              th:style="|fill:${cs != null and cs.techo != null ? cs.techo : '#E5E5E5'}|"/>
-          </svg>
+      th:with="cs=${recomendacionPintura.colorSuperficie},
+               tienePrecios=${recomendacionPintura.precioTotal != null}">
+      <div class="card-body">
+        <div th:if="${recomendacionPintura.formaPintura != null}" class="mb-4">
+          <h3 class="h5 mb-1" th:text="${recomendacionPintura.formaPintura.etiqueta}">
+            Pared opuesta a la puerta
+          </h3>
+          <p class="text-secondary mb-0" th:text="${recomendacionPintura.descripcion}">
+            Pintá la pared opuesta a la puerta de un color más oscuro para acortar visualmente el ambiente.
+          </p>
         </div>
 
-        <div class="ambiente-svg ambiente-svg-izquierda">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115.52 59.08" class="svg-superficie">
-            <polygon
-              points="0 59.08 25.32 42.2 25.32 15.82 0 7.65"
-              th:style="|fill:${cs != null and cs.paredIzquierda != null ? cs.paredIzquierda : '#E5E5E5'}|"/>
-          </svg>
-        </div>
+        <div class="row g-4 align-items-center">
+          <div class="col-12 col-lg-6">
+            <div id="ambiente-pintura" class="ambiente-pintura">
+              <div class="ambiente-svg ambiente-svg-techo">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115.52 59.08" class="svg-superficie">
+                  <polygon
+                    points="0 7.65 25.32 15.82 90.2 15.82 115.52 7.65"
+                    th:style="|fill:${cs != null and cs.techo != null ? cs.techo : '#E5E5E5'}|"/>
+                </svg>
+              </div>
 
-        <div class="ambiente-svg ambiente-svg-fondo">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115.52 59.08" class="svg-superficie">
-            <rect x="25.32" y="15.82" width="64.88" height="26.37"
-              th:style="|fill:${cs != null and cs.paredFondo != null ? cs.paredFondo : '#E5E5E5'}|"/>
-          </svg>
-        </div>
+              <div class="ambiente-svg ambiente-svg-izquierda">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115.52 59.08" class="svg-superficie">
+                  <polygon
+                    points="0 59.08 25.32 42.2 25.32 15.82 0 7.65"
+                    th:style="|fill:${cs != null and cs.paredIzquierda != null ? cs.paredIzquierda : '#E5E5E5'}|"/>
+                </svg>
+              </div>
 
-        <div class="ambiente-svg ambiente-svg-derecha">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115.52 59.08" class="svg-superficie">
-            <polygon
-              points="115.52 59.08 90.2 42.2 90.2 15.82 115.52 7.65"
-              th:style="|fill:${cs != null and cs.paredDerecha != null ? cs.paredDerecha : '#E5E5E5'}|"/>
-          </svg>
-        </div>
-      </div>
-      </div>
-        <div th:if="${recomendacionPintura.items != null and !#lists.isEmpty(recomendacionPintura.items)}">
-          <h5 class="mb-2">Colores recomendados</h5>
-          <div th:each="item : ${recomendacionPintura.items}" class="d-flex align-items-center justify-content-between border rounded p-2 mb-2">
-            <div class="d-flex align-items-center gap-2">
-              <span class="rounded-circle border flex-shrink-0" th:style="'width: 2rem; height: 2rem; background-color: ' + ${item.hex}"></span>
-              <div>
-                <div><strong th:text="${item.colorNombre}"></strong> <span class="text-muted">- <span th:text="${item.zona}"></span></span></div>
-                <div class="text-muted small">Baldes necesarios: <span th:text="${item.cantidadBaldes}"></span> | Superficie: <span th:text="${#numbers.formatDecimal(item.metrosCuadrados,1,'COMMA',2,'POINT')}"></span> m2</div>
+              <div class="ambiente-svg ambiente-svg-fondo">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115.52 59.08" class="svg-superficie">
+                  <rect x="25.32" y="15.82" width="64.88" height="26.37"
+                    th:style="|fill:${cs != null and cs.paredFondo != null ? cs.paredFondo : '#E5E5E5'}|"/>
+                </svg>
+              </div>
+
+              <div class="ambiente-svg ambiente-svg-derecha">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115.52 59.08" class="svg-superficie">
+                  <polygon
+                    points="115.52 59.08 90.2 42.2 90.2 15.82 115.52 7.65"
+                    th:style="|fill:${cs != null and cs.paredDerecha != null ? cs.paredDerecha : '#E5E5E5'}|"/>
+                </svg>
               </div>
             </div>
-            <div class="text-end">
-              <div><strong th:text="${'$ ' + #numbers.formatDecimal(item.precioTotal,1,'COMMA',0,'POINT')}"></strong></div>
-            </div>
           </div>
-          <div class="d-flex justify-content-end mt-3">
-            <div><strong>Precio total pintura: </strong><span th:text="${'$ ' + #numbers.formatDecimal(recomendacionPintura.precioTotal,1,'COMMA',0,'POINT')}"></span></div>
+
+          <div class="col-12 col-lg-6">
+            <h4 class="h6 text-uppercase text-secondary mb-3">Superficies</h4>
+            <ul class="hb-leyenda-superficie">
+              <li>
+                <span class="hb-swatch"
+                  th:style="|background-color:${cs != null and cs.techo != null ? cs.techo : 'transparent'}|"></span>
+                <span class="hb-leyenda-nombre">Techo</span>
+                <span class="hb-leyenda-estado"
+                  th:classappend="${cs != null and cs.techo != null} ? 'hb-leyenda-estado-pintada' : ''"
+                  th:text="${cs != null and cs.techo != null ? 'Pintada' : 'Sin pintar'}">Sin pintar</span>
+              </li>
+              <li>
+                <span class="hb-swatch"
+                  th:style="|background-color:${cs != null and cs.paredIzquierda != null ? cs.paredIzquierda : 'transparent'}|"></span>
+                <span class="hb-leyenda-nombre">Pared izquierda</span>
+                <span class="hb-leyenda-estado"
+                  th:classappend="${cs != null and cs.paredIzquierda != null} ? 'hb-leyenda-estado-pintada' : ''"
+                  th:text="${cs != null and cs.paredIzquierda != null ? 'Pintada' : 'Sin pintar'}">Sin pintar</span>
+              </li>
+              <li>
+                <span class="hb-swatch"
+                  th:style="|background-color:${cs != null and cs.paredFondo != null ? cs.paredFondo : 'transparent'}|"></span>
+                <span class="hb-leyenda-nombre">Pared de fondo</span>
+                <span class="hb-leyenda-estado"
+                  th:classappend="${cs != null and cs.paredFondo != null} ? 'hb-leyenda-estado-pintada' : ''"
+                  th:text="${cs != null and cs.paredFondo != null ? 'Pintada' : 'Sin pintar'}">Sin pintar</span>
+              </li>
+              <li>
+                <span class="hb-swatch"
+                  th:style="|background-color:${cs != null and cs.paredDerecha != null ? cs.paredDerecha : 'transparent'}|"></span>
+                <span class="hb-leyenda-nombre">Pared derecha</span>
+                <span class="hb-leyenda-estado"
+                  th:classappend="${cs != null and cs.paredDerecha != null} ? 'hb-leyenda-estado-pintada' : ''"
+                  th:text="${cs != null and cs.paredDerecha != null ? 'Pintada' : 'Sin pintar'}">Sin pintar</span>
+              </li>
+            </ul>
           </div>
         </div>
-        <div th:if="${recomendacionPintura.items == null or #lists.isEmpty(recomendacionPintura.items)}" class="alert alert-info mb-0">
-          No hay baldes cargados en la base de datos para calcular cantidades.
+
+        <div class="mt-4"
+          th:if="${recomendacionPintura.items != null and !#lists.isEmpty(recomendacionPintura.items)}">
+          <h4 class="h6 text-uppercase text-secondary mb-3">Detalle de superficies a pintar</h4>
+          <div class="table-responsive">
+            <table class="table align-middle mb-0 hb-tabla-pintura">
+              <thead>
+                <tr>
+                  <th scope="col">Superficie</th>
+                  <th scope="col">Color</th>
+                  <th scope="col" class="text-end">Metros cuadrados</th>
+                  <th scope="col" class="text-end" th:if="${tienePrecios}">Baldes</th>
+                  <th scope="col" class="text-end" th:if="${tienePrecios}">Precio</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="item : ${recomendacionPintura.items}">
+                  <td th:text="${item.zona}">Pared de fondo</td>
+                  <td>
+                    <span class="d-inline-flex align-items-center gap-2">
+                      <span class="hb-swatch"
+                        th:style="|background-color:${item.hex != null ? item.hex : 'transparent'}|"></span>
+                      <span th:text="${item.colorNombre}">Salvia</span>
+                    </span>
+                  </td>
+                  <td class="text-end"
+                    th:text="${item.metrosCuadrados != null ? #numbers.formatDecimal(item.metrosCuadrados,1,'COMMA',2,'POINT') : '—'}">
+                    8,10
+                  </td>
+                  <td class="text-end" th:if="${tienePrecios}"
+                    th:text="${item.cantidadBaldes != null ? item.cantidadBaldes : '—'}">—</td>
+                  <td class="text-end" th:if="${tienePrecios}"
+                    th:text="${item.precioTotal != null ? '$ ' + #numbers.formatDecimal(item.precioTotal,1,'COMMA',0,'POINT') : '—'}">
+                    —
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="d-flex justify-content-end mt-3" th:if="${tienePrecios}">
+            <div>
+              <strong>Precio total pintura: </strong>
+              <span th:text="${'$ ' + #numbers.formatDecimal(recomendacionPintura.precioTotal,1,'COMMA',0,'POINT')}">
+                $ 0
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-info mb-0 mt-4"
+          th:if="${recomendacionPintura.items == null or #lists.isEmpty(recomendacionPintura.items)}">
+          <i class="bi bi-info-circle"></i>
+          No hay baldes cargados en la base de datos para calcular cantidades. Igual podés ver las superficies y los colores sugeridos.
         </div>
       </div>
     </div>

@@ -7,7 +7,6 @@ public class RecomendacionPintura {
 
   private FormaPintura formaPintura;
   private String descripcion;
-  private String imagenSugerida;
   private List<ItemPintura> items = new ArrayList<ItemPintura>();
   private Double precioTotal;
   private ColorSuperficie colorSuperficie;
@@ -28,14 +27,6 @@ public class RecomendacionPintura {
 
   public void setDescripcion(String descripcion) {
     this.descripcion = descripcion;
-  }
-
-  public String getImagenSugerida() {
-    return imagenSugerida;
-  }
-
-  public void setImagenSugerida(String imagenSugerida) {
-    this.imagenSugerida = imagenSugerida;
   }
 
   public List<ItemPintura> getItems() {
@@ -68,16 +59,25 @@ public class RecomendacionPintura {
   }
 
   public void calcularTotal() {
-    Double total = 0.0;
     if (this.items == null) {
       this.precioTotal = 0.0;
       return;
     }
+
+    double total = 0.0;
+
     for (ItemPintura item : this.items) {
-      if (item != null && item.getPrecioTotal() != null) {
-        total = total + item.getPrecioTotal();
+      if (item == null) {
+        continue;
       }
+
+      if (item.getPrecioTotal() == null) {
+        continue;
+      }
+
+      total += item.getPrecioTotal();
     }
+
     this.precioTotal = total;
   }
 

@@ -3,7 +3,6 @@ package com.tallerwebi.presentacion;
 import com.tallerwebi.dominio.BaldePintura;
 import com.tallerwebi.dominio.RepositorioBaldePintura;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,16 +31,17 @@ public class ControladorCatalogoPinturas {
   public ModelAndView catalogoPinturas(HttpServletRequest request) {
     List<BaldePintura> todos = repositorioBaldePintura.obtenerTodos();
 
+    /*
     List<BaldePintura> baldesConColor = new ArrayList<>();
     for (BaldePintura balde : todos) {
       if (balde.getColorNombre() != null) {
         baldesConColor.add(balde);
       }
-    }
+    } */
 
     Map<String, Object> modelo = new ModelMap();
-    modelo.put("baldes", baldesConColor);
-    modelo.put("totalBaldes", baldesConColor.size());
+    modelo.put("baldes", todos);
+    modelo.put("totalBaldes", todos.size());
     return new ModelAndView(VISTA_CATALOGO_PINTURAS, modelo);
   }
 }

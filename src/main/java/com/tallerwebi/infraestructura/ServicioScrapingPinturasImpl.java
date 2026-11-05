@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 public class ServicioScrapingPinturasImpl implements ServicioScrapingPinturas {
 
   private static final String URL_BASE = "https://www.colorshop.com.ar/pinturas";
+  private static final String URL_SITIO = "https://www.colorshop.com.ar";
   private static final String MAP_COLORES = "category-1,colores";
   private static final int MAX_PAGINAS = 5;
   private static final int MAX_PRODUCTOS_POR_COLOR = 5;
@@ -48,6 +49,7 @@ public class ServicioScrapingPinturasImpl implements ServicioScrapingPinturas {
           }
           balde.setColorNombre(color.nombre());
           balde.setHex(color.hex());
+          balde.setUrl(URL_SITIO + balde.getHref());
           resultado.add(balde.aBaldePintura());
           productosDeEsteColor++;
         }

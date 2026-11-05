@@ -5,6 +5,7 @@ import com.tallerwebi.dominio.BaldePintura;
 public class BaldeScrapeado {
 
   private String href;
+  private String url;
   private String nombre;
   private Double precio;
   private Double litros;
@@ -26,6 +27,14 @@ public class BaldeScrapeado {
 
   public void setHref(String href) {
     this.href = href;
+  }
+
+  public String getUrl() {
+    return url;
+  }
+
+  public void setUrl(String url) {
+    this.url = url;
   }
 
   public String getNombre() {
@@ -69,6 +78,6 @@ public class BaldeScrapeado {
   }
 
   public BaldePintura aBaldePintura() {
-    return new BaldePintura(nombre, colorNombre, hex, litros, precio);
+    return new BaldePintura(nombre, colorNombre, hex, url, litros, precio);
   }
 }

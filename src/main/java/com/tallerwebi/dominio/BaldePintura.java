@@ -15,6 +15,7 @@ public class BaldePintura {
   private String nombre;
   private String colorNombre;
   private String hex;
+  private String url;
   private Double cantidadLitros;
   private Double precio;
 
@@ -24,12 +25,14 @@ public class BaldePintura {
     String nombre,
     String colorNombre,
     String hex,
+    String url,
     Double cantidadLitros,
     Double precio
   ) {
     this.nombre = nombre;
     this.colorNombre = colorNombre;
     this.hex = hex;
+    this.url = url;
     this.cantidadLitros = cantidadLitros;
     this.precio = precio;
   }
@@ -64,6 +67,14 @@ public class BaldePintura {
 
   public void setHex(String hex) {
     this.hex = hex;
+  }
+
+  public String getUrl() {
+    return url;
+  }
+
+  public void setUrl(String url) {
+    this.url = url;
   }
 
   public Double getCantidadLitros() {

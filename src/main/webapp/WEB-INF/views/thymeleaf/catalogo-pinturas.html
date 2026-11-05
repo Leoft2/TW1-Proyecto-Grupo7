@@ -35,8 +35,11 @@
             <p class="card-text text-muted small">
               <span th:if="${balde.cantidadLitros != null}" th:text="'${balde.cantidadLitros} L'">4 L</span>
             </p>
-            <div class="mt-auto">
+            <div class="d-flex justify-content-between align-items-center mt-auto pt-3">
               <span th:if="${balde.precio != null}" class="h3 text-success fw-bold" th:text="'$ ' + ${#numbers.formatDecimal(balde.precio, 0, 2)}">$ 0,00</span>
+              <a th:href="@{/pinturas/baldes/{id}(id=${balde.id})}" class="btn btn-outline-info btn-sm">
+                Ver detalle
+              </a>
             </div>
           </div>
         </div>

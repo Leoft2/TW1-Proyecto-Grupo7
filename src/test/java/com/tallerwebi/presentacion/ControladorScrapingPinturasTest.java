@@ -7,7 +7,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.tallerwebi.dominio.RepositorioBaldePintura;
 import com.tallerwebi.dominio.ServicioAdministracionBaldesPintura;
+import com.tallerwebi.dominio.ServicioScrapingDetalleBaldePintura;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.Test;
@@ -18,7 +20,15 @@ public class ControladorScrapingPinturasTest {
   @Test
   public void deberiaRechazarActualizacionCuandoNoEsAdmin() throws Exception {
     ServicioAdministracionBaldesPintura servicio = mock(ServicioAdministracionBaldesPintura.class);
-    ControladorScrapingPinturas controlador = new ControladorScrapingPinturas(servicio);
+    RepositorioBaldePintura repositorio = mock(RepositorioBaldePintura.class);
+    ServicioScrapingDetalleBaldePintura servicioDetalle = mock(
+      ServicioScrapingDetalleBaldePintura.class
+    );
+    ControladorScrapingPinturas controlador = new ControladorScrapingPinturas(
+      servicio,
+      repositorio,
+      servicioDetalle
+    );
 
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getSession()).thenReturn(null);
@@ -32,7 +42,15 @@ public class ControladorScrapingPinturasTest {
   @Test
   public void deberiaActualizarBaldesCuandoEsAdmin() throws Exception {
     ServicioAdministracionBaldesPintura servicio = mock(ServicioAdministracionBaldesPintura.class);
-    ControladorScrapingPinturas controlador = new ControladorScrapingPinturas(servicio);
+    RepositorioBaldePintura repositorio = mock(RepositorioBaldePintura.class);
+    ServicioScrapingDetalleBaldePintura servicioDetalle = mock(
+      ServicioScrapingDetalleBaldePintura.class
+    );
+    ControladorScrapingPinturas controlador = new ControladorScrapingPinturas(
+      servicio,
+      repositorio,
+      servicioDetalle
+    );
 
     HttpSession sesion = mock(HttpSession.class);
     when(sesion.getAttribute("ROL")).thenReturn("ADMIN");

@@ -6,7 +6,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.springframework.stereotype.Component;
 
+@Component
 public class ParserBaldesColorshop {
 
   public static final String SELECTOR_TARJETA = ".vtex-product-summary-2-x-container";

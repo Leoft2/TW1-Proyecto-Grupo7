@@ -120,7 +120,10 @@
         <hr>
 
         <a th:href="@{/plano/ambiente}" class="btn btn-secondary">Atrás</a>
-        <button type="submit" class="btn btn-primary">Siguiente →</button>
+        <button type="submit" class="btn btn-primary"
+                th:text="${#lists.isEmpty(advertenciasDeApertura)} ? 'Siguiente →' : 'Resolver y seguir'">
+            Siguiente →
+        </button>
         <button th:if="${not #lists.isEmpty(advertenciasDeApertura)}"
                 type="submit"
                 name="confirmarAdvertencias"

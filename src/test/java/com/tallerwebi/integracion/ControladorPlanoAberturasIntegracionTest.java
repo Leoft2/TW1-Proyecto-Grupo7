@@ -1,9 +1,7 @@
 package com.tallerwebi.integracion;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -425,6 +423,51 @@ public class ControladorPlanoAberturasIntegracionTest {
 
   private void thenSeMuestraElBotonContinuarIgual(String html) {
     assertThat(html, containsString("Continuar igual"));
+  }
+
+  @Test
+  public void deberiaMostrarElBotonResolverYSeguirCuandoHayUnaAdvertencia() throws Exception {
+    // Given: el usuario cargo una puerta que no tiene pared libre para abrir.
+
+    // When
+    String html = whenConfirmoUnaPuertaSinParedLibre();
+
+    // Then
+    thenSeMuestraElBotonResolverYSeguir(html);
+  }
+
+  private void thenSeMuestraElBotonResolverYSeguir(String html) {
+    assertThat(html, containsString("Resolver y seguir"));
+  }
+
+  @Test
+  public void deberiaMostrarElBotonSiguienteCuandoNoHayAdvertencia() throws Exception {
+    // Given: el usuario cargo una puerta que tiene pared libre para abrir.
+
+    // When
+    String html = whenEnvioElFormularioDeAberturas("PUERTA", "0.1");
+
+    // Then
+    thenSeMuestraElBotonSiguiente(html);
+  }
+
+  private void thenSeMuestraElBotonSiguiente(String html) {
+    assertThat(html, containsString(">Siguiente"));
+  }
+
+  @Test
+  public void deberiaNoMostrarElBotonResolverYSeguirCuandoNoHayAdvertencia() throws Exception {
+    // Given: el usuario cargo una puerta que tiene pared libre para abrir.
+
+    // When
+    String html = whenEnvioElFormularioDeAberturas("PUERTA", "0.1");
+
+    // Then
+    thenNoSeMuestraElBotonResolverYSeguir(html);
+  }
+
+  private void thenNoSeMuestraElBotonResolverYSeguir(String html) {
+    assertThat(html, not(containsString("Resolver y seguir")));
   }
 
   @Test

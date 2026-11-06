@@ -62,6 +62,15 @@
             </ul>
         </div>
 
+        <div th:if="${advertenciasDeApertura != null and not #lists.isEmpty(advertenciasDeApertura)}"
+             class="alert alert-warning" role="alert">
+            <strong>Algunas puertas no tienen pared libre para abrir.</strong>
+            <ul class="mb-0">
+                <li th:each="advertencia : ${advertenciasDeApertura}"
+                    th:text="${advertencia}">La puerta del muro superior en la posición 0.6 m no tiene pared libre para abrir; la hoja podría chocar con muebles.</li>
+            </ul>
+        </div>
+
         <section class="hb-plano-section mb-4">
             <div class="hb-section-heading">
                 <div>

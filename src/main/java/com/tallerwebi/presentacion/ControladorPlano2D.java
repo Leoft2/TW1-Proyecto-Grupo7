@@ -29,6 +29,7 @@ public class ControladorPlano2D {
   private static final String ATRIBUTO_TRAMOS_ESTRECHOS = "tramosEstrechos";
   private static final String VISTA_PLANO_INTERACTIVO = "plano-interactivo";
   private static final String ATRIBUTO_DATOS = "datosPlano";
+  private static final String ATRIBUTO_ADVERTENCIAS = "advertenciasDeApertura";
 
   private final ServicioCirculacion servicioCirculacion = new ServicioCirculacionImpl();
   private final ServicioColisiones servicioColisiones = new ServicioColisionesImpl();
@@ -37,12 +38,19 @@ public class ControladorPlano2D {
   private ServicioCategoriaDeMueble servicioCategoriaDeMueble;
   private ServicioPersistenciaPlano servicioPersistenciaPlano;
   private ServicioZonaExclusion servicioZonaExclusion;
+  private AdvertenciasDeApertura advertenciasDeApertura;
 
   public ControladorPlano2D(
     ServicioPlano2D servicioPlano2D,
     ServicioCategoriaDeMueble servicioCategoriaDeMueble
   ) {
-    this(servicioPlano2D, servicioCategoriaDeMueble, null, new ServicioZonaExclusionImpl());
+    this(
+      servicioPlano2D,
+      servicioCategoriaDeMueble,
+      null,
+      new ServicioZonaExclusionImpl(),
+      new ServicioReglasDeAperturaImpl()
+    );
   }
 
   public ControladorPlano2D(
@@ -54,7 +62,23 @@ public class ControladorPlano2D {
       servicioPlano2D,
       servicioCategoriaDeMueble,
       servicioPersistenciaPlano,
-      new ServicioZonaExclusionImpl()
+      new ServicioZonaExclusionImpl(),
+      new ServicioReglasDeAperturaImpl()
+    );
+  }
+
+  public ControladorPlano2D(
+    ServicioPlano2D servicioPlano2D,
+    ServicioCategoriaDeMueble servicioCategoriaDeMueble,
+    ServicioPersistenciaPlano servicioPersistenciaPlano,
+    ServicioZonaExclusion servicioZonaExclusion
+  ) {
+    this(
+      servicioPlano2D,
+      servicioCategoriaDeMueble,
+      servicioPersistenciaPlano,
+      servicioZonaExclusion,
+      new ServicioReglasDeAperturaImpl()
     );
   }
 
@@ -63,12 +87,14 @@ public class ControladorPlano2D {
     ServicioPlano2D servicioPlano2D,
     ServicioCategoriaDeMueble servicioCategoriaDeMueble,
     ServicioPersistenciaPlano servicioPersistenciaPlano,
-    ServicioZonaExclusion servicioZonaExclusion
+    ServicioZonaExclusion servicioZonaExclusion,
+    ServicioReglasDeApertura servicioReglasDeApertura
   ) {
     this.servicioPlano2D = servicioPlano2D;
     this.servicioCategoriaDeMueble = servicioCategoriaDeMueble;
     this.servicioPersistenciaPlano = servicioPersistenciaPlano;
     this.servicioZonaExclusion = servicioZonaExclusion;
+    this.advertenciasDeApertura = new AdvertenciasDeApertura(servicioReglasDeApertura);
   }
 
   @RequestMapping(path = "/plano/ambiente", method = RequestMethod.GET)
@@ -100,6 +126,7 @@ public class ControladorPlano2D {
       modelo.put(ATRIBUTO_PLANO, plano);
       modelo.put(ATRIBUTO_ZONAS_DE_EXCLUSION, servicioZonaExclusion.calcularZonas(ambiente));
       modelo.put(ATRIBUTO_TRAMOS_ESTRECHOS, servicioCirculacion.calcularTramosEstrechos(plano));
+      modelo.put(ATRIBUTO_ADVERTENCIAS, advertenciasDeApertura.calcular(ambiente));
       return new ModelAndView("plano-interactivo", modelo);
     } catch (ValidacionException e) {
       return planoConError(e);
@@ -245,6 +272,7 @@ public class ControladorPlano2D {
       servicioZonaExclusion.calcularZonas(plano.getAmbiente())
     );
     modelo.put(ATRIBUTO_TRAMOS_ESTRECHOS, servicioCirculacion.calcularTramosEstrechos(plano));
+    modelo.put(ATRIBUTO_ADVERTENCIAS, advertenciasDeApertura.calcular(plano.getAmbiente()));
     return new ModelAndView(VISTA_PLANO_INTERACTIVO, modelo);
   }
 
@@ -261,6 +289,7 @@ public class ControladorPlano2D {
       servicioZonaExclusion.calcularZonas(plano.getAmbiente())
     );
     modelo.put(ATRIBUTO_TRAMOS_ESTRECHOS, servicioCirculacion.calcularTramosEstrechos(plano));
+    modelo.put(ATRIBUTO_ADVERTENCIAS, advertenciasDeApertura.calcular(plano.getAmbiente()));
     return new ModelAndView(VISTA_PLANO_INTERACTIVO, modelo);
   }
 

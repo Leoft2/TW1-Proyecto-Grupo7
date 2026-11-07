@@ -9,16 +9,24 @@ public class BaldeScrapeado {
   private String nombre;
   private Double precio;
   private Double litros;
+  private String opcionesLitros;
   private String colorNombre;
   private String hex;
 
   public BaldeScrapeado() {}
 
-  public BaldeScrapeado(String href, String nombre, Double precio, Double litros) {
+  public BaldeScrapeado(
+    String href,
+    String nombre,
+    Double precio,
+    Double litros,
+    String opcionesLitros
+  ) {
     this.href = href;
     this.nombre = nombre;
     this.precio = precio;
     this.litros = litros;
+    this.opcionesLitros = opcionesLitros;
   }
 
   public String getHref() {
@@ -61,6 +69,14 @@ public class BaldeScrapeado {
     this.litros = litros;
   }
 
+  public String getOpcionesLitros() {
+    return opcionesLitros;
+  }
+
+  public void setOpcionesLitros(String opcionesLitros) {
+    this.opcionesLitros = opcionesLitros;
+  }
+
   public String getColorNombre() {
     return colorNombre;
   }
@@ -78,6 +94,6 @@ public class BaldeScrapeado {
   }
 
   public BaldePintura aBaldePintura() {
-    return new BaldePintura(nombre, colorNombre, hex, url, litros, precio);
+    return new BaldePintura(nombre, colorNombre, hex, url, litros, precio, opcionesLitros);
   }
 }

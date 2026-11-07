@@ -1,7 +1,7 @@
 package com.tallerwebi.infraestructura;
 
-import com.tallerwebi.dominio.DetalleBaldeScrapeado;
 import com.tallerwebi.dominio.ServicioScrapingDetalleBaldePintura;
+import java.util.List;
 import java.util.Optional;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,12 +24,12 @@ public class ServicioScrapingDetalleBaldePinturaImpl
   }
 
   @Override
-  public Optional<DetalleBaldeScrapeado> scrapearDetalle(String url) throws Exception {
-    Document doc = conexion.conectar(url);
-    DetalleBaldeScrapeado detalle = parser.parsear(doc);
-    if (detalle == null) {
+  public Optional<List<Double>> obtenerOpcionesLitros(String url) {
+    try {
+      Document doc = conexion.conectar(url);
+      return Optional.of(parser.extraerOpcionesLitros(doc));
+    } catch (Exception e) {
       return Optional.empty();
     }
-    return Optional.of(detalle);
   }
 }

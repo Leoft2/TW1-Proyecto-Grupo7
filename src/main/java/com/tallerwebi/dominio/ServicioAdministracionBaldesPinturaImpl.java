@@ -11,13 +11,16 @@ public class ServicioAdministracionBaldesPinturaImpl
 
   private final ServicioScrapingPinturas servicioScraping;
   private final RepositorioBaldePintura repositorioBaldePintura;
+  private final RepositorioLitros repositorioLitros;
 
   public ServicioAdministracionBaldesPinturaImpl(
     ServicioScrapingPinturas servicioScraping,
-    RepositorioBaldePintura repositorioBaldePintura
+    RepositorioBaldePintura repositorioBaldePintura,
+    RepositorioLitros repositorioLitros
   ) {
     this.servicioScraping = servicioScraping;
     this.repositorioBaldePintura = repositorioBaldePintura;
+    this.repositorioLitros = repositorioLitros;
   }
 
   @Override
@@ -26,7 +29,23 @@ public class ServicioAdministracionBaldesPinturaImpl
     List<BaldePintura> baldes = servicioScraping.scrapearBaldes();
     repositorioBaldePintura.eliminarTodos();
     for (BaldePintura balde : baldes) {
+      resolverOpcionesLitros(balde);
       repositorioBaldePintura.guardar(balde);
     }
+  }
+
+  private void resolverOpcionesLitros(BaldePintura balde) {
+    List<Double> valores = balde.getValoresOpcionesLitros();
+    balde.limpiarOpcionesLitros();
+    for (Double valor : valores) {
+      Litros litros = repositorioLitros.buscarPorValor(valor).orElseGet(() -> crearLitros(valor));
+      balde.agregarOpcionLitros(litros);
+    }
+  }
+
+  private Litros crearLitros(Double valor) {
+    Litros nuevo = new Litros(valor);
+    repositorioLitros.guardar(nuevo);
+    return nuevo;
   }
 }

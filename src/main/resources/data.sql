@@ -124,19 +124,24 @@ INSERT INTO ambiente_muebles(ambiente_id, mueble_id) VALUES
   (8, 6),
   (8, 14);
 
-INSERT INTO BaldePintura(id, nombre, colorNombre, hex, cantidadLitros, precio) VALUES
-  (4, 'Balde Mar Egeo', 'Mar Egeo', '#0191b4', 4.0, 9400.0),
-  (5, 'Balde Lago Puelo', 'Lago Puelo', '#47627d', 4.0, 9300.0),
-  (6, 'Balde El Palmar', 'El Palmar', '#567c49', 4.0, 9300.0),
-  (7, 'Balde Danubio', 'Danubio', '#5d79c0', 4.0, 9300.0),
-  (8, 'Balde Pradera', 'Pradera', '#7acf4b', 4.0, 9200.0),
-  (9, 'Balde Los Arrayanes', 'Los Arrayanes', '#7f532b', 4.0, 9200.0),
-  (10, 'Balde Uva', 'Uva', '#8364b3', 4.0, 9400.0),
-  (11, 'Balde El Leoncito', 'El Leoncito', '#938d81', 4.0, 9100.0),
-  (12, 'Balde Talampaya', 'Talampaya', '#b6213f', 4.0, 9500.0),
-  (13, 'Balde Rosa', 'Rosa', '#da68a4', 4.0, 9300.0),
-  (14, 'Balde Quebrada del Condorito', 'Quebrada del Condorito', '#dbc861', 4.0, 9200.0),
-  (15, 'Balde Carmin', 'Carmin', '#f32329', 4.0, 9400.0),
-  (16, 'Balde Limonchello', 'Limonchello', '#fadb49', 4.0, 9000.0),
-  (17, 'Balde Mango', 'Mango', '#ff8f21', 4.0, 9300.0),
-  (18, 'Balde Blanco', 'Blanco', '#ffffff', 4.0, 8700.0);
+INSERT INTO BaldePintura(nombre, colorNombre, hex, cantidadLitros, precio) VALUES
+  ('Balde Mar Egeo', 'Mar Egeo', '#0191b4', 4.0, 9400.0),
+  ('Balde Lago Puelo', 'Lago Puelo', '#47627d', 4.0, 9300.0),
+  ('Balde El Palmar', 'El Palmar', '#567c49', 4.0, 9300.0),
+  ('Balde Danubio', 'Danubio', '#5d79c0', 4.0, 9300.0),
+  ('Balde Pradera', 'Pradera', '#7acf4b', 4.0, 9200.0),
+  ('Balde Los Arrayanes', 'Los Arrayanes', '#7f532b', 4.0, 9200.0),
+  ('Balde Uva', 'Uva', '#8364b3', 4.0, 9400.0),
+  ('Balde El Leoncito', 'El Leoncito', '#938d81', 4.0, 9100.0),
+  ('Balde Talampaya', 'Talampaya', '#b6213f', 4.0, 9500.0),
+  ('Balde Rosa', 'Rosa', '#da68a4', 4.0, 9300.0),
+  ('Balde Quebrada del Condorito', 'Quebrada del Condorito', '#dbc861', 4.0, 9200.0),
+  ('Balde Carmin', 'Carmin', '#f32329', 4.0, 9400.0),
+  ('Balde Limonchello', 'Limonchello', '#fadb49', 4.0, 9000.0),
+  ('Balde Mango', 'Mango', '#ff8f21', 4.0, 9300.0),
+  ('Balde Blanco', 'Blanco', '#ffffff', 4.0, 8700.0);
+
+INSERT INTO Litros(valor) VALUES (1.0), (4.0), (10.0), (20.0);
+
+INSERT INTO balde_litros(balde_id, litros_id)
+SELECT b.id, l.id FROM BaldePintura b CROSS JOIN Litros l;

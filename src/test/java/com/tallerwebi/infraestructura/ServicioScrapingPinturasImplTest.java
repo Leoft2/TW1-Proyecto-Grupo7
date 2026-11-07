@@ -40,7 +40,7 @@ public class ServicioScrapingPinturasImplTest {
 
   @Test
   public void deberiaSetearColorYHexEnCadaBalde() throws Exception {
-    BaldeScrapeado balde = new BaldeScrapeado("/producto/p", "Pintura X", 1000.0, 4.0);
+    BaldeScrapeado balde = new BaldeScrapeado("/producto/p", "Pintura X", 1000.0, 4.0, "1,4,10,20");
     List<BaldeScrapeado> productos = List.of(balde);
 
     ConexionColorshop conexion = mock(ConexionColorshop.class);
@@ -57,6 +57,7 @@ public class ServicioScrapingPinturasImplTest {
     BaldePintura primero = resultado.get(0);
     assertThat(primero.getColorNombre(), is("Mar Egeo"));
     assertThat(primero.getHex(), is("0191b4"));
+    assertThat(primero.getOpcionesLitros(), is("1,4,10,20"));
     for (BaldePintura baldePintura : resultado) {
       assertThat(baldePintura.getColorNombre(), is(notNullValue()));
       assertThat(baldePintura.getHex(), is(notNullValue()));
@@ -66,12 +67,12 @@ public class ServicioScrapingPinturasImplTest {
   @Test
   public void deberiaLimitarProductosPorColor() throws Exception {
     List<BaldeScrapeado> muchosProductos = List.of(
-      new BaldeScrapeado("/p1", "P1", 1000.0, 4.0),
-      new BaldeScrapeado("/p2", "P2", 1000.0, 4.0),
-      new BaldeScrapeado("/p3", "P3", 1000.0, 4.0),
-      new BaldeScrapeado("/p4", "P4", 1000.0, 4.0),
-      new BaldeScrapeado("/p5", "P5", 1000.0, 4.0),
-      new BaldeScrapeado("/p6", "P6", 1000.0, 4.0)
+      new BaldeScrapeado("/p1", "P1", 1000.0, 4.0, "4"),
+      new BaldeScrapeado("/p2", "P2", 1000.0, 4.0, "4"),
+      new BaldeScrapeado("/p3", "P3", 1000.0, 4.0, "4"),
+      new BaldeScrapeado("/p4", "P4", 1000.0, 4.0, "4"),
+      new BaldeScrapeado("/p5", "P5", 1000.0, 4.0, "4"),
+      new BaldeScrapeado("/p6", "P6", 1000.0, 4.0, "4")
     );
 
     ConexionColorshop conexion = mock(ConexionColorshop.class);
@@ -93,7 +94,7 @@ public class ServicioScrapingPinturasImplTest {
 
   @Test
   public void deberiaCortarPaginacionCuandoPaginaEstaVacia() throws Exception {
-    BaldeScrapeado balde = new BaldeScrapeado("/producto/p", "Pintura X", 1000.0, 4.0);
+    BaldeScrapeado balde = new BaldeScrapeado("/producto/p", "Pintura X", 1000.0, 4.0, "4");
     List<BaldeScrapeado> productos = List.of(balde);
     List<BaldeScrapeado> vacio = List.of();
 

@@ -38,6 +38,11 @@
           <dt>Litros</dt>
           <dd th:if="${balde.cantidadLitros != null}" th:text="${balde.cantidadLitros} + ' L'">4 L</dd>
           <dd th:if="${balde.cantidadLitros == null}" class="text-muted">Sin litros</dd>
+          <dt>Opciones de litros</dt>
+          <dd th:if="${opcionesLitros == null || opcionesLitros.isEmpty()}" class="text-muted">Sin opciones</dd>
+          <dd th:if="${opcionesLitros != null && !opcionesLitros.isEmpty()}">
+            <span th:each="opcion : ${opcionesLitros}" class="badge bg-info text-dark me-1" th:text="${opcion} + ' L'">4 L</span>
+          </dd>
           <dt>Hex</dt>
           <dd th:if="${balde.hex != null}" th:text="${'#' + balde.hex}">#ffffff</dd>
           <dd th:if="${balde.hex == null}" class="text-muted">Sin hex</dd>

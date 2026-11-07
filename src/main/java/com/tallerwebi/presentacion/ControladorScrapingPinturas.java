@@ -1,14 +1,16 @@
 package com.tallerwebi.presentacion;
 
 import com.tallerwebi.dominio.BaldePintura;
-import com.tallerwebi.dominio.DetalleBaldeScrapeado;
+import com.tallerwebi.dominio.Litros;
 import com.tallerwebi.dominio.RepositorioBaldePintura;
+import com.tallerwebi.dominio.RepositorioLitros;
 import com.tallerwebi.dominio.ServicioAdministracionBaldesPintura;
 import com.tallerwebi.dominio.ServicioScrapingDetalleBaldePintura;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -35,21 +37,24 @@ public class ControladorScrapingPinturas {
 
   private final ServicioAdministracionBaldesPintura servicioAdministracion;
   private final RepositorioBaldePintura repositorioBaldePintura;
-  private final ServicioScrapingDetalleBaldePintura servicioScrapingDetalle;
+  private final ServicioScrapingDetalleBaldePintura servicioScrapingDetalleBaldePintura;
+  private final RepositorioLitros repositorioLitros;
 
   @Autowired
   public ControladorScrapingPinturas(
     ServicioAdministracionBaldesPintura servicioAdministracion,
     RepositorioBaldePintura repositorioBaldePintura,
-    ServicioScrapingDetalleBaldePintura servicioScrapingDetalle
+    ServicioScrapingDetalleBaldePintura servicioScrapingDetalleBaldePintura,
+    RepositorioLitros repositorioLitros
   ) {
     this.servicioAdministracion = servicioAdministracion;
     this.repositorioBaldePintura = repositorioBaldePintura;
-    this.servicioScrapingDetalle = servicioScrapingDetalle;
+    this.servicioScrapingDetalleBaldePintura = servicioScrapingDetalleBaldePintura;
+    this.repositorioLitros = repositorioLitros;
   }
 
   @GetMapping("/{id}")
-  @Transactional(readOnly = true)
+  @Transactional
   public ModelAndView detalleBalde(@PathVariable("id") Long id) {
     Optional<BaldePintura> baldeOptional = Optional.ofNullable(
       repositorioBaldePintura.buscarPorId(id)
@@ -58,27 +63,37 @@ public class ControladorScrapingPinturas {
       return new ModelAndView(REDIRECT_HOME + "?error=baldeNoEncontrado");
     }
     BaldePintura balde = baldeOptional.get();
-    Map<String, Object> modelo = new ModelMap();
-    modelo.put("balde", balde);
-    if (balde.getUrl() != null) {
+    if (balde.getUrl() != null && balde.getLitrosOpciones().isEmpty()) {
       try {
-        Optional<DetalleBaldeScrapeado> detalle = servicioScrapingDetalle.scrapearDetalle(
+        Optional<List<Double>> opciones = servicioScrapingDetalleBaldePintura.obtenerOpcionesLitros(
           balde.getUrl()
         );
-        if (detalle.isPresent()) {
-          DetalleBaldeScrapeado detalleScrapeado = detalle.get();
-          if (detalleScrapeado.getLitros() != null) {
-            balde.setCantidadLitros(detalleScrapeado.getLitros());
-          }
-          if (detalleScrapeado.getNombre() != null) {
-            balde.setNombre(detalleScrapeado.getNombre());
-          }
+        if (opciones.isPresent() && !opciones.get().isEmpty()) {
+          guardarOpcionesLitros(balde, opciones.get());
+          repositorioBaldePintura.guardar(balde);
         }
       } catch (Exception e) {
-        LOGGER.warn("No se pudieron obtener los litros del balde {}", id, e);
+        LOGGER.error("Error obteniendo opciones de litros del balde {}", id, e);
       }
     }
+    Map<String, Object> modelo = new ModelMap();
+    modelo.put("balde", balde);
+    modelo.put("opcionesLitros", balde.getOpcionesLitrosFormateadas());
     return new ModelAndView(VISTA_DETALLE_BALDE, modelo);
+  }
+
+  private void guardarOpcionesLitros(BaldePintura balde, List<Double> opciones) {
+    balde.limpiarOpcionesLitros();
+    for (Double valor : opciones) {
+      Litros litro = repositorioLitros
+        .buscarPorValor(valor)
+        .orElseGet(() -> {
+          Litros nuevo = new Litros(valor);
+          repositorioLitros.guardar(nuevo);
+          return nuevo;
+        });
+      balde.agregarOpcionLitros(litro);
+    }
   }
 
   @PostMapping("/actualizar")

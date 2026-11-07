@@ -47,7 +47,6 @@
                     <p th:if="${#lists.isEmpty(ambiente.muebles)}" class="text-secondary">Sin muebles cargados todavía.</p>
                     <div class="d-flex gap-2">
                         <a th:href="@{/ambientes/{id}(id=${ambiente.id})}" class="btn btn-primary">Detalle</a>
-                        <a th:href="@{/ambientes/{id}/propuestas(id=${ambiente.id})}" class="btn btn-secondary">Ver propuestas</a>
                     </div>
                 </div>
             </div>

@@ -1,9 +1,6 @@
 package com.tallerwebi.presentacion;
 
-import com.tallerwebi.dominio.Abertura;
-import com.tallerwebi.dominio.Ambiente;
 import com.tallerwebi.dominio.Muro;
-import com.tallerwebi.dominio.ReglaDeApertura;
 import com.tallerwebi.dominio.ServicioReglasDeApertura;
 import com.tallerwebi.dominio.ServicioReglasDeAperturaImpl;
 import com.tallerwebi.dominio.TipoAbertura;
@@ -28,13 +25,8 @@ public class ControladorPlanoAberturas {
   private static final String ATRIBUTO_ADVERTENCIAS = "advertenciasDeApertura";
   private static final String ERROR_DE_ABERTURA_INCOMPLETA =
     "Completá la posición y el ancho de cada abertura, o eliminá la fila.";
-  // Mensaje que se agrega por cada puerta que no tiene espacio para abrir.
-  private static final String MENSAJE_ADVERTENCIA =
-    "La puerta del muro %s en la posición %s m no tiene pared libre para abrir; " +
-    "la hoja podría chocar con muebles.";
 
-  // Servicio que decide si una puerta tiene pared libre para abrir.
-  private final ServicioReglasDeApertura servicioReglasDeApertura;
+  private final AdvertenciasDeApertura calculadoraDeAdvertencias;
 
   // Constructor sin argumentos que conserva el uso directo del controlador.
   public ControladorPlanoAberturas() {
@@ -43,7 +35,7 @@ public class ControladorPlanoAberturas {
 
   @Autowired
   public ControladorPlanoAberturas(ServicioReglasDeApertura servicioReglasDeApertura) {
-    this.servicioReglasDeApertura = servicioReglasDeApertura;
+    this.calculadoraDeAdvertencias = new AdvertenciasDeApertura(servicioReglasDeApertura);
   }
 
   @RequestMapping(path = "/plano/aberturas", method = RequestMethod.GET)
@@ -98,28 +90,11 @@ public class ControladorPlanoAberturas {
     return modelo;
   }
 
-  // Calcula una advertencia por cada PUERTA sin pared libre. Las ventanas no
-  // se consultan al servicio y, si faltan las medidas, no se intenta calcular.
+  // Si faltan las medidas del ambiente, no se intenta calcular advertencias.
   private List<String> advertenciasDeApertura(DatosPlano datos) {
-    List<String> advertencias = new ArrayList<>();
     if (datos.getAncho() == null || datos.getLargo() == null) {
-      return advertencias;
+      return new ArrayList<>();
     }
-    Ambiente ambiente = datos.aAmbiente();
-    for (Abertura abertura : ambiente.getAberturas()) {
-      if (abertura.getTipo() == TipoAbertura.PUERTA) {
-        ReglaDeApertura regla = servicioReglasDeApertura.determinarApertura(abertura, ambiente);
-        if (!regla.getHayParedLibre()) {
-          advertencias.add(
-            String.format(
-              MENSAJE_ADVERTENCIA,
-              abertura.getMuro().getNombre(),
-              abertura.getPosicion()
-            )
-          );
-        }
-      }
-    }
-    return advertencias;
+    return calculadoraDeAdvertencias.calcular(datos.aAmbiente());
   }
 }

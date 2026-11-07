@@ -1,20 +1,28 @@
 package com.tallerwebi.infraestructura;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.springframework.stereotype.Component;
 
+@Component
 public class ParserBaldesColorshop {
 
   public static final String SELECTOR_TARJETA = ".vtex-product-summary-2-x-container";
+  public static final String SELECTOR_PRESENTACION_ITEM =
+    "[class*=skuSelectorSubcontainer--presentacion] [class*=skuSelectorItem]";
   private static final String SELECTOR_NOMBRE = "h3";
   private static final String SELECTOR_PRECIO = ".vtex-product-price-1-x-sellingPrice";
   private static final String SELECTOR_ENLACE = "a[href]";
 
-  private static final Pattern PATRON_LITROS = Pattern.compile("(\\d+)\\s*[Ll](?:itros)?\\b");
+  public static final Pattern PATRON_LITROS = Pattern.compile(
+    "(\\d+(?:[.,]\\d+)?)\\s*(?:Lts|Lt|Litros?|L)\\b",
+    Pattern.CASE_INSENSITIVE
+  );
 
   public List<BaldeScrapeado> parsear(Document doc) {
     List<Element> tarjetas = doc.select(SELECTOR_TARJETA);
@@ -32,9 +40,10 @@ public class ParserBaldesColorshop {
       }
 
       Double precio = extraerPrecio(tarjeta, SELECTOR_PRECIO);
-      Double litros = extraerLitrosDelNombre(nombre);
+      String opcionesLitros = extraerOpcionesLitros(tarjeta);
+      Double litros = primerLitro(opcionesLitros);
 
-      baldes.add(new BaldeScrapeado(href, nombre, precio, litros));
+      baldes.add(new BaldeScrapeado(href, nombre, precio, litros, opcionesLitros));
     }
 
     return baldes;
@@ -87,15 +96,76 @@ public class ParserBaldesColorshop {
     }
   }
 
-  private Double extraerLitrosDelNombre(String nombre) {
-    Matcher matcher = PATRON_LITROS.matcher(nombre);
-    if (matcher.find()) {
-      try {
-        return Double.parseDouble(matcher.group(1));
-      } catch (NumberFormatException e) {
-        return null;
+  private String extraerOpcionesLitros(Element tarjeta) {
+    List<Double> opciones = new ArrayList<>();
+    for (Element item : tarjeta.select(SELECTOR_PRESENTACION_ITEM)) {
+      agregarValores(extraerValoresLitros(item.text()), opciones);
+    }
+    if (opciones.isEmpty()) {
+      agregarValores(extraerValoresLitros(tarjeta.text()), opciones);
+    }
+    return formatearOpciones(opciones);
+  }
+
+  private void agregarValores(List<Double> origen, List<Double> destino) {
+    for (Double valor : origen) {
+      if (!destino.contains(valor)) {
+        destino.add(valor);
       }
     }
-    return null;
+  }
+
+  public static List<Double> extraerValoresLitros(String texto) {
+    List<Double> valores = new ArrayList<>();
+    if (texto == null) {
+      return valores;
+    }
+    Matcher matcher = PATRON_LITROS.matcher(texto);
+    while (matcher.find()) {
+      Double valor = parsearValorLitros(matcher.group(1));
+      if (valor != null && !valores.contains(valor)) {
+        valores.add(valor);
+      }
+    }
+    return valores;
+  }
+
+  public static String formatearOpciones(List<Double> opciones) {
+    if (opciones == null || opciones.isEmpty()) {
+      return null;
+    }
+    List<Double> ordenadas = new ArrayList<>(opciones);
+    ordenadas.sort(Comparator.naturalOrder());
+    StringBuilder sb = new StringBuilder();
+    for (Double valor : ordenadas) {
+      if (sb.length() > 0) {
+        sb.append(",");
+      }
+      if (valor == Math.floor(valor)) {
+        sb.append(valor.intValue());
+      } else {
+        sb.append(valor);
+      }
+    }
+    return sb.toString();
+  }
+
+  private static Double parsearValorLitros(String texto) {
+    try {
+      return Double.parseDouble(texto.replace(",", "."));
+    } catch (NumberFormatException e) {
+      return null;
+    }
+  }
+
+  private Double primerLitro(String opcionesLitros) {
+    if (opcionesLitros == null || opcionesLitros.isBlank()) {
+      return null;
+    }
+    try {
+      return Double.parseDouble(opcionesLitros.split(",")[0]);
+    } catch (NumberFormatException e) {
+      return null;
+    }
   }
 }

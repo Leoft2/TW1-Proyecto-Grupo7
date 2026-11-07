@@ -17,8 +17,6 @@ import org.springframework.web.servlet.ModelAndView;
 public class ControladorCatalogoPinturas {
 
   private static final String VISTA_CATALOGO_PINTURAS = "catalogo-pinturas";
-  private static final String REDIRECT_HOME = "redirect:/home";
-
   private final RepositorioBaldePintura repositorioBaldePintura;
 
   @Autowired
@@ -30,15 +28,6 @@ public class ControladorCatalogoPinturas {
   @Transactional(readOnly = true)
   public ModelAndView catalogoPinturas(HttpServletRequest request) {
     List<BaldePintura> todos = repositorioBaldePintura.obtenerTodos();
-
-    /*
-    List<BaldePintura> baldesConColor = new ArrayList<>();
-    for (BaldePintura balde : todos) {
-      if (balde.getColorNombre() != null) {
-        baldesConColor.add(balde);
-      }
-    } */
-
     Map<String, Object> modelo = new ModelMap();
     modelo.put("baldes", todos);
     modelo.put("totalBaldes", todos.size());

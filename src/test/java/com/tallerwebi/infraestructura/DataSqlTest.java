@@ -9,12 +9,16 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
 import com.tallerwebi.datos.HsqldbConDatosTestConfig;
 import com.tallerwebi.dominio.Ambiente;
+import com.tallerwebi.dominio.BaldeLitros;
+import com.tallerwebi.dominio.BaldePintura;
 import com.tallerwebi.dominio.CategoriaDeMueble;
 import com.tallerwebi.dominio.Estilo;
 import com.tallerwebi.dominio.FormaPintura;
+import com.tallerwebi.dominio.Litros;
 import com.tallerwebi.dominio.Material;
 import com.tallerwebi.dominio.Mueble;
 import com.tallerwebi.dominio.RecomendacionPintura;
@@ -319,6 +323,66 @@ public class DataSqlTest {
 
     assertThat(usuarioDeTest.getRol(), is("USER"));
     assertThat(administrador.getRol(), is("ADMIN"));
+  }
+
+  @Test
+  @Transactional
+  public void dadoQueArrancaLaAplicacion_cuandoConsultoLosBaldes_entoncesTienenSusOpcionesDeLitrosSembradas() {
+    List<BaldePintura> baldes =
+      this.sessionFactory.getCurrentSession()
+        .createQuery("FROM BaldePintura", BaldePintura.class)
+        .getResultList();
+
+    assertThat(baldes, hasSize(15));
+    for (BaldePintura balde : baldes) {
+      assertThat(balde.getCantidadLitros(), is(4.0));
+      assertThat(balde.getUrl(), is(nullValue()));
+      assertThat(balde.getOpcionesLitros(), is("1,4,10,20"));
+    }
+
+    Long cantidadLitros =
+      this.sessionFactory.getCurrentSession()
+        .createQuery("SELECT COUNT(l) FROM Litros l", Long.class)
+        .getSingleResult();
+    assertThat(cantidadLitros, is(4L));
+
+    Long cantidadBaldeLitros =
+      this.sessionFactory.getCurrentSession()
+        .createQuery("SELECT COUNT(bl) FROM BaldeLitros bl", Long.class)
+        .getSingleResult();
+    assertThat(cantidadBaldeLitros, is(60L));
+  }
+
+  @Test
+  @Transactional
+  public void dadoQueGuardoUnBaldeConOpcionesLitros_cuandoLoRecargoDesdeLaBaseDeDatos_entoncesPersistenLasOpciones() {
+    BaldePintura balde = new BaldePintura(
+      "Balde Test",
+      "Rojo",
+      "#ff0000",
+      "/test",
+      4.0,
+      5000.0,
+      null
+    );
+    balde.agregarOpcionLitros(
+      this.sessionFactory.getCurrentSession()
+        .createQuery("FROM Litros WHERE valor = 4.0", Litros.class)
+        .getSingleResult()
+    );
+    balde.agregarOpcionLitros(
+      this.sessionFactory.getCurrentSession()
+        .createQuery("FROM Litros WHERE valor = 10.0", Litros.class)
+        .getSingleResult()
+    );
+    this.sessionFactory.getCurrentSession().persist(balde);
+    this.sessionFactory.getCurrentSession().flush();
+    this.sessionFactory.getCurrentSession().clear();
+
+    BaldePintura recargado =
+      this.sessionFactory.getCurrentSession().get(BaldePintura.class, balde.getId());
+
+    assertThat(recargado.getOpcionesLitros(), is("4,10"));
   }
 
   private Usuario obtenerUsuario(String email) {

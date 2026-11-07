@@ -1,0 +1,66 @@
+<!DOCTYPE HTML>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/layout :: head(${balde.nombre})}"></head>
+
+<body>
+  <nav th:replace="~{fragments/layout :: navbar('pinturas')}"></nav>
+
+  <main class="container">
+    <header class="hb-page-header">
+      <div>
+        <span class="hb-eyebrow">Balde de pintura</span>
+        <h1 th:text="${balde.nombre}">Pintura interior</h1>
+        <p th:text="'Color: ' + ${balde.colorNombre}">Color: Blanco</p>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="card-body">
+        <dl class="hb-datos">
+          <dt>Color</dt>
+          <dd>
+            <span
+              th:if="${balde.hex != null}"
+              class="badge"
+              th:style="'background-color: #' + ${balde.hex} + '; color: #000; border: 1px solid #999; box-shadow: 0 1px 2px rgba(0,0,0,0.15);'"
+              th:text="${balde.colorNombre}"
+            >Blanco</span>
+            <span
+              th:if="${balde.hex == null}"
+              class="badge bg-secondary"
+              th:text="${balde.colorNombre}"
+            >Sin color</span>
+          </dd>
+          <dt>Precio</dt>
+          <dd th:if="${balde.precio != null}" th:text="'$ ' + ${#numbers.formatDecimal(balde.precio, 0, 2)}">$ 0,00</dd>
+          <dd th:if="${balde.precio == null}" class="text-muted">Sin precio</dd>
+          <dt>Litros</dt>
+          <dd th:if="${balde.cantidadLitros != null}" th:text="${balde.cantidadLitros} + ' L'">4 L</dd>
+          <dd th:if="${balde.cantidadLitros == null}" class="text-muted">Sin litros</dd>
+          <dt>Opciones de litros</dt>
+          <dd th:if="${opcionesLitros == null || opcionesLitros.isEmpty()}" class="text-muted">Sin opciones</dd>
+          <dd th:if="${opcionesLitros != null && !opcionesLitros.isEmpty()}">
+            <span th:each="opcion : ${opcionesLitros}" class="badge bg-info text-dark me-1" th:text="${opcion} + ' L'">4 L</span>
+          </dd>
+          <dt>Hex</dt>
+          <dd th:if="${balde.hex != null}" th:text="${'#' + balde.hex}">#ffffff</dd>
+          <dd th:if="${balde.hex == null}" class="text-muted">Sin hex</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div th:if="${balde.url != null}" class="mt-4">
+      <a th:href="${balde.url}" class="btn btn-primary" target="_blank" rel="noopener">
+        <i class="bi bi-box-arrow-up-right"></i> Ver en Colorshop
+      </a>
+    </div>
+
+    <a th:href="@{/pinturas/baldes}" class="btn btn-secondary mt-4"><i class="bi bi-arrow-left"></i> Volver a los baldes</a>
+  </main>
+
+  <footer th:replace="~{fragments/layout :: footer}"></footer>
+  <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+
+</html>

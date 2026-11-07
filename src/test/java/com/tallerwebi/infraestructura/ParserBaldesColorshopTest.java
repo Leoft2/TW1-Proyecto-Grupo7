@@ -13,60 +13,102 @@ import org.junit.jupiter.api.Test;
 
 public class ParserBaldesColorshopTest {
 
-  private static final String HTML_CON_DOS_BALDES =
+  private static final String HTML_CON_SELECTOR_PRESENTACION =
     "" +
     "<html><body>" +
     "<div class='vtex-product-summary-2-x-container'>" +
-    "  <a href='/recuplast-interior-mate/p?skuId=84520993'></a>" +
-    "  <h3>Pintura Recuplast Interior 4L</h3>" +
+    "  <a href='/recuplast-interior-colores/p'></a>" +
+    "  <h3><span>Recuplast Interior Colores</span></h3>" +
     "  <span class='vtex-product-price-1-x-sellingPrice'>$ 17.193,60</span>" +
+    "  <div class='vtex-store-components-3-x-skuSelectorSubcontainer--presentacion'>" +
+    "    <div class='vtex-store-components-3-x-skuSelectorItem'>1 Lt.</div>" +
+    "    <div class='vtex-store-components-3-x-skuSelectorItem'>4 Lts.</div>" +
+    "    <div class='vtex-store-components-3-x-skuSelectorItem'>10 Lts.</div>" +
+    "  </div>" +
     "</div>" +
     "<div class='vtex-product-summary-2-x-container'>" +
-    "  <a href='/hidroesmalte-epoxi/p?skuId=89441003'></a>" +
-    "  <h3>Pintura Sin Litros Especificados</h3>" +
+    "  <a href='/hidroesmalte-epoxi/p'></a>" +
+    "  <h3><span>Hidroesmalte Epoxi</span></h3>" +
     "  <span class='vtex-product-price-1-x-sellingPrice'>10.000,00</span>" +
+    "  <div class='vtex-store-components-3-x-skuSelectorSubcontainer--presentacion'>" +
+    "    <div class='vtex-store-components-3-x-skuSelectorItem'>20 L</div>" +
+    "  </div>" +
     "</div>" +
     "<div class='vtex-product-summary-2-x-container'>" +
-    "  <a href='/sin-enlace/p?skuId=999'></a>" +
-    "  <h3>   </h3>" +
+    "  <a href='/sin-litros/p'></a>" +
+    "  <h3><span>Pintura Sin Medida</span></h3>" +
     "  <span class='vtex-product-price-1-x-sellingPrice'>5.000,00</span>" +
     "</div>" +
     "</body></html>";
 
   @Test
-  public void deberiaParsearNombrePrecioYLitrosDeCadaTarjeta() {
+  public void deberiaParsearOpcionesDeLitrosDelSelectorDePresentacion() {
     ParserBaldesColorshop parser = new ParserBaldesColorshop();
-    Document doc = Jsoup.parse(HTML_CON_DOS_BALDES);
+    Document doc = Jsoup.parse(HTML_CON_SELECTOR_PRESENTACION);
 
     List<BaldeScrapeado> baldes = parser.parsear(doc);
 
-    assertThat(baldes, hasSize(2));
+    assertThat(baldes, hasSize(3));
 
     BaldeScrapeado primero = baldes.get(0);
-    assertThat(primero.getNombre(), is("Pintura Recuplast Interior 4L"));
-    assertThat(primero.getHref(), is("/recuplast-interior-mate/p"));
-    assertThat(primero.getPrecio(), equalTo(17193.60));
-    assertThat(primero.getLitros(), equalTo(4.0));
-    assertThat(primero.getColorNombre(), nullValue());
-    assertThat(primero.getHex(), nullValue());
+    assertThat(primero.getNombre(), is("Recuplast Interior Colores"));
+    assertThat(primero.getOpcionesLitros(), is("1,4,10"));
+    assertThat(primero.getLitros(), equalTo(1.0));
 
     BaldeScrapeado segundo = baldes.get(1);
-    assertThat(segundo.getNombre(), is("Pintura Sin Litros Especificados"));
-    assertThat(segundo.getHref(), is("/hidroesmalte-epoxi/p"));
-    assertThat(segundo.getPrecio(), equalTo(10000.00));
-    assertThat(segundo.getLitros(), nullValue());
-    assertThat(segundo.getColorNombre(), nullValue());
-    assertThat(segundo.getHex(), nullValue());
+    assertThat(segundo.getNombre(), is("Hidroesmalte Epoxi"));
+    assertThat(segundo.getOpcionesLitros(), is("20"));
+    assertThat(segundo.getLitros(), equalTo(20.0));
+
+    BaldeScrapeado tercero = baldes.get(2);
+    assertThat(tercero.getNombre(), is("Pintura Sin Medida"));
+    assertThat(tercero.getOpcionesLitros(), nullValue());
+    assertThat(tercero.getLitros(), nullValue());
   }
 
   @Test
-  public void deberiaIgnorarTarjetasSinNombre() {
+  public void deberiaUsarElTextoDeLaTarjetaCuandoNoHaySelectorDePresentacion() {
     ParserBaldesColorshop parser = new ParserBaldesColorshop();
-    Document doc = Jsoup.parse(HTML_CON_DOS_BALDES);
+    Document doc = Jsoup.parse(
+      "" +
+      "<html><body>" +
+      "<div class='vtex-product-summary-2-x-container'>" +
+      "  <a href='/pintura/p'></a>" +
+      "  <h3>Pintura Especial</h3>" +
+      "  <span class='vtex-product-price-1-x-sellingPrice'>$ 9.000,00</span>" +
+      "  <span>Envase de 4L y 10 L disponibles</span>" +
+      "</div>" +
+      "</body></html>"
+    );
 
     List<BaldeScrapeado> baldes = parser.parsear(doc);
 
-    assertThat(baldes, hasSize(2));
-    assertThat(baldes.stream().anyMatch(b -> b.getNombre().isBlank()), is(false));
+    assertThat(baldes, hasSize(1));
+    assertThat(baldes.get(0).getOpcionesLitros(), is("4,10"));
+    assertThat(baldes.get(0).getLitros(), equalTo(4.0));
+  }
+
+  @Test
+  public void deberiaOrdenarYDeduplicarLasOpcionesDeLitros() {
+    ParserBaldesColorshop parser = new ParserBaldesColorshop();
+    Document doc = Jsoup.parse(
+      "" +
+      "<html><body>" +
+      "<div class='vtex-product-summary-2-x-container'>" +
+      "  <a href='/pintura/p'></a>" +
+      "  <h3>Pintura Especial</h3>" +
+      "  <div class='vtex-store-components-3-x-skuSelectorSubcontainer--presentacion'>" +
+      "    <div class='vtex-store-components-3-x-skuSelectorItem'>10 Lts.</div>" +
+      "    <div class='vtex-store-components-3-x-skuSelectorItem'>4 Lts.</div>" +
+      "    <div class='vtex-store-components-3-x-skuSelectorItem'>4 Lts.</div>" +
+      "  </div>" +
+      "</div>" +
+      "</body></html>"
+    );
+
+    List<BaldeScrapeado> baldes = parser.parsear(doc);
+
+    assertThat(baldes, hasSize(1));
+    assertThat(baldes.get(0).getOpcionesLitros(), is("4,10"));
   }
 }

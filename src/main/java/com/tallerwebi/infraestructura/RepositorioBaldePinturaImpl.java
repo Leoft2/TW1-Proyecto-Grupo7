@@ -40,6 +40,9 @@ public class RepositorioBaldePinturaImpl implements RepositorioBaldePintura {
   @Override
   public void eliminarTodos() {
     this.sessionFactory.getCurrentSession()
+      .createMutationQuery("DELETE FROM BaldeLitros")
+      .executeUpdate();
+    this.sessionFactory.getCurrentSession()
       .createMutationQuery("DELETE FROM BaldePintura")
       .executeUpdate();
   }

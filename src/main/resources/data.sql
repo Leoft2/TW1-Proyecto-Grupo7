@@ -124,22 +124,24 @@ INSERT INTO ambiente_muebles(ambiente_id, mueble_id) VALUES
                                                          (8, 6),
                                                          (8, 14);
 
--- Baldes randoms para tener una entidad con que testear. Luego reescribo esto e implemento scraping
-INSERT INTO BaldePintura(id, nombre, colorNombre, hex, cantidadLitros, precio) VALUES
-                                                                                   -- Colores de la recomendación de pintura
-                                                                                   (4, 'Balde Blanco roto', 'Blanco roto', '#F2F0EB', 4.0, 8700.0),
-                                                                                   (5, 'Balde Celeste', 'Celeste', '#A8C3D1', 4.0, 9300.0),
-                                                                                   (6, 'Balde Salvia', 'Salvia', '#9CAF94', 4.0, 9400.0),
-                                                                                   -- Paletas de estilos
-                                                                                   (7, 'Balde Mostaza', 'Mostaza', '#D4A017', 4.0, 9600.0),
-                                                                                   (8, 'Balde Oliva', 'Oliva', '#6B7B3A', 4.0, 9500.0),
-                                                                                   (9, 'Balde Carbón', 'Carbón', '#2B2B2B', 4.0, 9800.0),
-                                                                                   (10, 'Balde Arena', 'Arena', '#D9CBB8', 4.0, 8900.0),
-                                                                                   (11, 'Balde Madera clara', 'Madera clara', '#C8A87C', 4.0, 9200.0),
-                                                                                   (12, 'Balde Cemento', 'Cemento', '#8C8C86', 4.0, 9100.0),
-                                                                                   (13, 'Balde Hierro', 'Hierro', '#33322E', 4.0, 9700.0),
-                                                                                   (14, 'Balde Ladrillo', 'Ladrillo', '#A0522D', 4.0, 9500.0),
-                                                                                   (15, 'Balde Mostaza arena', 'Mostaza arena', '#E0B252', 4.0, 9400.0),
-                                                                                   (16, 'Balde Turquesa', 'Turquesa', '#4FA3A5', 4.0, 9600.0),
-                                                                                   (17, 'Balde Gris cálido', 'Gris cálido', '#C4B8A8', 4.0, 8900.0),
-                                                                                   (18, 'Balde Terracota', 'Terracota', '#C1663F', 4.0, 9600.0);
+INSERT INTO BaldePintura(nombre, colorNombre, hex, cantidadLitros, precio) VALUES
+  ('Balde Mar Egeo', 'Mar Egeo', '#0191b4', 4.0, 9400.0),
+  ('Balde Lago Puelo', 'Lago Puelo', '#47627d', 4.0, 9300.0),
+  ('Balde El Palmar', 'El Palmar', '#567c49', 4.0, 9300.0),
+  ('Balde Danubio', 'Danubio', '#5d79c0', 4.0, 9300.0),
+  ('Balde Pradera', 'Pradera', '#7acf4b', 4.0, 9200.0),
+  ('Balde Los Arrayanes', 'Los Arrayanes', '#7f532b', 4.0, 9200.0),
+  ('Balde Uva', 'Uva', '#8364b3', 4.0, 9400.0),
+  ('Balde El Leoncito', 'El Leoncito', '#938d81', 4.0, 9100.0),
+  ('Balde Talampaya', 'Talampaya', '#b6213f', 4.0, 9500.0),
+  ('Balde Rosa', 'Rosa', '#da68a4', 4.0, 9300.0),
+  ('Balde Quebrada del Condorito', 'Quebrada del Condorito', '#dbc861', 4.0, 9200.0),
+  ('Balde Carmin', 'Carmin', '#f32329', 4.0, 9400.0),
+  ('Balde Limonchello', 'Limonchello', '#fadb49', 4.0, 9000.0),
+  ('Balde Mango', 'Mango', '#ff8f21', 4.0, 9300.0),
+  ('Balde Blanco', 'Blanco', '#ffffff', 4.0, 8700.0);
+
+INSERT INTO Litros(valor) VALUES (1.0), (4.0), (10.0), (20.0);
+
+INSERT INTO balde_litros(balde_id, litros_id)
+SELECT b.id, l.id FROM BaldePintura b CROSS JOIN Litros l;

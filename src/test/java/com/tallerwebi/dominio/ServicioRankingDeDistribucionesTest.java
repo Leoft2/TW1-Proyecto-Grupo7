@@ -143,10 +143,126 @@ public class ServicioRankingDeDistribucionesTest {
     thenNoHayOpcionesEspejadasConElMismoPuntaje(ranking);
   }
 
+  // -------------------------------------------------------------------------
+  // HU35.1: Piso eliminatorio de despeje frontal del placard
+  // -------------------------------------------------------------------------
+
+  @Test
+  public void deberiaExcluirDelRankingUnaDistribucionConPlacardSinDespejeFrontal() {
+    //Given
+    ServicioZonaExclusion servicioZonaExclusion = new ServicioZonaExclusionImpl();
+    ServicioReglasDeUbicacion reglasReales = new ServicioReglasDeUbicacionImpl(
+      servicioZonaExclusion
+    );
+    ServicioRankingDeDistribuciones rankingReal = new ServicioRankingDeDistribucionesImpl(
+      servicioPlano2D,
+      reglasReales
+    );
+    Ambiente ambienteConPlacard = new Ambiente(4.0, 2.0);
+    Mueble placard = givenUnPlacard();
+    Mueble bloqueo = givenUnaMesa();
+    List<MuebleUbicado> mueblesUbicados = new ArrayList<>();
+    mueblesUbicados.add(new MuebleUbicado(placard, 1.0, 0.0));
+    mueblesUbicados.add(new MuebleUbicado(bloqueo, 1.5, 0.6));
+    Plano plano = new Plano(
+      ambienteConPlacard,
+      mueblesUbicados,
+      new ArrayList<>(),
+      new ArrayList<>()
+    );
+    when(servicioPlano2D.generarPlano(any(Ambiente.class), anyList())).thenReturn(plano);
+    when(servicioPlano2D.estaDentroDelPerimetro(any(MuebleUbicado.class), any(Ambiente.class)))
+      .thenReturn(true);
+    List<Mueble> mueblesDelAmbiente = new ArrayList<>();
+    mueblesDelAmbiente.add(placard);
+    mueblesDelAmbiente.add(bloqueo);
+
+    //When
+    List<OpcionDeDistribucion> ranking = rankingReal.generarRanking(
+      ambienteConPlacard,
+      mueblesDelAmbiente
+    );
+
+    //Then
+    assertThat(ranking.size(), is(equalTo(0)));
+  }
+
+  @Test
+  public void deberiaNoIncluirEnElRankingUnaDistribucionDescartadaPorDespejeFrontal() {
+    //Given
+    ServicioZonaExclusion servicioZonaExclusion = new ServicioZonaExclusionImpl();
+    ServicioReglasDeUbicacion reglasReales = new ServicioReglasDeUbicacionImpl(
+      servicioZonaExclusion
+    );
+    ServicioRankingDeDistribuciones rankingReal = new ServicioRankingDeDistribucionesImpl(
+      servicioPlano2D,
+      reglasReales
+    );
+    Ambiente ambienteConPlacard = new Ambiente(4.0, 3.0);
+    Mueble placard = givenUnPlacard();
+    Mueble bloqueo = givenUnaMesa();
+    Plano planoBloqueado = givenPlanoCon(
+      ambienteConPlacard,
+      new MuebleUbicado(placard, 1.0, 0.0),
+      new MuebleUbicado(bloqueo, 1.5, 0.6)
+    );
+    Plano planoValido = givenPlanoCon(
+      ambienteConPlacard,
+      new MuebleUbicado(placard, 1.0, 0.0),
+      new MuebleUbicado(bloqueo, 1.5, 1.6)
+    );
+    when(servicioPlano2D.generarPlano(any(Ambiente.class), anyList()))
+      .thenReturn(planoBloqueado, planoValido, planoBloqueado, planoValido);
+    when(servicioPlano2D.estaDentroDelPerimetro(any(MuebleUbicado.class), any(Ambiente.class)))
+      .thenAnswer(invocacion -> {
+        MuebleUbicado ubicado = invocacion.getArgument(0);
+        Ambiente ambienteDelPlano = invocacion.getArgument(1);
+        return (
+          ubicado.getPosicionX() >= -ZonaNoDisponible.TOLERANCIA &&
+          ubicado.getPosicionY() >= -ZonaNoDisponible.TOLERANCIA &&
+          ubicado.getPosicionX() + ubicado.getMueble().getAncho() <=
+            ambienteDelPlano.getAncho() + ZonaNoDisponible.TOLERANCIA &&
+          ubicado.getPosicionY() + ubicado.getMueble().getLargo() <=
+            ambienteDelPlano.getLargo() + ZonaNoDisponible.TOLERANCIA
+        );
+      });
+    List<Mueble> mueblesDelAmbiente = new ArrayList<>();
+    mueblesDelAmbiente.add(placard);
+    mueblesDelAmbiente.add(bloqueo);
+
+    //When
+    List<OpcionDeDistribucion> ranking = rankingReal.generarRanking(
+      ambienteConPlacard,
+      mueblesDelAmbiente
+    );
+
+    //Then
+    assertThat(
+      thenElRankingDescartaLaBloqueadaYMantieneLaValida(ranking, bloqueo),
+      is(equalTo(true))
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // GIVEN
+  // -------------------------------------------------------------------------
+
   private Mueble givenUnaCama() {
     Mueble mueble = new Mueble("Cama", 1.0, 1.0);
     mueble.setCategoriaDeMueble(new CategoriaDeMueble("Cama individual", 1.0, 1.0));
     return mueble;
+  }
+
+  private Mueble givenUnPlacard() {
+    Mueble placard = new Mueble("Placard", 1.8, 0.6);
+    placard.setCategoriaDeMueble(new CategoriaDeMueble("Placard", 1.8, 0.6));
+    return placard;
+  }
+
+  private Mueble givenUnaMesa() {
+    Mueble mesa = new Mueble("Mesa", 1.0, 0.5);
+    mesa.setCategoriaDeMueble(new CategoriaDeMueble("Mesa", 1.0, 0.5));
+    return mesa;
   }
 
   private Ambiente givenAmbiente() {
@@ -194,17 +310,32 @@ public class ServicioRankingDeDistribucionesTest {
     return new Plano(ambiente, muebles, new ArrayList<>(), new ArrayList<>());
   }
 
+  private Plano givenPlanoCon(Ambiente ambiente, MuebleUbicado primero, MuebleUbicado segundo) {
+    List<MuebleUbicado> muebles = new ArrayList<>();
+    muebles.add(primero);
+    muebles.add(segundo);
+    return new Plano(ambiente, muebles, new ArrayList<>(), new ArrayList<>());
+  }
+
   private Plano givenPlanoConConflicto() {
     List<MuebleUbicado> muebles = new ArrayList<>();
     muebles.add(new MuebleUbicado(cama, 0.0, 0.0, true));
     return new Plano(ambiente, muebles, new ArrayList<>(), new ArrayList<>());
   }
 
+  // -------------------------------------------------------------------------
+  // WHEN
+  // -------------------------------------------------------------------------
+
   private List<OpcionDeDistribucion> whenGeneroElRanking() {
     List<Mueble> muebles = new ArrayList<>();
     muebles.add(cama);
     return servicioRankingDeDistribuciones.generarRanking(ambiente, muebles);
   }
+
+  // -------------------------------------------------------------------------
+  // THEN
+  // -------------------------------------------------------------------------
 
   private void thenRankingOrdenado(List<OpcionDeDistribucion> ranking) {
     for (int indice = 1; indice < ranking.size(); indice++) {
@@ -213,6 +344,33 @@ public class ServicioRankingDeDistribucionesTest {
         is(equalTo(true))
       );
     }
+  }
+
+  private boolean thenElMuebleEstaEnY(
+    List<OpcionDeDistribucion> ranking,
+    Mueble mueble,
+    Double posicionY
+  ) {
+    for (OpcionDeDistribucion opcion : ranking) {
+      for (MuebleUbicado ubicado : opcion.getPlano().getMuebles()) {
+        if (
+          ubicado.getMueble().equals(mueble) &&
+          Math.abs(ubicado.getPosicionY() - posicionY) < ZonaNoDisponible.TOLERANCIA
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private boolean thenElRankingDescartaLaBloqueadaYMantieneLaValida(
+    List<OpcionDeDistribucion> ranking,
+    Mueble bloqueo
+  ) {
+    return (
+      !thenElMuebleEstaEnY(ranking, bloqueo, 0.6) && thenElMuebleEstaEnY(ranking, bloqueo, 1.6)
+    );
   }
 
   private void thenNoHayOpcionesEspejadasConElMismoPuntaje(List<OpcionDeDistribucion> ranking) {

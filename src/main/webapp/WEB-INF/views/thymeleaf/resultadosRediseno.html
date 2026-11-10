@@ -61,12 +61,20 @@
     <div class="card">
       <div class="card-body">
         <div class="row row-cols-1 row-cols-md-3 g-4">
-          <div th:each="color : ${recomendacion.colores}" class="col">
-            <div class="d-flex align-items-center gap-2">
-              <span class="rounded-circle border flex-shrink-0"
-                th:style="'width: 2.25rem; height: 2.25rem; background-color: ' + ${color.hex}"></span>
-              <span th:text="${color.nombre}">Arena</span>
-            </div>
+          <div th:each="color, stat : ${coloresOrdenados}" class="col">
+            <form th:action="@{/ambientes/{id}/redisenar/pintura/color(id=${ambiente.id})}"
+                  method="post"
+                  class="m-0">
+              <input type="hidden" name="colorIndex" th:value="${stat.index}"/>
+              <input type="hidden" name="estilo" th:value="${propuesta.estilo}"/>
+              <input type="hidden" name="presupuesto" th:value="${propuesta.presupuesto}"/>
+              <input type="hidden" name="soloSostenibles" th:value="${soloSostenibles}"/>
+              <button type="submit" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 w-100">
+                <span class="rounded-circle border flex-shrink-0"
+                  th:style="'width: 2.25rem; height: 2.25rem; background-color: #' + ${color.hex} + '; border: ' + (${colorSeleccionadoIndex == stat.index} ? '3px solid #333' : '1px solid #dee2e6')"></span>
+                <span th:text="${color.nombre}">Arena</span>
+              </button>
+            </form>
           </div>
         </div>
 
@@ -82,9 +90,19 @@
 
     <h2 class="hb-section-title">Recomendación de pintura</h2>
 
-    <div class="card" th:if="${recomendacionPintura != null}"
-      th:with="cs=${recomendacionPintura.colorSuperficie},
-               tienePrecios=${recomendacionPintura.precioTotal != null}">
+      <div class="card" th:if="${recomendacionPintura != null}"
+        th:with="cs=${recomendacionPintura.colorSuperficie},
+                 forma=${recomendacionPintura.formaPintura},
+                 neutroHex=${recomendacion.coloresSecundarios != null
+                   and !#lists.isEmpty(recomendacion.coloresSecundarios)
+                   ? recomendacion.coloresSecundarios[0].hex
+                   : 'E5E5E5'},
+                 nombreNeutro=${recomendacion.coloresSecundarios != null
+                   and !#lists.isEmpty(recomendacion.coloresSecundarios)
+                   ? recomendacion.coloresSecundarios[0].nombre
+                   : 'Tono neutro'},
+                 tienePrecios=${recomendacionPintura.items != null
+                   and !#lists.isEmpty(recomendacionPintura.items.?[#this.precioTotal != null])}">
       <div class="card-body">
         <div th:if="${recomendacionPintura.formaPintura != null}" class="mb-4">
           <h3 class="h5 mb-1" th:text="${recomendacionPintura.formaPintura.etiqueta}">
@@ -102,7 +120,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115.52 59.08" class="svg-superficie">
                   <polygon
                     points="0 7.65 25.32 15.82 90.2 15.82 115.52 7.65"
-                    th:style="|fill:${cs != null and cs.techo != null ? cs.techo : '#E5E5E5'}|"/>
+                    th:style="|fill:#${cs != null ? cs.techo : neutroHex}|"/>
                 </svg>
               </div>
 
@@ -110,14 +128,14 @@
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115.52 59.08" class="svg-superficie">
                   <polygon
                     points="0 59.08 25.32 42.2 25.32 15.82 0 7.65"
-                    th:style="|fill:${cs != null and cs.paredIzquierda != null ? cs.paredIzquierda : '#E5E5E5'}|"/>
+                    th:style="|fill:#${cs != null ? cs.paredIzquierda : neutroHex}|"/>
                 </svg>
               </div>
 
               <div class="ambiente-svg ambiente-svg-fondo">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115.52 59.08" class="svg-superficie">
                   <rect x="25.32" y="15.82" width="64.88" height="26.37"
-                    th:style="|fill:${cs != null and cs.paredFondo != null ? cs.paredFondo : '#E5E5E5'}|"/>
+                    th:style="|fill:#${cs != null ? cs.paredFondo : neutroHex}|"/>
                 </svg>
               </div>
 
@@ -125,7 +143,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 115.52 59.08" class="svg-superficie">
                   <polygon
                     points="115.52 59.08 90.2 42.2 90.2 15.82 115.52 7.65"
-                    th:style="|fill:${cs != null and cs.paredDerecha != null ? cs.paredDerecha : '#E5E5E5'}|"/>
+                    th:style="|fill:#${cs != null ? cs.paredDerecha : neutroHex}|"/>
                 </svg>
               </div>
             </div>
@@ -136,35 +154,35 @@
             <ul class="hb-leyenda-superficie">
               <li>
                 <span class="hb-swatch"
-                  th:style="|background-color:${cs != null and cs.techo != null ? cs.techo : 'transparent'}|"></span>
+                  th:style="|background-color:#${forma != null and forma.superficies[0] == 1 ? (cs != null ? cs.techo : neutroHex) : neutroHex}|"></span>
                 <span class="hb-leyenda-nombre">Techo</span>
                 <span class="hb-leyenda-estado"
-                  th:classappend="${cs != null and cs.techo != null} ? 'hb-leyenda-estado-pintada' : ''"
-                  th:text="${cs != null and cs.techo != null ? 'Pintada' : 'Sin pintar'}">Sin pintar</span>
+                  th:classappend="${forma != null and forma.superficies[0] == 1} ? 'hb-leyenda-estado-pintada' : 'hb-leyenda-estado-neutro'"
+                  th:text="${forma != null and forma.superficies[0] == 1 ? 'Pintada' : ('Tono neutro (' + nombreNeutro + ')')}">Pintada</span>
               </li>
               <li>
                 <span class="hb-swatch"
-                  th:style="|background-color:${cs != null and cs.paredIzquierda != null ? cs.paredIzquierda : 'transparent'}|"></span>
+                  th:style="|background-color:#${forma != null and forma.superficies[1] == 1 ? (cs != null ? cs.paredIzquierda : neutroHex) : neutroHex}|"></span>
                 <span class="hb-leyenda-nombre">Pared izquierda</span>
                 <span class="hb-leyenda-estado"
-                  th:classappend="${cs != null and cs.paredIzquierda != null} ? 'hb-leyenda-estado-pintada' : ''"
-                  th:text="${cs != null and cs.paredIzquierda != null ? 'Pintada' : 'Sin pintar'}">Sin pintar</span>
+                  th:classappend="${forma != null and forma.superficies[1] == 1} ? 'hb-leyenda-estado-pintada' : 'hb-leyenda-estado-neutro'"
+                  th:text="${forma != null and forma.superficies[1] == 1 ? 'Pintada' : ('Tono neutro (' + nombreNeutro + ')')}">Pintada</span>
               </li>
               <li>
                 <span class="hb-swatch"
-                  th:style="|background-color:${cs != null and cs.paredFondo != null ? cs.paredFondo : 'transparent'}|"></span>
+                  th:style="|background-color:#${forma != null and forma.superficies[2] == 1 ? (cs != null ? cs.paredFondo : neutroHex) : neutroHex}|"></span>
                 <span class="hb-leyenda-nombre">Pared de fondo</span>
                 <span class="hb-leyenda-estado"
-                  th:classappend="${cs != null and cs.paredFondo != null} ? 'hb-leyenda-estado-pintada' : ''"
-                  th:text="${cs != null and cs.paredFondo != null ? 'Pintada' : 'Sin pintar'}">Sin pintar</span>
+                  th:classappend="${forma != null and forma.superficies[2] == 1} ? 'hb-leyenda-estado-pintada' : 'hb-leyenda-estado-neutro'"
+                  th:text="${forma != null and forma.superficies[2] == 1 ? 'Pintada' : ('Tono neutro (' + nombreNeutro + ')')}">Pintada</span>
               </li>
               <li>
                 <span class="hb-swatch"
-                  th:style="|background-color:${cs != null and cs.paredDerecha != null ? cs.paredDerecha : 'transparent'}|"></span>
+                  th:style="|background-color:#${forma != null and forma.superficies[3] == 1 ? (cs != null ? cs.paredDerecha : neutroHex) : neutroHex}|"></span>
                 <span class="hb-leyenda-nombre">Pared derecha</span>
                 <span class="hb-leyenda-estado"
-                  th:classappend="${cs != null and cs.paredDerecha != null} ? 'hb-leyenda-estado-pintada' : ''"
-                  th:text="${cs != null and cs.paredDerecha != null ? 'Pintada' : 'Sin pintar'}">Sin pintar</span>
+                  th:classappend="${forma != null and forma.superficies[3] == 1} ? 'hb-leyenda-estado-pintada' : 'hb-leyenda-estado-neutro'"
+                  th:text="${forma != null and forma.superficies[3] == 1 ? 'Pintada' : ('Tono neutro (' + nombreNeutro + ')')}">Pintada</span>
               </li>
             </ul>
           </div>
@@ -179,19 +197,34 @@
                 <tr>
                   <th scope="col">Superficie</th>
                   <th scope="col">Color</th>
+                  <th scope="col" th:if="${tienePrecios}">Balde</th>
+                  <th scope="col" class="text-end" th:if="${tienePrecios}">Litros</th>
                   <th scope="col" class="text-end">Metros cuadrados</th>
                   <th scope="col" class="text-end" th:if="${tienePrecios}">Baldes</th>
                   <th scope="col" class="text-end" th:if="${tienePrecios}">Precio</th>
                 </tr>
               </thead>
               <tbody>
-                <tr th:each="item : ${recomendacionPintura.items}">
+                <tr th:each="item, stat : ${recomendacionPintura.items}">
                   <td th:text="${item.zona}">Pared de fondo</td>
                   <td>
                     <span class="d-inline-flex align-items-center gap-2">
                       <span class="hb-swatch"
-                        th:style="|background-color:${item.hex != null ? item.hex : 'transparent'}|"></span>
+                        th:style="|background-color:${item.hex != null ? ('#' + item.hex) : 'transparent'}|"></span>
                       <span th:text="${item.colorNombre}">Salvia</span>
+                    </span>
+                  </td>
+                  <td class="text-end" th:if="${tienePrecios}">
+                    <span th:if="${item.baldePintura == null}">—</span>
+                    <a th:if="${item.baldePintura != null}"
+                       th:href="@{/pinturas/baldes/{id}(id=${item.baldePintura.id})}"
+                       th:text="${item.baldePintura.nombre}">Balde</a>
+                  </td>
+                  <td class="text-end" th:if="${tienePrecios}">
+                    <span
+                      th:text="${#numbers.formatDecimal(item.litrosSeleccionados != null ? item.litrosSeleccionados : (item.baldePintura != null ? item.baldePintura.cantidadLitros : 0), 1, 'COMMA', 0, 'POINT')} + ' L'"
+                      title="Opción de litraje más barata asignada automáticamente">
+                      4 L
                     </span>
                   </td>
                   <td class="text-end"
@@ -219,9 +252,11 @@
         </div>
 
         <div class="alert alert-info mb-0 mt-4"
-          th:if="${recomendacionPintura.items == null or #lists.isEmpty(recomendacionPintura.items)}">
+          th:if="${recomendacionPintura.items == null or #lists.isEmpty(recomendacionPintura.items)
+            or #lists.isEmpty(recomendacionPintura.items.?[#this.baldePintura != null])}">
           <i class="bi bi-info-circle"></i>
-          No hay baldes cargados en la base de datos para calcular cantidades. Igual podés ver las superficies y los colores sugeridos.
+          No se encontraron baldes en el catálogo que coincidan con los colores recomendados.
+          Igual podés ver las superficies y los colores sugeridos.
         </div>
       </div>
     </div>

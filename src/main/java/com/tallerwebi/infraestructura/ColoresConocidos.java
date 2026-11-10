@@ -8,14 +8,6 @@ public final class ColoresConocidos {
 
   public record ColorConocido(String hex, String nombre) {}
 
-  /**
-   * Colores de interiores de Colorshop con su valor hexadecimal y el nombre tal como aparece en el sitio.
-   * La URL de filtro de Colorshop sigue el patron:
-   * /pinturas/-{hex}-{nombre-color}?map=category-1,colores
-   *
-   * Son los colores que devuelve el filtro de interiores; usar estos evita traer Enduido, esmalte, etc.
-   * Se mantiene una lista reducida para que el scraping sea rapido (una request HTTP por color).
-   */
   public static List<ColorConocido> obtenerColores() {
     return List.of(
       new ColorConocido("0191b4", "Mar Egeo"),

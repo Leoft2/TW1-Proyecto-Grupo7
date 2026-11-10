@@ -1,291 +1,319 @@
 package com.tallerwebi.dominio;
 
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service("servicioRecomendacionPintura")
+@Transactional(readOnly = true)
 public class ServicioRecomendacionPinturaImpl implements ServicioRecomendacionPintura {
 
-  private static final String COLOR_BLANCO_ROTO = "Blanco roto";
-  private static final String HEX_BLANCO_ROTO = "#F2F0EB";
-  private static final String COLOR_SALVIA = "Salvia";
-  private static final String HEX_SALVIA = "#9CAF94";
-  private static final String COLOR_CELESTE = "Celeste";
-  private static final String HEX_CELESTE = "#A8C3D1";
-  private static final String COLOR_ARENA = "Arena";
-  private static final String HEX_ARENA = "#D9CBB8";
-  private static final String COLOR_CARBON = "Carbón";
-  private static final String HEX_CARBON = "#2B2B2B";
-  private static final String COLOR_TERRACOTA = "Terracota";
-  private static final String HEX_TERRACOTA = "#C1663F";
+  private final SeleccionadorColoresPorPrecio seleccionadorColores;
+  private final CalculadorLitros calculadorLitros;
+  private final ServicioRediseño servicioRediseño;
+  private final RepositorioBaldePintura repositorioBaldePintura;
+  private final Map<FormaPintura, EstrategiaAplicacionPintura> estrategias;
 
-  private static final String ZONA_TECHO = "Techo";
-  private static final String ZONA_PARED_IZQUIERDA = "Pared izquierda";
-  private static final String ZONA_PARED_FONDO = "Pared de fondo";
-  private static final String ZONA_PARED_DERECHA = "Pared derecha";
-  private static final String ZONA_TODO_AMBIENTE = "Todo el ambiente";
-  private static final String ZONA_PARED_OPUESTA = "Pared opuesta a la puerta";
-  private static final String ZONA_PARED_DESTACADA = "Pared a destacar";
-  private static final String ZONA_RESTO_AMBIENTE = "Resto del ambiente";
-
-  private static final int INDICE_TECHO = 0;
-  private static final int INDICE_PARED_IZQUIERDA = 1;
-  private static final int INDICE_PARED_FONDO = 2;
-  private static final int INDICE_PARED_DERECHA = 3;
-
-  private final SelectorFormaPintura selector = new SelectorFormaPintura();
-
-  @Override
-  public RecomendacionPintura recomendar(Ambiente ambiente) {
-    return ambiente == null
-      ? new RecomendacionPintura()
-      : recomendarPara(AnalisisAmbiente.de(ambiente));
+  @Autowired
+  public ServicioRecomendacionPinturaImpl(
+    ServicioRediseño servicioRediseño,
+    RepositorioBaldePintura repositorioBaldePintura
+  ) {
+    this.servicioRediseño = servicioRediseño;
+    this.repositorioBaldePintura = repositorioBaldePintura;
+    this.seleccionadorColores = new SeleccionadorColoresPorPrecio(repositorioBaldePintura);
+    this.calculadorLitros = new CalculadorLitros();
+    this.estrategias = new EnumMap<>(FormaPintura.class);
+    inicializarEstrategias();
   }
 
-  private RecomendacionPintura recomendarPara(AnalisisAmbiente analisis) {
-    FormaPintura forma = selector.seleccionar(analisis);
+  public ServicioRecomendacionPinturaImpl() {
+    this.servicioRediseño = null;
+    this.repositorioBaldePintura = null;
+    this.seleccionadorColores = null;
+    this.calculadorLitros = null;
+    this.estrategias = new EnumMap<>(FormaPintura.class);
+    inicializarEstrategias();
+  }
+
+  private void inicializarEstrategias() {
+    this.estrategias.put(
+        FormaPintura.PINTAR_PARED_OPUESTA_A_PUERTA_PARA_ACORTAR_AMBIENTE,
+        new EstrategiaParedOpuesta()
+      );
+    this.estrategias.put(
+        FormaPintura.PINTAR_TODAS_LAS_PAREDES_DE_UN_COLOR_PARA_ESTRECHAR_VERTICALMENTE,
+        new EstrategiaTodasLasParedes(false)
+      );
+    this.estrategias.put(FormaPintura.PINTAR_TECHO_DE_UN_COLOR_PARA_BAJARLO, new EstrategiaTecho());
+    this.estrategias.put(
+        FormaPintura.PINTAR_PAREDES_OPUESTAS_PARA_ESTRECHAR_AMBIENTE,
+        new EstrategiaParedesOpuestas()
+      );
+    this.estrategias.put(
+        FormaPintura.PINTAR_TECHO_Y_PARED_OPUESTA_DE_UN_AMBIENTE_PARA_ALARGARLO,
+        new EstrategiaTechoYParedOpuesta()
+      );
+    this.estrategias.put(
+        FormaPintura.PINTAR_TODAS_LAS_PAREDES_POR_LA_MITAD_PARA_ACORTAR_LAS_PAREDES,
+        new EstrategiaTodasLasParedes(true)
+      );
+    this.estrategias.put(
+        FormaPintura.PINTAR_TODO_DE_UN_COLOR_PARA_COMPACTAR,
+        new EstrategiaTodoUnColor()
+      );
+    this.estrategias.put(
+        FormaPintura.PINTAR_TODO_MENOS_UNA_PARED_PARA_DESTACARLA,
+        new EstrategiaTodoMenosUnaPared()
+      );
+  }
+
+  @Override
+  public RecomendacionPintura recomendar(Ambiente ambiente, Estilo estilo) {
+    return recomendar(ambiente, estilo, null);
+  }
+
+  @Override
+  public RecomendacionPintura recomendar(
+    Ambiente ambiente,
+    Estilo estilo,
+    Integer colorOverrideIndex
+  ) {
+    if (ambiente == null) {
+      return new RecomendacionPintura();
+    }
+    return recomendarPara(AnalisisAmbiente.de(ambiente), estilo, colorOverrideIndex);
+  }
+
+  private RecomendacionPintura recomendarPara(
+    AnalisisAmbiente analisis,
+    Estilo estilo,
+    Integer colorOverrideIndex
+  ) {
+    FormaPintura forma = new SelectorFormaPintura().seleccionar(analisis);
 
     RecomendacionPintura recomendacion = new RecomendacionPintura();
     recomendacion.setFormaPintura(forma);
     recomendacion.setDescripcion(forma.getDescripcion());
 
-    aplicarForma(recomendacion, analisis, forma);
+    List<Color> colores = coloresOrdenadosPorPrecio(estilo);
+    List<Color> coloresSecundarios = coloresSecundariosPara(estilo);
+    String neutralHex = hexNeutral(coloresSecundarios);
+
+    ContextoSuperficies ctx = new ContextoSuperficies(
+      analisis.areaTecho(),
+      analisis.areaParedIzquierda(),
+      analisis.areaParedFondo(),
+      analisis.areaParedDerecha(),
+      indiceParedOpuesta(analisis.muroPuerta())
+    );
+    ctx.hexes[0] = neutralHex;
+    ctx.hexes[1] = neutralHex;
+    ctx.hexes[2] = neutralHex;
+    ctx.hexes[3] = neutralHex;
+
+    Color override = colorActivo(colores, colorOverrideIndex);
+    EstrategiaAplicacionPintura estrategia = estrategias.get(forma);
+    if (estrategia != null) {
+      estrategia.aplicar(recomendacion, colores, override, ctx);
+    } else {
+      new EstrategiaTodoUnColor().aplicar(recomendacion, colores, override, ctx);
+    }
+
+    for (int i = 0; i < 4; i++) {
+      if (ctx.hexes[i].equals(neutralHex) && ctx.areas[i] > 0) {
+        UtilidadesPintura.agregarItem(
+          recomendacion,
+          UtilidadesPintura.nombreSuperficie(i),
+          ctx.areas[i],
+          UtilidadesPintura.NOMBRE_NEUTRO,
+          neutralHex
+        );
+      }
+    }
+
+    recomendacion.setColorSuperficie(
+      new ColorSuperficie(ctx.hexes[0], ctx.hexes[1], ctx.hexes[2], ctx.hexes[3])
+    );
+
+    agruparItemsPorColor(recomendacion);
+
+    resolverBaldes(recomendacion);
 
     recomendacion.calcularTotal();
     return recomendacion;
   }
 
-  private void aplicarForma(
-    RecomendacionPintura recomendacion,
-    AnalisisAmbiente analisis,
-    FormaPintura forma
-  ) {
-    if (forma == FormaPintura.PINTAR_PARED_OPUESTA_A_PUERTA_PARA_ACORTAR_AMBIENTE) {
-      recomendarParedOpuesta(recomendacion, analisis);
-    } else if (
-      forma == FormaPintura.PINTAR_TODAS_LAS_PAREDES_DE_UN_COLOR_PARA_ESTRECHAR_VERTICALMENTE
+  @Override
+  public List<Color> coloresOrdenadosPorPrecio(Estilo estilo) {
+    if (this.seleccionadorColores == null || estilo == null) {
+      return new ArrayList<>();
+    }
+    List<Color> colores = coloresPara(estilo);
+    return this.seleccionadorColores.coloresOrdenadosPorPrecio(colores);
+  }
+
+  private List<Color> coloresPara(Estilo estilo) {
+    if (this.servicioRediseño != null && estilo != null) {
+      List<Color> colores = this.servicioRediseño.recomendar(estilo).getColores();
+      if (colores != null && !colores.isEmpty()) {
+        return colores;
+      }
+    }
+
+    return new ArrayList<>();
+  }
+
+  private List<Color> coloresSecundariosPara(Estilo estilo) {
+    if (this.servicioRediseño != null && estilo != null) {
+      List<Color> secundarios = this.servicioRediseño.recomendar(estilo).getColoresSecundarios();
+      if (secundarios != null && !secundarios.isEmpty()) {
+        return secundarios;
+      }
+    }
+    List<Color> colores = new ArrayList<>();
+    colores.add(new Color("Neutro", UtilidadesPintura.HEX_NEUTRO_FALLBACK));
+    return colores;
+  }
+
+  private String hexNeutral(List<Color> coloresSecundarios) {
+    if (coloresSecundarios != null && !coloresSecundarios.isEmpty()) {
+      return coloresSecundarios.get(0).getHex();
+    }
+    return UtilidadesPintura.HEX_NEUTRO_FALLBACK;
+  }
+
+  private Color colorActivo(List<Color> colores, Integer colorOverrideIndex) {
+    if (
+      colorOverrideIndex != null &&
+      colores != null &&
+      !colores.isEmpty() &&
+      colorOverrideIndex >= 0 &&
+      colorOverrideIndex < colores.size()
     ) {
-      recomendarTodasLasParedes(recomendacion, analisis, false);
-    } else if (forma == FormaPintura.PINTAR_TECHO_DE_UN_COLOR_PARA_BAJARLO) {
-      recomendarTecho(recomendacion, analisis);
-    } else if (forma == FormaPintura.PINTAR_PAREDES_OPUESTAS_PARA_ESTRECHAR_AMBIENTE) {
-      recomendarParedesOpuestas(recomendacion, analisis);
-    } else if (forma == FormaPintura.PINTAR_TECHO_Y_PARED_OPUESTA_DE_UN_AMBIENTE_PARA_ALARGARLO) {
-      recomendarTechoYParedOpuesta(recomendacion, analisis);
-    } else if (
-      forma == FormaPintura.PINTAR_TODAS_LAS_PAREDES_POR_LA_MITAD_PARA_ACORTAR_LAS_PAREDES
-    ) {
-      recomendarTodasLasParedes(recomendacion, analisis, true);
-    } else if (forma == FormaPintura.PINTAR_TODO_DE_UN_COLOR_PARA_COMPACTAR) {
-      recomendarTodoDeUnColor(recomendacion, analisis);
-    } else if (forma == FormaPintura.PINTAR_TODO_MENOS_UNA_PARED_PARA_DESTACARLA) {
-      recomendarTodoMenosUnaPared(recomendacion, analisis);
-    } else {
-      recomendarTodoDeUnColor(recomendacion, analisis);
+      return colores.get(colorOverrideIndex);
+    }
+    return null;
+  }
+
+  private void resolverBaldes(RecomendacionPintura recomendacion) {
+    if (this.repositorioBaldePintura == null || recomendacion.getItems() == null) {
+      return;
+    }
+
+    for (RecomendacionPintura.ItemPintura item : recomendacion.getItems()) {
+      if (item == null || item.getBaldePintura() != null) {
+        continue;
+      }
+
+      BaldePintura balde = resolverBalde(item);
+      if (balde == null) {
+        continue;
+      }
+
+      item.setBaldePintura(balde);
+      this.calculadorLitros.elegirLitroMasBarato(item, balde);
+      establecerCantidadYPrecio(item, balde);
     }
   }
 
-  private void recomendarParedOpuesta(
-    RecomendacionPintura recomendacion,
-    AnalisisAmbiente analisis
-  ) {
-    int indice = indiceParedOpuesta(analisis.muroPuerta());
-    String[] colores = new String[4];
-    colores[indice] = HEX_SALVIA;
+  private BaldePintura resolverBalde(RecomendacionPintura.ItemPintura item) {
+    String hex = item.getHex();
+    BaldePintura balde = null;
 
-    recomendacion.setColorSuperficie(colorSuperficie(colores));
-    agregarItem(
-      recomendacion,
-      ZONA_PARED_OPUESTA,
-      areaDePared(analisis, indice),
-      COLOR_SALVIA,
-      HEX_SALVIA
-    );
-  }
-
-  private void recomendarTodasLasParedes(
-    RecomendacionPintura recomendacion,
-    AnalisisAmbiente analisis,
-    boolean porLaMitad
-  ) {
-    String[] colores = new String[4];
-    colores[INDICE_PARED_IZQUIERDA] = HEX_ARENA;
-    colores[INDICE_PARED_FONDO] = HEX_ARENA;
-    colores[INDICE_PARED_DERECHA] = HEX_ARENA;
-
-    double divisor = 1.0;
-
-    if (porLaMitad) {
-      divisor = 2.0;
+    if (hex != null && !hex.isBlank()) {
+      balde = this.repositorioBaldePintura.buscarPorHex(hex);
     }
 
-    recomendacion.setColorSuperficie(colorSuperficie(colores));
-    agregarItem(
-      recomendacion,
-      ZONA_PARED_IZQUIERDA,
-      analisis.areaParedIzquierda() / divisor,
-      COLOR_ARENA,
-      HEX_ARENA
-    );
-    agregarItem(
-      recomendacion,
-      ZONA_PARED_FONDO,
-      analisis.areaParedFondo() / divisor,
-      COLOR_ARENA,
-      HEX_ARENA
-    );
-    agregarItem(
-      recomendacion,
-      ZONA_PARED_DERECHA,
-      analisis.areaParedDerecha() / divisor,
-      COLOR_ARENA,
-      HEX_ARENA
-    );
-  }
-
-  private void recomendarTecho(RecomendacionPintura recomendacion, AnalisisAmbiente analisis) {
-    String[] colores = new String[4];
-    colores[INDICE_TECHO] = HEX_CARBON;
-
-    recomendacion.setColorSuperficie(colorSuperficie(colores));
-    agregarItem(recomendacion, ZONA_TECHO, analisis.areaTecho(), COLOR_CARBON, HEX_CARBON);
-  }
-
-  private void recomendarParedesOpuestas(
-    RecomendacionPintura recomendacion,
-    AnalisisAmbiente analisis
-  ) {
-    String[] colores = new String[4];
-    colores[INDICE_PARED_IZQUIERDA] = HEX_CELESTE;
-    colores[INDICE_PARED_DERECHA] = HEX_CELESTE;
-
-    recomendacion.setColorSuperficie(colorSuperficie(colores));
-    agregarItem(
-      recomendacion,
-      ZONA_PARED_IZQUIERDA,
-      analisis.areaParedIzquierda(),
-      COLOR_CELESTE,
-      HEX_CELESTE
-    );
-    agregarItem(
-      recomendacion,
-      ZONA_PARED_DERECHA,
-      analisis.areaParedDerecha(),
-      COLOR_CELESTE,
-      HEX_CELESTE
-    );
-  }
-
-  private void recomendarTechoYParedOpuesta(
-    RecomendacionPintura recomendacion,
-    AnalisisAmbiente analisis
-  ) {
-    String[] colores = new String[4];
-    colores[INDICE_TECHO] = HEX_BLANCO_ROTO;
-    colores[INDICE_PARED_FONDO] = HEX_SALVIA;
-
-    recomendacion.setColorSuperficie(colorSuperficie(colores));
-    agregarItem(
-      recomendacion,
-      ZONA_TECHO,
-      analisis.areaTecho(),
-      COLOR_BLANCO_ROTO,
-      HEX_BLANCO_ROTO
-    );
-    agregarItem(
-      recomendacion,
-      ZONA_PARED_FONDO,
-      analisis.areaParedFondo(),
-      COLOR_SALVIA,
-      HEX_SALVIA
-    );
-  }
-
-  private void recomendarTodoDeUnColor(
-    RecomendacionPintura recomendacion,
-    AnalisisAmbiente analisis
-  ) {
-    String[] colores = new String[4];
-    for (int i = 0; i < colores.length; i++) {
-      colores[i] = HEX_BLANCO_ROTO;
+    if (balde == null) {
+      String nombre = item.getColorNombre();
+      if (nombre != null && !nombre.isBlank()) {
+        balde = this.repositorioBaldePintura.buscarPorColorNombre(nombre);
+      }
     }
 
-    recomendacion.setColorSuperficie(colorSuperficie(colores));
-    agregarItem(
-      recomendacion,
-      ZONA_TODO_AMBIENTE,
-      analisis.areaTotal(),
-      COLOR_BLANCO_ROTO,
-      HEX_BLANCO_ROTO
-    );
+    return balde;
   }
 
-  private void recomendarTodoMenosUnaPared(
-    RecomendacionPintura recomendacion,
-    AnalisisAmbiente analisis
+  private void establecerCantidadYPrecio(
+    RecomendacionPintura.ItemPintura item,
+    BaldePintura balde
   ) {
-    int indice = indiceParedOpuesta(analisis.muroPuerta());
-    double areaDestacada = areaDePared(analisis, indice);
-    String[] colores = new String[4];
-    for (int i = 0; i < colores.length; i++) {
-      colores[i] = HEX_BLANCO_ROTO;
+    Double litros = item.getLitrosSeleccionados();
+    if (litros == null || litros <= 0) {
+      litros = balde.getCantidadLitros();
     }
-    colores[indice] = HEX_TERRACOTA;
+    Double metros = item.getMetrosCuadrados();
 
-    recomendacion.setColorSuperficie(colorSuperficie(colores));
-    agregarItem(
-      recomendacion,
-      ZONA_RESTO_AMBIENTE,
-      analisis.areaTotal() - areaDestacada,
-      COLOR_BLANCO_ROTO,
-      HEX_BLANCO_ROTO
-    );
-    agregarItem(recomendacion, ZONA_PARED_DESTACADA, areaDestacada, COLOR_TERRACOTA, HEX_TERRACOTA);
+    if (litros == null || litros <= 0 || metros == null) {
+      return;
+    }
+
+    int cantidad = (int) Math.ceil(metros / litros);
+    item.setCantidadBaldes(cantidad);
+
+    Double precio = balde.getPrecio();
+    if (precio != null) {
+      item.setPrecioTotal(cantidad * precio);
+    }
   }
 
   private int indiceParedOpuesta(Muro muroPuerta) {
     if (muroPuerta == null) {
-      return INDICE_PARED_FONDO;
+      return UtilidadesPintura.INDICE_PARED_FONDO;
     }
 
     return switch (muroPuerta) {
-      case IZQUIERDO -> INDICE_PARED_DERECHA;
-      case DERECHO -> INDICE_PARED_IZQUIERDA;
-      case SUPERIOR, INFERIOR -> INDICE_PARED_FONDO;
+      case IZQUIERDO -> UtilidadesPintura.INDICE_PARED_DERECHA;
+      case DERECHO -> UtilidadesPintura.INDICE_PARED_IZQUIERDA;
+      case SUPERIOR, INFERIOR -> UtilidadesPintura.INDICE_PARED_FONDO;
     };
   }
 
-  private double areaDePared(AnalisisAmbiente analisis, int indice) {
-    return switch (indice) {
-      case INDICE_PARED_IZQUIERDA, INDICE_PARED_DERECHA -> analisis.areaParedIzquierda();
-      case INDICE_PARED_FONDO -> analisis.areaParedFondo();
-      default -> 0.0;
-    };
-  }
-
-  private ColorSuperficie colorSuperficie(String... colores) {
-    return new ColorSuperficie(colores[0], colores[1], colores[2], colores[3]);
-  }
-
-  private void agregarItem(
-    RecomendacionPintura recomendacion,
-    String zona,
-    double metrosCuadrados,
-    String colorNombre,
-    String hex
-  ) {
-    if (metrosCuadrados <= 0) {
+  private void agruparItemsPorColor(RecomendacionPintura recomendacion) {
+    List<RecomendacionPintura.ItemPintura> items = recomendacion.getItems();
+    if (items == null || items.isEmpty()) {
       return;
     }
 
-    RecomendacionPintura.ItemPintura item = new RecomendacionPintura.ItemPintura();
-    item.setZona(zona);
-    item.setColorNombre(colorNombre);
-    item.setHex(hex);
-    item.setMetrosCuadrados(redondear(metrosCuadrados));
-    recomendacion.agregarItem(item);
-  }
+    Map<String, RecomendacionPintura.ItemPintura> gruposPorColor = new java.util.LinkedHashMap<>();
+    List<RecomendacionPintura.ItemPintura> itemsSinAgrupar = new ArrayList<>();
 
-  private double redondear(double valor) {
-    return Math.round(valor * 100.0) / 100.0;
+    for (RecomendacionPintura.ItemPintura item : items) {
+      if (item == null) {
+        continue;
+      }
+      String hex = item.getHex();
+      if (hex == null || hex.isBlank()) {
+        itemsSinAgrupar.add(item);
+        continue;
+      }
+
+      RecomendacionPintura.ItemPintura existente = gruposPorColor.get(hex);
+      if (existente != null) {
+        existente.setMetrosCuadrados(
+          UtilidadesPintura.redondear(existente.getMetrosCuadrados() + item.getMetrosCuadrados())
+        );
+        existente.setZona(existente.getZona() + " + " + item.getZona());
+      } else {
+        RecomendacionPintura.ItemPintura copia = new RecomendacionPintura.ItemPintura();
+        copia.setZona(item.getZona());
+        copia.setColorNombre(item.getColorNombre());
+        copia.setHex(item.getHex());
+        copia.setMetrosCuadrados(item.getMetrosCuadrados());
+        copia.setLitrosSeleccionados(item.getLitrosSeleccionados());
+        gruposPorColor.put(hex, copia);
+      }
+    }
+
+    List<RecomendacionPintura.ItemPintura> resultado = new ArrayList<>();
+    resultado.addAll(itemsSinAgrupar);
+    resultado.addAll(gruposPorColor.values());
+
+    recomendacion.setItems(resultado);
   }
 }

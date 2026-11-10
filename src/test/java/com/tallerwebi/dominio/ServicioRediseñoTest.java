@@ -53,7 +53,7 @@ public class ServicioRediseñoTest {
 
     for (Color color : japandi.getColores()) {
       assertThat(color.getNombre(), is(notNullValue()));
-      assertThat(color.getHex().matches("^#[0-9A-Fa-f]{6}$"), is(true));
+      assertThat(color.getHex().matches("^#?[0-9A-Fa-f]{6}$"), is(true));
     }
   }
 

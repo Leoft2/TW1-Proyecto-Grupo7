@@ -5,14 +5,19 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.tallerwebi.dominio.Ambiente;
+import com.tallerwebi.dominio.BaldePintura;
 import com.tallerwebi.dominio.Color;
 import com.tallerwebi.dominio.Estilo;
 import com.tallerwebi.dominio.Iluminacion;
@@ -27,6 +32,8 @@ import com.tallerwebi.dominio.TipoDeAmbiente;
 import com.tallerwebi.dominio.excepcion.PresupuestoNegativoException;
 import com.tallerwebi.presentacion.ControladorRediseno;
 import com.tallerwebi.presentacion.DatosPropuesta;
+import com.tallerwebi.presentacion.excepcion.FiltroDeMueblesInvalidoException;
+import jakarta.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -211,7 +218,24 @@ public class ControladorRedisenoTest {
     throws Exception {
     this.dadoQueElAmbienteNoTieneTipo();
     RecomendacionPintura recomendacionPintura = new RecomendacionPintura();
-    when(this.servicioRecomendacionPintura.recomendar(any(Ambiente.class)))
+    RecomendacionPintura.ItemPintura item = new RecomendacionPintura.ItemPintura();
+    item.setZona("Pared de fondo");
+    BaldePintura balde = new BaldePintura(
+      "Blanco Roto",
+      "Blanco roto",
+      "#F2F0EB",
+      null,
+      10.0,
+      5000.0,
+      null
+    );
+    item.setBaldePintura(balde);
+    item.setCantidadBaldes(5);
+    item.setPrecioTotal(25000.0);
+    recomendacionPintura.agregarItem(item);
+    when(
+      this.servicioRecomendacionPintura.recomendar(any(Ambiente.class), any(Estilo.class), isNull())
+    )
       .thenReturn(recomendacionPintura);
     List<Mueble> muebles = new ArrayList<>();
     this.dadoQueElCatalogoCumpleCon(ESTILO, PRESUPUESTO, muebles);
@@ -219,7 +243,75 @@ public class ControladorRedisenoTest {
     ModelAndView modelAndView = this.cuandoEnvioElFormulario(ESTILO, PRESUPUESTO);
 
     assertThat(modelAndView.getModel().get("recomendacionPintura"), is(recomendacionPintura));
-    verify(this.servicioRecomendacionPintura).recomendar(any(Ambiente.class));
+    RecomendacionPintura obtenida = (RecomendacionPintura) modelAndView
+      .getModel()
+      .get("recomendacionPintura");
+    assertThat(obtenida.getItems(), hasSize(1));
+    assertThat(obtenida.getItems().get(0).getBaldePintura(), is(notNullValue()));
+    assertThat(obtenida.getItems().get(0).getCantidadBaldes(), is(5));
+    assertThat(obtenida.getItems().get(0).getPrecioTotal(), is(25000.0));
+    verify(this.servicioRecomendacionPintura)
+      .recomendar(any(Ambiente.class), any(Estilo.class), isNull());
+  }
+
+  @Test
+  public void dadoQueSeleccionoUnColor_cuandoActualizoElColor_entoncesSeAplicaElOverrideYSeResalta()
+    throws Exception {
+    this.dadoQueElAmbienteNoTieneTipo();
+    List<Mueble> muebles = new ArrayList<>();
+    this.dadoQueElCatalogoCumpleCon(ESTILO, PRESUPUESTO, muebles);
+    when(this.servicioRediseño.recomendar(ESTILO)).thenReturn(this.unaRecomendacion(ESTILO));
+    RecomendacionPintura recomendacionPintura = new RecomendacionPintura();
+    when(
+      this.servicioRecomendacionPintura.recomendar(any(Ambiente.class), any(Estilo.class), eq(1))
+    )
+      .thenReturn(recomendacionPintura);
+
+    ModelAndView modelAndView =
+      this.controladorRediseno.actualizarColor(
+          AMBIENTE_ID,
+          1,
+          ESTILO.name(),
+          String.valueOf(PRESUPUESTO),
+          null
+        );
+
+    assertThat(modelAndView.getViewName(), is(RESULTADOS));
+    assertThat(modelAndView.getModel().get("colorSeleccionadoIndex"), is(1));
+    assertThat(modelAndView.getModel().get("recomendacionPintura"), is(recomendacionPintura));
+    verify(this.servicioRecomendacionPintura, times(2))
+      .recomendar(any(Ambiente.class), any(Estilo.class), eq(1));
+  }
+
+  @Test
+  public void dadoQueSeleccionoUnColor_cuandoActualizoLosLitros_entoncesSePreservaElColorSeleccionado()
+    throws Exception {
+    this.dadoQueElAmbienteNoTieneTipo();
+    List<Mueble> muebles = new ArrayList<>();
+    this.dadoQueElCatalogoCumpleCon(ESTILO, PRESUPUESTO, muebles);
+    when(this.servicioRediseño.recomendar(ESTILO)).thenReturn(this.unaRecomendacion(ESTILO));
+    RecomendacionPintura recomendacionPintura = new RecomendacionPintura();
+    when(
+      this.servicioRecomendacionPintura.recomendar(any(Ambiente.class), any(Estilo.class), eq(2))
+    )
+      .thenReturn(recomendacionPintura);
+
+    ModelAndView modelAndView =
+      this.controladorRediseno.actualizarLitros(
+          AMBIENTE_ID,
+          0,
+          5.0,
+          2,
+          ESTILO.name(),
+          String.valueOf(PRESUPUESTO),
+          null
+        );
+
+    assertThat(modelAndView.getViewName(), is(RESULTADOS));
+    assertThat(modelAndView.getModel().get("colorSeleccionadoIndex"), is(2));
+    assertThat(modelAndView.getModel().get("recomendacionPintura"), is(recomendacionPintura));
+    verify(this.servicioRecomendacionPintura)
+      .recomendar(any(Ambiente.class), any(Estilo.class), eq(2));
   }
 
   @Test
@@ -300,7 +392,11 @@ public class ControladorRedisenoTest {
   }
 
   private ModelAndView cuandoEnvioElFormularioConTexto(String estilo, String presupuesto) {
-    return this.controladorRediseno.generarPropuesta(AMBIENTE_ID, estilo, presupuesto, null);
+    try {
+      return this.controladorRediseno.generarPropuesta(AMBIENTE_ID, estilo, presupuesto, null);
+    } catch (FiltroDeMueblesInvalidoException e) {
+      return new ModelAndView("redirect:/ambientes/1/redisenar");
+    }
   }
 
   private ModelAndView cuandoEnvioElFormulario(Estilo estilo, Double presupuesto) {

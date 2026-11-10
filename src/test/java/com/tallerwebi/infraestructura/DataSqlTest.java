@@ -230,7 +230,7 @@ public class DataSqlTest {
     Set<FormaPintura> formas = EnumSet.noneOf(FormaPintura.class);
     for (Ambiente ambiente : ambientes) {
       Hibernate.initialize(ambiente.getAberturas());
-      RecomendacionPintura recomendacion = servicioRecomendacion.recomendar(ambiente);
+      RecomendacionPintura recomendacion = servicioRecomendacion.recomendar(ambiente, null);
       assertThat(recomendacion.getFormaPintura(), is(notNullValue()));
       formas.add(recomendacion.getFormaPintura());
     }

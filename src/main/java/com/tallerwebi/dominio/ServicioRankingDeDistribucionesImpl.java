@@ -28,6 +28,14 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
   private static final double DESPLAZAMIENTO_MINIMO = 0.25;
   // Las categorias se reconocen por el prefijo del nombre (ej.: "Cama 2 plazas").
   private static final String CATEGORIA_CAMA = "Cama";
+  private static final String CATEGORIA_PLACARD = "Placard";
+  // Puntaje por despeje frontal del placard. El minimo coincide con el piso eliminatorio de
+  // HU-35.1: si cambia uno, el otro debe quedar alineado.
+  private static final double DESPEJE_FRONTAL_COMODO = 0.60;
+  private static final double DESPEJE_FRONTAL_MINIMO = 0.40;
+  private static final int PUNTOS_POR_DESPEJE_COMODO = 2;
+  private static final int PUNTOS_POR_DESPEJE_MINIMO = 1;
+  private static final int PUNTOS_MAXIMOS_POR_PLACARD = 2;
 
   private final ServicioPlano2D servicioPlano2D;
   private final ServicioReglasDeUbicacion servicioReglasDeUbicacion;
@@ -92,7 +100,7 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
         reflejarHorizontalmente,
         reflejarVerticalmente
       );
-      agregarSiEsUnaOpcionNueva(ranking, puntuar(plano, ambiente));
+      agregarSiEsUnaOpcionNueva(ranking, puntuar(plano, ambiente, zonasAmbienteOriginal));
       agregarVariantes(ranking, plano, ambiente, zonasAmbienteOriginal, puntajeMaximo);
     }
     ranking.sort(Comparator.comparingInt(OpcionDeDistribucion::getPuntajeTotal).reversed());
@@ -196,7 +204,7 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
       double distancia = desplazamiento * indiceDesplazamiento * sentido;
       Plano variante = desplazarMueble(plano, indiceMueble, eje, distancia);
       if (esVarianteValida(variante, indiceMueble, ambiente, zonas)) {
-        agregarSiEsUnaOpcionNueva(ranking, puntuar(variante, ambiente));
+        agregarSiEsUnaOpcionNueva(ranking, puntuar(variante, ambiente, zonas));
       }
       if (Math.abs(distancia) >= anchoDelEje) {
         break;
@@ -229,12 +237,16 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
       : servicioReglasDeUbicacion.esUbicacionValida(desplazado, ambiente, otros, zonas);
   }
 
-  /** Puntaje maximo posible: un punto por cada cama, que es la unica regla que puntua. */
+  /** Puntaje maximo posible: un punto por cada cama y dos por cada placard. */
   private int calcularPuntajeMaximo(List<Mueble> muebles) {
     int puntajeMaximo = 0;
     for (Mueble mueble : muebles) {
-      if (mueble.getCategoriaDeMueble() != null && esCama(mueble)) {
-        puntajeMaximo += PUNTOS_POR_CUMPLIR_REGLA;
+      if (mueble.getCategoriaDeMueble() != null) {
+        if (esCama(mueble)) {
+          puntajeMaximo += PUNTOS_POR_CUMPLIR_REGLA;
+        } else if (esPlacard(mueble)) {
+          puntajeMaximo += PUNTOS_MAXIMOS_POR_PLACARD;
+        }
       }
     }
     return puntajeMaximo;
@@ -294,9 +306,10 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
 
   /**
    * Puntua un plano: los muebles sin categoria generan un aviso; cada cama suma 1 si queda opuesta
-   * a la ventana y resta 1 si no. El desglose explica el puntaje de cada mueble.
+   * a la ventana y resta 1 si no; cada placard suma segun su despeje frontal. El desglose explica
+   * el puntaje de cada mueble.
    */
-  private OpcionDeDistribucion puntuar(Plano plano, Ambiente ambiente) {
+  private OpcionDeDistribucion puntuar(Plano plano, Ambiente ambiente, List<ZonaExclusion> zonas) {
     int puntaje = 0;
     List<String> desglose = new ArrayList<>();
     List<String> avisos = new ArrayList<>();
@@ -315,14 +328,45 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
           puntaje += PUNTOS_POR_INCUMPLIR_REGLA;
           desglose.add(mueble.getNombre() + ": cama no opuesta a la ventana (-1)");
         }
+      } else if (esPlacard(mueble)) {
+        List<MuebleUbicado> otros = new ArrayList<>(plano.getMuebles());
+        otros.remove(ubicado);
+        Double despeje = servicioReglasDeUbicacion.despejeFrontalDe(
+          ubicado,
+          ambiente,
+          otros,
+          zonas
+        );
+        int puntos = puntosPorDespejeFrontal(despeje);
+        puntaje += puntos;
+        desglose.add(mueble.getNombre() + ": despeje frontal (+" + puntos + ")");
       }
     }
     return new OpcionDeDistribucion(plano, puntaje, desglose, avisos);
   }
 
+  /** Convierte el despeje frontal en puntos, con la tolerancia de los bordes de la tabla. */
+  private int puntosPorDespejeFrontal(Double despeje) {
+    if (despeje == null) {
+      return 0;
+    }
+    if (despeje >= DESPEJE_FRONTAL_COMODO - ZonaNoDisponible.TOLERANCIA) {
+      return PUNTOS_POR_DESPEJE_COMODO;
+    }
+    if (despeje >= DESPEJE_FRONTAL_MINIMO - ZonaNoDisponible.TOLERANCIA) {
+      return PUNTOS_POR_DESPEJE_MINIMO;
+    }
+    return 0;
+  }
+
   /** Reconoce la categoria por el prefijo del nombre (ej.: "Cama 2 plazas"). */
   private boolean esCama(Mueble mueble) {
     return mueble.getCategoriaDeMueble().getNombre().startsWith(CATEGORIA_CAMA);
+  }
+
+  /** Reconoce la categoria por el prefijo del nombre (ej.: "Placard 3 puertas"). */
+  private boolean esPlacard(Mueble mueble) {
+    return mueble.getCategoriaDeMueble().getNombre().startsWith(CATEGORIA_PLACARD);
   }
 
   /** Agrega la opcion solo si no equivale a una que ya este en el ranking. */

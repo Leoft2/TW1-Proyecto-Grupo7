@@ -2,10 +2,14 @@ package com.tallerwebi.dominio;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -244,6 +248,173 @@ public class ServicioRankingDeDistribucionesTest {
   }
 
   // -------------------------------------------------------------------------
+  // HU35.2: Puntaje por despeje frontal del placard
+  // -------------------------------------------------------------------------
+
+  @Test
+  public void deberiaSumarDosPuntosCuandoElDespejeFrontalEsMayorOIgualA60Centimetros() {
+    //Given
+    Mueble placard = givenUnPlacard();
+    givenPlanoValidoCon(placard, 1.0, 0.5);
+    when(servicioReglasDeUbicacion.despejeFrontalDe(any(), any(), anyList(), any()))
+      .thenReturn(0.60);
+
+    //When
+    List<OpcionDeDistribucion> ranking = whenGeneroElRankingCon(placard);
+
+    //Then
+    thenElPuntajeTotalEs(ranking, 2);
+  }
+
+  @Test
+  public void deberiaSumarUnPuntoCuandoElDespejeFrontalEstaEntre40Y59Centimetros() {
+    //Given
+    Mueble placard = givenUnPlacard();
+    givenPlanoValidoCon(placard, 1.0, 0.5);
+    when(servicioReglasDeUbicacion.despejeFrontalDe(any(), any(), anyList(), any()))
+      .thenReturn(0.59);
+
+    //When
+    List<OpcionDeDistribucion> ranking = whenGeneroElRankingCon(placard);
+
+    //Then
+    thenElPuntajeTotalEs(ranking, 1);
+  }
+
+  @Test
+  public void deberiaSumarUnPuntoCuandoElDespejeFrontalEsExactamente40Centimetros() {
+    //Given
+    Mueble placard = givenUnPlacard();
+    givenPlanoValidoCon(placard, 1.0, 0.5);
+    when(servicioReglasDeUbicacion.despejeFrontalDe(any(), any(), anyList(), any()))
+      .thenReturn(0.40);
+
+    //When
+    List<OpcionDeDistribucion> ranking = whenGeneroElRankingCon(placard);
+
+    //Then
+    thenElPuntajeTotalEs(ranking, 1);
+  }
+
+  @Test
+  public void deberiaSumarCeroPuntosCuandoElDespejeFrontalEsMenorA40Centimetros() {
+    //Given
+    Mueble placard = givenUnPlacard();
+    givenPlanoValidoCon(placard, 1.0, 0.5);
+    when(servicioReglasDeUbicacion.despejeFrontalDe(any(), any(), anyList(), any()))
+      .thenReturn(0.39);
+
+    //When
+    List<OpcionDeDistribucion> ranking = whenGeneroElRankingCon(placard);
+
+    //Then
+    thenElPuntajeTotalEs(ranking, 0);
+  }
+
+  @Test
+  public void deberiaMostrarCeroPuntosEnElDesgloseCuandoElPlacardNoTieneDespejeFrontalAplicable() {
+    //Given
+    Mueble placard = givenUnPlacard();
+    givenPlanoValidoCon(placard, 1.0, 0.5);
+    when(servicioReglasDeUbicacion.despejeFrontalDe(any(), any(), anyList(), any()))
+      .thenReturn(null);
+
+    //When
+    List<OpcionDeDistribucion> ranking = whenGeneroElRankingCon(placard);
+
+    //Then
+    thenElDesgloseContiene(ranking, "Placard: despeje frontal (+0)");
+  }
+
+  @Test
+  public void deberiaNoMostrarDesgloseDeDespejeFrontalCuandoElMuebleNoEsUnPlacard() {
+    //Given
+    Mueble mesa = givenUnaMesa();
+    givenPlanoValidoCon(mesa, 1.0, 0.5);
+
+    //When
+    List<OpcionDeDistribucion> ranking = whenGeneroElRankingCon(mesa);
+
+    //Then
+    thenElDesgloseEstaVacio(ranking);
+  }
+
+  @Test
+  public void deberiaUsarLasZonasCalculadasCuandoPuntuaElDespejeFrontal() {
+    //Given
+    ServicioZonaExclusion servicioZonaExclusion = mock(ServicioZonaExclusion.class);
+    List<ZonaExclusion> zonasOriginales = new ArrayList<>();
+    zonasOriginales.add(new ZonaExclusion(1.0, 0.8, 1.0, 0.4, TipoAbertura.PUERTA));
+    List<ZonaExclusion> zonasTransformadas = new ArrayList<>();
+    when(servicioZonaExclusion.calcularZonas(any(Ambiente.class)))
+      .thenReturn(
+        zonasOriginales,
+        zonasTransformadas,
+        zonasTransformadas,
+        zonasTransformadas,
+        zonasTransformadas
+      );
+    servicioRankingDeDistribuciones =
+      new ServicioRankingDeDistribucionesImpl(
+        servicioPlano2D,
+        servicioReglasDeUbicacion,
+        servicioZonaExclusion
+      );
+    Mueble placard = givenUnPlacard();
+    givenPlanoValidoConZonas(placard, 1.0, 0.5);
+    when(servicioReglasDeUbicacion.despejeFrontalDe(any(), any(), anyList(), any()))
+      .thenReturn(0.60);
+
+    //When
+    whenGeneroElRankingCon(placard);
+
+    //Then
+    thenSeUsoLaZonaCalculada(zonasOriginales);
+  }
+
+  @Test
+  public void deberiaSeguirExplorandoVariantesCuandoLasPrimerasOpcionesNoAlcanzanElPuntajeMaximoDelPlacard() {
+    //Given
+    ambiente = new Ambiente(4.0, 1.7);
+    Mueble placard = givenUnPlacard();
+    givenPlanoValidoCon(placard, 1.0, 0.5);
+    when(servicioReglasDeUbicacion.despejeFrontalDe(any(), any(), anyList(), any()))
+      .thenAnswer(invocacion -> {
+        MuebleUbicado ubicado = invocacion.getArgument(0);
+        return ubicado.getPosicionY() > 0.7 ? 0.60 : 0.59;
+      });
+
+    //When
+    List<OpcionDeDistribucion> ranking = whenGeneroElRankingCon(placard);
+
+    //Then
+    thenElPuntajeTotalEs(ranking, 2);
+  }
+
+  @Test
+  public void deberiaSumarElPuntajeDeCadaPlacardCuandoHayMasDeUnPlacard() {
+    //Given
+    ambiente = new Ambiente(4.0, 2.5);
+    Mueble primerPlacard = givenUnPlacard();
+    Mueble segundoPlacard = givenUnPlacard();
+    givenPlanoValidoConDosMuebles(primerPlacard, 0.0, 0.0, segundoPlacard, 2.0, 0.0);
+    when(servicioReglasDeUbicacion.despejeFrontalDe(any(), any(), anyList(), any()))
+      .thenAnswer(invocacion -> {
+        MuebleUbicado ubicado = invocacion.getArgument(0);
+        return ubicado.getMueble() == primerPlacard ? 0.60 : 0.40;
+      });
+
+    //When
+    List<OpcionDeDistribucion> ranking = whenGeneroElRankingConDosMuebles(
+      primerPlacard,
+      segundoPlacard
+    );
+
+    //Then
+    thenElPuntajeTotalEs(ranking, 3);
+  }
+
+  // -------------------------------------------------------------------------
   // GIVEN
   // -------------------------------------------------------------------------
 
@@ -323,6 +494,71 @@ public class ServicioRankingDeDistribucionesTest {
     return new Plano(ambiente, muebles, new ArrayList<>(), new ArrayList<>());
   }
 
+  private void givenPlanoValidoCon(Mueble mueble, Double x, Double y) {
+    when(servicioPlano2D.estaDentroDelPerimetro(any(MuebleUbicado.class), any(Ambiente.class)))
+      .thenReturn(true);
+    when(
+      servicioReglasDeUbicacion.esUbicacionValida(
+        any(MuebleUbicado.class),
+        any(Ambiente.class),
+        anyList()
+      )
+    )
+      .thenReturn(true);
+    when(servicioPlano2D.generarPlano(any(Ambiente.class), anyList()))
+      .thenReturn(givenPlanoConMueble(mueble, x, y));
+  }
+
+  private void givenPlanoValidoConDosMuebles(
+    Mueble primero,
+    Double xPrimero,
+    Double yPrimero,
+    Mueble segundo,
+    Double xSegundo,
+    Double ySegundo
+  ) {
+    when(servicioPlano2D.estaDentroDelPerimetro(any(MuebleUbicado.class), any(Ambiente.class)))
+      .thenReturn(true);
+    when(
+      servicioReglasDeUbicacion.esUbicacionValida(
+        any(MuebleUbicado.class),
+        any(Ambiente.class),
+        anyList()
+      )
+    )
+      .thenReturn(true);
+    when(servicioPlano2D.generarPlano(any(Ambiente.class), anyList()))
+      .thenReturn(
+        givenPlanoCon(
+          ambiente,
+          new MuebleUbicado(primero, xPrimero, yPrimero),
+          new MuebleUbicado(segundo, xSegundo, ySegundo)
+        )
+      );
+  }
+
+  private void givenPlanoValidoConZonas(Mueble mueble, Double x, Double y) {
+    when(servicioPlano2D.estaDentroDelPerimetro(any(MuebleUbicado.class), any(Ambiente.class)))
+      .thenReturn(true);
+    when(
+      servicioReglasDeUbicacion.esUbicacionValida(
+        any(MuebleUbicado.class),
+        any(Ambiente.class),
+        anyList(),
+        anyList()
+      )
+    )
+      .thenReturn(true);
+    when(servicioPlano2D.generarPlano(any(Ambiente.class), anyList()))
+      .thenReturn(givenPlanoConMueble(mueble, x, y));
+  }
+
+  private Plano givenPlanoConMueble(Mueble mueble, Double x, Double y) {
+    List<MuebleUbicado> muebles = new ArrayList<>();
+    muebles.add(new MuebleUbicado(mueble, x, y));
+    return new Plano(ambiente, muebles, new ArrayList<>(), new ArrayList<>());
+  }
+
   // -------------------------------------------------------------------------
   // WHEN
   // -------------------------------------------------------------------------
@@ -330,6 +566,22 @@ public class ServicioRankingDeDistribucionesTest {
   private List<OpcionDeDistribucion> whenGeneroElRanking() {
     List<Mueble> muebles = new ArrayList<>();
     muebles.add(cama);
+    return servicioRankingDeDistribuciones.generarRanking(ambiente, muebles);
+  }
+
+  private List<OpcionDeDistribucion> whenGeneroElRankingCon(Mueble mueble) {
+    List<Mueble> muebles = new ArrayList<>();
+    muebles.add(mueble);
+    return servicioRankingDeDistribuciones.generarRanking(ambiente, muebles);
+  }
+
+  private List<OpcionDeDistribucion> whenGeneroElRankingConDosMuebles(
+    Mueble primero,
+    Mueble segundo
+  ) {
+    List<Mueble> muebles = new ArrayList<>();
+    muebles.add(primero);
+    muebles.add(segundo);
     return servicioRankingDeDistribuciones.generarRanking(ambiente, muebles);
   }
 
@@ -424,5 +676,22 @@ public class ServicioRankingDeDistribucionesTest {
         ) <
         0.0001;
     return espejoHorizontal || espejoVertical || espejoAmbos;
+  }
+
+  private void thenElPuntajeTotalEs(List<OpcionDeDistribucion> ranking, int esperado) {
+    assertThat(ranking.get(0).getPuntajeTotal(), is(equalTo(esperado)));
+  }
+
+  private void thenElDesgloseContiene(List<OpcionDeDistribucion> ranking, String linea) {
+    assertThat(ranking.get(0).getDesglose(), hasItem(linea));
+  }
+
+  private void thenElDesgloseEstaVacio(List<OpcionDeDistribucion> ranking) {
+    assertThat(ranking.get(0).getDesglose().isEmpty(), is(equalTo(true)));
+  }
+
+  private void thenSeUsoLaZonaCalculada(List<ZonaExclusion> zonas) {
+    verify(servicioReglasDeUbicacion, atLeastOnce())
+      .despejeFrontalDe(any(MuebleUbicado.class), any(Ambiente.class), anyList(), eq(zonas));
   }
 }

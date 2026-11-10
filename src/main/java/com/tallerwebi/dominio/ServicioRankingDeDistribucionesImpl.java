@@ -6,32 +6,66 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+/**
+ * Genera hasta tres opciones de distribucion para un ambiente y las ordena de mayor a menor
+ * puntaje.
+ *
+ * <p>El proceso prueba cuatro simetrias del ambiente (sin espejo, espejo horizontal, vertical y
+ * ambos), genera un plano con ServicioPlano2D, lo valida con las reglas de ubicacion, lo devuelve
+ * a la orientacion original y explora desplazamientos cortos de cada mueble para mejorar el
+ * resultado. Las opciones espejadas entre si se consideran duplicadas.
+ */
 @Service
 public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDistribuciones {
 
+  // Puntaje: cada regla de categoria cumplida suma 1 y cada una incumplida resta 1.
   private static final int PUNTOS_POR_CUMPLIR_REGLA = 1;
   private static final int PUNTOS_POR_INCUMPLIR_REGLA = -1;
+  // El ranking devuelve como maximo tres opciones.
   private static final int CANTIDAD_MAXIMA_DE_OPCIONES = 3;
+  // Exploracion de variantes: hasta ocho pasos por eje y sentido, de 0,25 m como minimo.
   private static final int CANTIDAD_MAXIMA_DE_DESPLAZAMIENTOS = 8;
   private static final double DESPLAZAMIENTO_MINIMO = 0.25;
+  // Las categorias se reconocen por el prefijo del nombre (ej.: "Cama 2 plazas").
   private static final String CATEGORIA_CAMA = "Cama";
 
   private final ServicioPlano2D servicioPlano2D;
   private final ServicioReglasDeUbicacion servicioReglasDeUbicacion;
   private final ServicioZonaExclusion servicioZonaExclusion;
+  private final ServicioOrientacionFuncional orientacionFuncional;
+  private final PuntajePorDespejeFrontal puntajePorDespejeFrontal;
+  // Transforma el ambiente y devuelve los planos a la orientacion original.
   private final SimetriaDeAmbiente simetria = new SimetriaDeAmbiente();
+  private final PropuestasDeOrientacion propuestasDeOrientacion = new PropuestasDeOrientacion();
 
-  @Autowired
   public ServicioRankingDeDistribucionesImpl(
     ServicioPlano2D servicioPlano2D,
     ServicioReglasDeUbicacion servicioReglasDeUbicacion,
     ServicioZonaExclusion servicioZonaExclusion
   ) {
+    this(
+      servicioPlano2D,
+      servicioReglasDeUbicacion,
+      servicioZonaExclusion,
+      new ServicioOrientacionFuncionalImpl()
+    );
+  }
+
+  @Autowired
+  public ServicioRankingDeDistribucionesImpl(
+    ServicioPlano2D servicioPlano2D,
+    ServicioReglasDeUbicacion servicioReglasDeUbicacion,
+    ServicioZonaExclusion servicioZonaExclusion,
+    ServicioOrientacionFuncional orientacionFuncional
+  ) {
     this.servicioPlano2D = servicioPlano2D;
     this.servicioReglasDeUbicacion = servicioReglasDeUbicacion;
     this.servicioZonaExclusion = servicioZonaExclusion;
+    this.orientacionFuncional = orientacionFuncional;
+    this.puntajePorDespejeFrontal = new PuntajePorDespejeFrontal(servicioReglasDeUbicacion);
   }
 
+  /** Constructor sin zonas de exclusion: se usa cuando no hace falta filtrar por aberturas. */
   public ServicioRankingDeDistribucionesImpl(
     ServicioPlano2D servicioPlano2D,
     ServicioReglasDeUbicacion servicioReglasDeUbicacion
@@ -39,6 +73,13 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
     this(servicioPlano2D, servicioReglasDeUbicacion, ambiente -> null);
   }
 
+  /**
+   * Genera el ranking: por cada simetria transforma el ambiente, calcula sus zonas, pide el plano y
+   * lo valida; si es valido lo devuelve a la orientacion original, lo puntua y agrega variantes
+   * desplazando cada mueble. Al final ordena de mayor a menor puntaje y recorta a las tres mejores.
+   *
+   * <p>Indice de simetria: 0 sin espejo, 1 horizontal, 2 vertical, 3 ambos.
+   */
   @Override
   public List<OpcionDeDistribucion> generarRanking(Ambiente ambiente, List<Mueble> muebles) {
     List<OpcionDeDistribucion> ranking = new ArrayList<>();
@@ -70,8 +111,23 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
         reflejarHorizontalmente,
         reflejarVerticalmente
       );
-      agregarSiEsUnaOpcionNueva(ranking, puntuar(plano, ambiente));
+      if (orientacionFuncional.cumpleOrientacion(plano)) {
+        agregarSiEsUnaOpcionNueva(ranking, puntuar(plano, ambiente, zonasAmbienteOriginal));
+      }
+      agregarPropuestasDeOrientacion(ranking, plano, ambiente, zonasAmbienteOriginal);
       agregarVariantes(ranking, plano, ambiente, zonasAmbienteOriginal, puntajeMaximo);
+    }
+    if (ranking.isEmpty()) {
+      new BusquedaPerimetralOrientada(
+        servicioPlano2D,
+        servicioReglasDeUbicacion,
+        orientacionFuncional
+      )
+        .buscar(ambiente, muebles, zonasAmbienteOriginal)
+        .ifPresent(plano -> {
+          agregarSiEsUnaOpcionNueva(ranking, puntuar(plano, ambiente, zonasAmbienteOriginal));
+          agregarVariantes(ranking, plano, ambiente, zonasAmbienteOriginal, puntajeMaximo);
+        });
     }
     ranking.sort(Comparator.comparingInt(OpcionDeDistribucion::getPuntajeTotal).reversed());
     while (ranking.size() > CANTIDAD_MAXIMA_DE_OPCIONES) {
@@ -80,10 +136,32 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
     return ranking;
   }
 
+  /** Delega el calculo de zonas; con el constructor de dos argumentos devuelve null. */
   private List<ZonaExclusion> calcularZonas(Ambiente ambiente) {
     return servicioZonaExclusion.calcularZonas(ambiente);
   }
 
+  private void agregarPropuestasDeOrientacion(
+    List<OpcionDeDistribucion> ranking,
+    Plano plano,
+    Ambiente ambiente,
+    List<ZonaExclusion> zonas
+  ) {
+    for (Plano propuesta : propuestasDeOrientacion.generar(plano)) {
+      if (
+        esDistribucionValida(propuesta, plano.getMuebles().size(), ambiente, zonas) &&
+        orientacionFuncional.cumpleOrientacion(propuesta)
+      ) {
+        agregarSiEsUnaOpcionNueva(ranking, puntuar(propuesta, ambiente, zonas));
+      }
+    }
+  }
+
+  /**
+   * Un plano es valido si ubico todos los muebles, no excluyo ninguno y cada mueble esta fuera de
+   * conflicto, dentro del perimetro, sin superponerse con los ya validados y cumple las reglas de
+   * ubicacion. La lista de "otros" excluye al mueble que se esta validando.
+   */
   private boolean esDistribucionValida(
     Plano plano,
     int cantidadMuebles,
@@ -95,18 +173,13 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
     }
     List<MuebleUbicado> mueblesValidados = new ArrayList<>();
     for (MuebleUbicado ubicado : plano.getMuebles()) {
+      List<MuebleUbicado> otros = new ArrayList<>(plano.getMuebles());
+      otros.remove(ubicado);
       if (
         ubicado.isEnConflicto() ||
         !servicioPlano2D.estaDentroDelPerimetro(ubicado, ambiente) ||
         seSuperponeConAlguno(ubicado, mueblesValidados) ||
-        !(zonas == null
-            ? servicioReglasDeUbicacion.esUbicacionValida(ubicado, ambiente, mueblesValidados)
-            : servicioReglasDeUbicacion.esUbicacionValida(
-              ubicado,
-              ambiente,
-              mueblesValidados,
-              zonas
-            ))
+        !cumpleReglasDeUbicacion(ubicado, ambiente, otros, zonas)
       ) {
         return false;
       }
@@ -115,6 +188,10 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
     return true;
   }
 
+  /**
+   * Explora variantes desplazando cada mueble en ambos ejes y sentidos, con pasos del ancho minimo
+   * de pasillo (o 0,25 m si es menor). Corta cuando ya hay tres opciones con el puntaje maximo.
+   */
   private void agregarVariantes(
     List<OpcionDeDistribucion> ranking,
     Plano plano,
@@ -144,6 +221,10 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
     }
   }
 
+  /**
+   * Aplica hasta ocho desplazamientos crecientes sobre un eje y valida cada variante. Se detiene
+   * cuando la distancia acumulada alcanza la dimension del ambiente.
+   */
   private void agregarVariantesEnEje(
     List<OpcionDeDistribucion> ranking,
     Plano plano,
@@ -162,8 +243,12 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
     ) {
       double distancia = desplazamiento * indiceDesplazamiento * sentido;
       Plano variante = desplazarMueble(plano, indiceMueble, eje, distancia);
-      if (esVarianteValida(variante, indiceMueble, ambiente, zonas)) {
-        agregarSiEsUnaOpcionNueva(ranking, puntuar(variante, ambiente));
+      if (
+        esVarianteValida(variante, indiceMueble, ambiente, zonas) &&
+        esDistribucionValida(variante, plano.getMuebles().size(), ambiente, zonas) &&
+        orientacionFuncional.cumpleOrientacion(variante)
+      ) {
+        agregarSiEsUnaOpcionNueva(ranking, puntuar(variante, ambiente, zonas));
       }
       if (Math.abs(distancia) >= anchoDelEje) {
         break;
@@ -171,7 +256,7 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
     }
   }
 
-  // El resto de la distribucion ya era valida: solo se revisa el mueble desplazado.
+  // Primero se comprueba el mueble desplazado; luego se valida la distribucion completa.
   private boolean esVarianteValida(
     Plano variante,
     int indiceMueble,
@@ -191,21 +276,34 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
     ) {
       return false;
     }
-    return zonas == null
-      ? servicioReglasDeUbicacion.esUbicacionValida(desplazado, ambiente, otros)
-      : servicioReglasDeUbicacion.esUbicacionValida(desplazado, ambiente, otros, zonas);
+    return cumpleReglasDeUbicacion(desplazado, ambiente, otros, zonas);
   }
 
+  private boolean cumpleReglasDeUbicacion(
+    MuebleUbicado ubicado,
+    Ambiente ambiente,
+    List<MuebleUbicado> otros,
+    List<ZonaExclusion> zonas
+  ) {
+    if (zonas == null) {
+      return servicioReglasDeUbicacion.esUbicacionValida(ubicado, ambiente, otros);
+    }
+    return servicioReglasDeUbicacion.esUbicacionValida(ubicado, ambiente, otros, zonas);
+  }
+
+  /** Puntaje maximo posible de las reglas de categoria y de orientacion aplicables. */
   private int calcularPuntajeMaximo(List<Mueble> muebles) {
     int puntajeMaximo = 0;
     for (Mueble mueble : muebles) {
       if (mueble.getCategoriaDeMueble() != null && esCama(mueble)) {
         puntajeMaximo += PUNTOS_POR_CUMPLIR_REGLA;
       }
+      puntajeMaximo += puntajePorDespejeFrontal.puntajeMaximo(mueble);
     }
-    return puntajeMaximo;
+    return puntajeMaximo + orientacionFuncional.puntajeMaximo(muebles);
   }
 
+  /** Indica si ya hay tres opciones con el puntaje maximo, para cortar la busqueda. */
   private boolean estaCompleto(List<OpcionDeDistribucion> ranking, int puntajeMaximo) {
     int cantidadConPuntajeMaximo = 0;
     for (OpcionDeDistribucion opcion : ranking) {
@@ -216,6 +314,7 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
     return cantidadConPuntajeMaximo >= CANTIDAD_MAXIMA_DE_OPCIONES;
   }
 
+  /** Devuelve una copia del plano con un solo mueble desplazado, sin exclusiones. */
   private Plano desplazarMueble(Plano plano, int indiceMueble, int eje, double distancia) {
     List<MuebleUbicado> muebles = new ArrayList<>();
     for (int indice = 0; indice < plano.getMuebles().size(); indice++) {
@@ -233,6 +332,7 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
     return new Plano(plano.getAmbiente(), muebles, new ArrayList<>(), new ArrayList<>());
   }
 
+  /** Detecta superposicion de rectangulos con margen para el error de redondeo. */
   private boolean seSuperponeConAlguno(
     MuebleUbicado candidato,
     List<MuebleUbicado> mueblesUbicados
@@ -255,7 +355,11 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
     return false;
   }
 
-  private OpcionDeDistribucion puntuar(Plano plano, Ambiente ambiente) {
+  /**
+   * Puntua un plano: los muebles sin categoria generan un aviso; cada cama suma 1 si queda opuesta
+   * a la ventana y resta 1 si no. Las reglas funcionales cumplidas tambien suman puntos.
+   */
+  private OpcionDeDistribucion puntuar(Plano plano, Ambiente ambiente, List<ZonaExclusion> zonas) {
     int puntaje = 0;
     List<String> desglose = new ArrayList<>();
     List<String> avisos = new ArrayList<>();
@@ -274,15 +378,29 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
           puntaje += PUNTOS_POR_INCUMPLIR_REGLA;
           desglose.add(mueble.getNombre() + ": cama no opuesta a la ventana (-1)");
         }
+      } else {
+        int puntosDelPlacard = puntajePorDespejeFrontal.agregarPuntaje(
+          ubicado,
+          plano,
+          ambiente,
+          zonas,
+          desglose
+        );
+        puntaje += puntosDelPlacard;
       }
     }
+    List<String> orientacionesCumplidas = orientacionFuncional.desgloseOrientacion(plano);
+    desglose.addAll(orientacionesCumplidas);
+    puntaje += orientacionesCumplidas.size() * PUNTOS_POR_CUMPLIR_REGLA;
     return new OpcionDeDistribucion(plano, puntaje, desglose, avisos);
   }
 
+  /** Reconoce la categoria por el prefijo del nombre (ej.: "Cama 2 plazas"). */
   private boolean esCama(Mueble mueble) {
     return mueble.getCategoriaDeMueble().getNombre().startsWith(CATEGORIA_CAMA);
   }
 
+  /** Agrega la opcion solo si no equivale a una que ya este en el ranking. */
   private void agregarSiEsUnaOpcionNueva(
     List<OpcionDeDistribucion> ranking,
     OpcionDeDistribucion candidata
@@ -295,6 +413,10 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
     ranking.add(candidata);
   }
 
+  /**
+   * Dos opciones son equivalentes si tienen las mismas posiciones, o si una es el espejo de la otra
+   * y ambas tienen el mismo puntaje. Asi no se muestran variantes que solo cambian de orientacion.
+   */
   private boolean sonEquivalentes(OpcionDeDistribucion primera, OpcionDeDistribucion segunda) {
     Ambiente ambiente = primera.getPlano().getAmbiente();
     if (mismasPosiciones(primera, segunda, ambiente, false, false)) {
@@ -310,6 +432,10 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
     );
   }
 
+  /**
+   * Compara mueble por mueble aplicando, si corresponde, el espejo sobre el ambiente. Usa la
+   * tolerancia para no distinguir diferencias de redondeo.
+   */
   private boolean mismasPosiciones(
     OpcionDeDistribucion primera,
     OpcionDeDistribucion segunda,

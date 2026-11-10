@@ -4,6 +4,7 @@ import com.tallerwebi.dominio.*;
 import com.tallerwebi.dominio.excepcion.MuebleNoEncontrado;
 import com.tallerwebi.dominio.excepcion.ValidacionException;
 import jakarta.servlet.http.HttpSession;
+import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -30,6 +31,8 @@ public class ControladorInventarioMuebles {
   private static final String ATRIBUTO_TRAMOS_ESTRECHOS = "tramosEstrechos";
 
   private final ServicioCirculacion servicioCirculacion = new ServicioCirculacionImpl();
+  private final ServicioOrientacionFuncional orientacionFuncional =
+    new ServicioOrientacionFuncionalImpl();
 
   private final ServicioEdicionInventarioMuebles servicioEdicionInventarioMuebles;
   private final ServicioPlano2D servicioPlano2D;
@@ -200,10 +203,21 @@ public class ControladorInventarioMuebles {
     }
     try {
       Map<String, Object> model = new ModelMap();
-      Plano plano = servicioPlano2D.generarPlano(
-        ambiente,
-        servicioEdicionInventarioMuebles.listar()
-      );
+      List<Mueble> muebles = servicioEdicionInventarioMuebles.listar();
+      Plano plano = servicioPlano2D.generarPlano(ambiente, muebles);
+      if (!orientacionFuncional.cumpleOrientacion(plano)) {
+        plano =
+          new BusquedaDePlanoOrientado()
+            .buscar(ambiente, muebles, servicioPlano2D, servicioZonaExclusion)
+            .orElse(null);
+        if (plano == null) {
+          return new ModelAndView(
+            "plano-interactivo",
+            "error",
+            "No se pudo orientar los muebles ni garantizar el acceso lateral de la cama."
+          );
+        }
+      }
       String usuarioEmail = (String) sesion.getAttribute("USUARIO_EMAIL");
       if (usuarioEmail != null) {
         servicioPersistenciaPlano.guardar(plano, usuarioEmail);

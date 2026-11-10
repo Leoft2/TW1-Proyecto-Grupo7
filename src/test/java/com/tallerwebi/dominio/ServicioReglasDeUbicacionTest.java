@@ -1,6 +1,7 @@
 package com.tallerwebi.dominio;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
@@ -202,6 +203,343 @@ public class ServicioReglasDeUbicacionTest {
     assertThat(aviso, is(nullValue()));
   }
 
+  // -------------------------------------------------------------------------
+  // HU35.1: Piso eliminatorio de despeje frontal del placard
+  // -------------------------------------------------------------------------
+
+  @Test
+  public void deberiaAceptarUnPlacardCuandoElDespejeFrontalEsExactamente40Centimetros() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 1.0);
+    MuebleUbicado placard = givenPlacardUbicado(1.0, 0.0, 1.8, 0.6);
+
+    //When
+    boolean valida = whenEvaluoLaUbicacion(placard, ambiente, new ArrayList<>());
+
+    //Then
+    thenLaUbicacionEs(valida, true);
+  }
+
+  @Test
+  public void deberiaDescartarUnPlacardCuandoElDespejeFrontalEsMenorA40Centimetros() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 0.99);
+    MuebleUbicado placard = givenPlacardUbicado(1.0, 0.0, 1.8, 0.6);
+
+    //When
+    boolean valida = whenEvaluoLaUbicacion(placard, ambiente, new ArrayList<>());
+
+    //Then
+    thenLaUbicacionEs(valida, false);
+  }
+
+  @Test
+  public void deberiaDescartarUnPlacardCuandoLaCaraFrontalEstaContraUnaPared() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 0.6);
+    MuebleUbicado placard = givenPlacardUbicado(1.0, 0.0, 1.8, 0.6);
+
+    //When
+    boolean valida = whenEvaluoLaUbicacion(placard, ambiente, new ArrayList<>());
+
+    //Then
+    thenLaUbicacionEs(valida, false);
+  }
+
+  @Test
+  public void deberiaDescartarUnPlacardCuandoLaCaraFrontalChocaConOtroMueble() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 2.0);
+    MuebleUbicado placard = givenPlacardUbicado(1.0, 0.0, 1.8, 0.6);
+    MuebleUbicado bloqueo = givenMuebleUbicado("Mesa", 1.0, 0.5, 1.5, 0.8);
+    List<MuebleUbicado> ubicados = new ArrayList<>();
+    ubicados.add(bloqueo);
+
+    //When
+    boolean valida = whenEvaluoLaUbicacion(placard, ambiente, ubicados);
+
+    //Then
+    thenLaUbicacionEs(valida, false);
+  }
+
+  @Test
+  public void deberiaAceptarUnPlacardCuandoLaCaraFrontalDejaUnPasilloDe50CentimetrosHastaOtroMueble() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 2.5);
+    MuebleUbicado placard = givenPlacardUbicado(1.0, 0.0, 1.8, 0.6);
+    MuebleUbicado otro = givenMuebleUbicado("Mesa", 1.0, 1.0, 1.5, 1.1);
+    List<MuebleUbicado> ubicados = new ArrayList<>();
+    ubicados.add(otro);
+
+    //When
+    boolean valida = whenEvaluoLaUbicacion(placard, ambiente, ubicados);
+
+    //Then
+    thenLaUbicacionEs(valida, true);
+  }
+
+  @Test
+  public void deberiaDescartarUnPlacardCuandoLaCaraFrontalChocaConUnObstaculoFijo() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 2.0);
+    ambiente.agregarObstaculo(
+      new Obstaculo(TipoDeObstaculo.RADIADOR, Muro.INFERIOR, 1.0, 1.0, 1.2)
+    );
+    MuebleUbicado placard = givenPlacardUbicado(1.0, 0.0, 1.8, 0.6);
+
+    //When
+    boolean valida = whenEvaluoLaUbicacion(placard, ambiente, new ArrayList<>());
+
+    //Then
+    thenLaUbicacionEs(valida, false);
+  }
+
+  @Test
+  public void deberiaDescartarUnPlacardCuandoLaCaraFrontalChocaConLaZonaDeBarridoDeUnaPuerta() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 1.2);
+    MuebleUbicado placard = givenPlacardUbicado(1.0, 0.0, 1.8, 0.6);
+    List<ZonaExclusion> zonas = new ArrayList<>();
+    zonas.add(new ZonaExclusion(1.0, 0.8, 1.0, 0.4, TipoAbertura.PUERTA));
+
+    //When
+    boolean valida = whenEvaluoLaUbicacionConZonas(placard, ambiente, new ArrayList<>(), zonas);
+
+    //Then
+    thenLaUbicacionEs(valida, false);
+  }
+
+  @Test
+  public void deberiaAceptarUnPlacardCuandoLaZonaDeBarridoDeUnaVentanaQuedaAdelante() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 1.2);
+    MuebleUbicado placard = givenPlacardUbicado(1.0, 0.0, 1.8, 0.6);
+    List<ZonaExclusion> zonas = new ArrayList<>();
+    zonas.add(new ZonaExclusion(1.0, 0.9, 1.0, 0.3, TipoAbertura.VENTANA));
+
+    //When
+    boolean valida = whenEvaluoLaUbicacionConZonas(placard, ambiente, new ArrayList<>(), zonas);
+
+    //Then
+    thenLaUbicacionEs(valida, true);
+  }
+
+  @Test
+  public void deberiaAceptarUnMuebleDeOtraCategoriaCuandoElDespejeFrontalEsMenorA40Centimetros() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 0.6);
+    Mueble mesa = new Mueble("Mesa", 1.8, 0.6);
+    mesa.setCategoriaDeMueble(new CategoriaDeMueble("Mesa", 1.8, 0.6));
+    MuebleUbicado ubicado = new MuebleUbicado(mesa, 1.0, 0.0);
+
+    //When
+    boolean valida = whenEvaluoLaUbicacion(ubicado, ambiente, new ArrayList<>());
+
+    //Then
+    thenLaUbicacionEs(valida, true);
+  }
+
+  @Test
+  public void deberiaDescartarUnPlacardSinMuroDeApoyoCuandoDejaUnPasilloMenorAlMinimo() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 1.3);
+    MuebleUbicado placard = givenPlacardUbicado(1.0, 0.3, 1.8, 0.6);
+
+    //When
+    boolean valida = whenEvaluoLaUbicacion(placard, ambiente, new ArrayList<>());
+
+    //Then
+    thenLaUbicacionEs(valida, false);
+  }
+
+  @Test
+  public void deberiaAceptarUnPlacardSinMuroDeApoyoCuandoDejaPasillosMayoresAlMinimo() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 2.1);
+    MuebleUbicado placard = givenPlacardUbicado(1.0, 0.7, 1.8, 0.6);
+
+    //When
+    boolean valida = whenEvaluoLaUbicacion(placard, ambiente, new ArrayList<>());
+
+    //Then
+    thenLaUbicacionEs(valida, true);
+  }
+
+  @Test
+  public void deberiaDescartarUnPlacardCuandoUnaCaraNoFrontalDejaUnPasilloMenorA60Centimetros() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 1.0);
+    MuebleUbicado placard = givenPlacardUbicado(0.3, 0.0, 1.8, 0.6);
+
+    //When
+    boolean valida = whenEvaluoLaUbicacion(placard, ambiente, new ArrayList<>());
+
+    //Then
+    thenLaUbicacionEs(valida, false);
+  }
+
+  @Test
+  public void deberiaElegirElMuroDeApoyoDeMayorContactoCuandoElPlacardTocaDosMuros() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 2.0);
+    MuebleUbicado placard = givenPlacardUbicado(0.0, 0.0, 1.8, 0.6);
+    List<ZonaExclusion> zonas = new ArrayList<>();
+    zonas.add(new ZonaExclusion(0.5, 0.8, 1.0, 0.4, TipoAbertura.PUERTA));
+
+    //When
+    boolean valida = whenEvaluoLaUbicacionConZonas(placard, ambiente, new ArrayList<>(), zonas);
+
+    //Then
+    thenLaUbicacionEs(valida, false);
+  }
+
+  @Test
+  public void deberiaElegirElPrimerMuroDelEnumCuandoElPlacardTocaDosMurosConElMismoContacto() {
+    //Given
+    Ambiente ambiente = givenAmbiente(3.0, 3.0);
+    MuebleUbicado placard = givenPlacardUbicado(1.0, 0.0, 2.0, 2.0);
+    List<ZonaExclusion> zonas = new ArrayList<>();
+    zonas.add(new ZonaExclusion(1.3, 2.2, 1.0, 0.4, TipoAbertura.PUERTA));
+
+    //When
+    boolean valida = whenEvaluoLaUbicacionConZonas(placard, ambiente, new ArrayList<>(), zonas);
+
+    //Then
+    thenLaUbicacionEs(valida, false);
+  }
+
+  @Test
+  public void deberiaAplicarLaReglaDeDespejeFrontalCuandoLaCategoriaEmpiezaConPlacard() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 1.0);
+    Mueble placard = new Mueble("Placard 2 puertas", 1.8, 0.6);
+    placard.setCategoriaDeMueble(new CategoriaDeMueble("Placard 2 puertas", 1.8, 0.6));
+    MuebleUbicado ubicado = new MuebleUbicado(placard, 1.0, 0.0);
+
+    //When
+    boolean valida = whenEvaluoLaUbicacion(ubicado, ambiente, new ArrayList<>());
+
+    //Then
+    thenLaUbicacionEs(valida, true);
+  }
+
+  // -------------------------------------------------------------------------
+  // HU35.2: Puntaje por despeje frontal del placard
+  // -------------------------------------------------------------------------
+
+  @Test
+  public void deberiaMedir60CentimetrosCuandoElPlacardTieneUnDespejeFrontalDe60Centimetros() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 1.20);
+    MuebleUbicado placard = givenPlacardUbicado(1.0, 0.0, 1.8, 0.6);
+
+    //When
+    Double despeje = whenMidoElDespejeFrontal(placard, ambiente, new ArrayList<>());
+
+    //Then
+    thenElDespejeEs(despeje, 0.60);
+  }
+
+  @Test
+  public void deberiaMedir59CentimetrosCuandoElPlacardTieneUnDespejeFrontalDe59Centimetros() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 1.19);
+    MuebleUbicado placard = givenPlacardUbicado(1.0, 0.0, 1.8, 0.6);
+
+    //When
+    Double despeje = whenMidoElDespejeFrontal(placard, ambiente, new ArrayList<>());
+
+    //Then
+    thenElDespejeEs(despeje, 0.59);
+  }
+
+  @Test
+  public void deberiaMedir40CentimetrosCuandoElPlacardTieneUnDespejeFrontalDe40Centimetros() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 1.00);
+    MuebleUbicado placard = givenPlacardUbicado(1.0, 0.0, 1.8, 0.6);
+
+    //When
+    Double despeje = whenMidoElDespejeFrontal(placard, ambiente, new ArrayList<>());
+
+    //Then
+    thenElDespejeEs(despeje, 0.40);
+  }
+
+  @Test
+  public void deberiaMedir39CentimetrosCuandoElPlacardTieneUnDespejeFrontalDe39Centimetros() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 0.99);
+    MuebleUbicado placard = givenPlacardUbicado(1.0, 0.0, 1.8, 0.6);
+
+    //When
+    Double despeje = whenMidoElDespejeFrontal(placard, ambiente, new ArrayList<>());
+
+    //Then
+    thenElDespejeEs(despeje, 0.39);
+  }
+
+  @Test
+  public void deberiaDevolverNullCuandoElPlacardNoTieneMuroDeApoyo() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 2.1);
+    MuebleUbicado placard = givenPlacardUbicado(1.0, 0.7, 1.8, 0.6);
+
+    //When
+    Double despeje = whenMidoElDespejeFrontal(placard, ambiente, new ArrayList<>());
+
+    //Then
+    thenElDespejeEsNulo(despeje);
+  }
+
+  @Test
+  public void deberiaDevolverNullCuandoElMuebleNoEsUnPlacard() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 1.0);
+    Mueble mesa = new Mueble("Mesa", 1.8, 0.6);
+    mesa.setCategoriaDeMueble(new CategoriaDeMueble("Mesa", 1.8, 0.6));
+    MuebleUbicado ubicado = new MuebleUbicado(mesa, 1.0, 0.0);
+
+    //When
+    Double despeje = whenMidoElDespejeFrontal(ubicado, ambiente, new ArrayList<>());
+
+    //Then
+    thenElDespejeEsNulo(despeje);
+  }
+
+  @Test
+  public void deberiaMedir50CentimetrosCuandoUnMuebleCubreSoloParteDelAnchoDelPlacard() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 1.5);
+    MuebleUbicado placard = givenPlacardUbicado(1.0, 0.0, 1.8, 0.6);
+    MuebleUbicado otro = givenMuebleUbicado("Mesa", 0.30, 0.40, 2.70, 1.10);
+    List<MuebleUbicado> ubicados = new ArrayList<>();
+    ubicados.add(otro);
+
+    //When
+    Double despeje = whenMidoElDespejeFrontal(placard, ambiente, ubicados);
+
+    //Then
+    thenElDespejeEs(despeje, 0.50);
+  }
+
+  @Test
+  public void deberiaCalcularElDespejeCuandoLasZonasSonNulas() {
+    //Given
+    Ambiente ambiente = givenAmbiente(4.0, 1.20);
+    MuebleUbicado placard = givenPlacardUbicado(1.0, 0.0, 1.8, 0.6);
+
+    //When
+    Double despeje = whenMidoElDespejeFrontalConZonasNulas(placard, ambiente, new ArrayList<>());
+
+    //Then
+    thenElDespejeEs(despeje, 0.60);
+  }
+
+  // -------------------------------------------------------------------------
+  // GIVEN
+  // -------------------------------------------------------------------------
+
   private Ambiente givenAmbiente(Double ancho, Double largo) {
     return new Ambiente(ancho, largo);
   }
@@ -216,11 +554,26 @@ public class ServicioReglasDeUbicacionTest {
     return new MuebleUbicado(new Mueble(nombre, ancho, largo), posicionX, posicionY);
   }
 
+  private MuebleUbicado givenPlacardUbicado(
+    Double posicionX,
+    Double posicionY,
+    Double ancho,
+    Double largo
+  ) {
+    Mueble placard = new Mueble("Placard", ancho, largo);
+    placard.setCategoriaDeMueble(new CategoriaDeMueble("Placard", ancho, largo));
+    return new MuebleUbicado(placard, posicionX, posicionY);
+  }
+
   private MuebleUbicado givenCamaUbicada(Double posicionX, Double posicionY) {
     Mueble cama = new Mueble("Cama", 1.0, 2.0);
     cama.setCategoriaDeMueble(new CategoriaDeMueble("Cama individual", 1.0, 2.0));
     return new MuebleUbicado(cama, posicionX, posicionY);
   }
+
+  // -------------------------------------------------------------------------
+  // WHEN
+  // -------------------------------------------------------------------------
 
   private boolean whenEvaluoLaUbicacion(
     MuebleUbicado candidato,
@@ -230,7 +583,49 @@ public class ServicioReglasDeUbicacionTest {
     return servicioReglasDeUbicacion.esUbicacionValida(candidato, ambiente, ubicados);
   }
 
+  private boolean whenEvaluoLaUbicacionConZonas(
+    MuebleUbicado candidato,
+    Ambiente ambiente,
+    List<MuebleUbicado> ubicados,
+    List<ZonaExclusion> zonas
+  ) {
+    return servicioReglasDeUbicacion.esUbicacionValida(candidato, ambiente, ubicados, zonas);
+  }
+
+  private Double whenMidoElDespejeFrontal(
+    MuebleUbicado candidato,
+    Ambiente ambiente,
+    List<MuebleUbicado> ubicados
+  ) {
+    return servicioReglasDeUbicacion.despejeFrontalDe(
+      candidato,
+      ambiente,
+      ubicados,
+      new ArrayList<>()
+    );
+  }
+
+  private Double whenMidoElDespejeFrontalConZonasNulas(
+    MuebleUbicado candidato,
+    Ambiente ambiente,
+    List<MuebleUbicado> ubicados
+  ) {
+    return servicioReglasDeUbicacion.despejeFrontalDe(candidato, ambiente, ubicados, null);
+  }
+
+  // -------------------------------------------------------------------------
+  // THEN
+  // -------------------------------------------------------------------------
+
   private void thenLaUbicacionEs(boolean resultado, boolean esperado) {
     assertThat(resultado, is(equalTo(esperado)));
+  }
+
+  private void thenElDespejeEs(Double despeje, Double esperado) {
+    assertThat(despeje, is(closeTo(esperado, ZonaNoDisponible.TOLERANCIA)));
+  }
+
+  private void thenElDespejeEsNulo(Double despeje) {
+    assertThat(despeje, is(nullValue()));
   }
 }

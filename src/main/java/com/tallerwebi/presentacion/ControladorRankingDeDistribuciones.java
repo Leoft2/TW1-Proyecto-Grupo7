@@ -67,7 +67,7 @@ public class ControladorRankingDeDistribuciones {
         );
       if (opciones.isEmpty()) {
         mensaje =
-          "No fue posible generar una distribución válida. Las opciones probadas no pudieron ubicar todos los muebles sin interferir con puertas, obstáculos o el ancho mínimo de circulación.";
+          "No fue posible generar una distribución válida. Las opciones probadas no pudieron ubicar todos los muebles sin interferir con puertas, obstáculos o el ancho mínimo de circulación. También se revisan la orientación y el acceso lateral de las camas.";
       }
     } catch (ValidacionException e) {
       opciones = new ArrayList<>();

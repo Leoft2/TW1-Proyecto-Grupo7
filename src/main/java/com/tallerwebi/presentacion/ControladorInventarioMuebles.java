@@ -205,16 +205,24 @@ public class ControladorInventarioMuebles {
       Map<String, Object> model = new ModelMap();
       List<Mueble> muebles = servicioEdicionInventarioMuebles.listar();
       Plano plano = servicioPlano2D.generarPlano(ambiente, muebles);
-      if (!orientacionFuncional.cumpleOrientacion(plano)) {
+      if (
+        !orientacionFuncional.cumpleOrientacion(plano) ||
+        (new RelacionSofaTelevisor().haySofaYTelevisor(muebles) &&
+          !plano.getMueblesExcluidos().isEmpty())
+      ) {
         plano =
           new BusquedaDePlanoOrientado()
             .buscar(ambiente, muebles, servicioPlano2D, servicioZonaExclusion)
             .orElse(null);
         if (plano == null) {
+          String mensaje = "No se pudo orientar los muebles ni garantizar el acceso lateral de la cama.";
+          if (new RelacionSofaTelevisor().haySofaYTelevisor(muebles)) {
+            mensaje += RelacionSofaTelevisor.MENSAJE_CONFLICTO;
+          }
           return new ModelAndView(
             "plano-interactivo",
             "error",
-            "No se pudo orientar los muebles ni garantizar el acceso lateral de la cama."
+            mensaje
           );
         }
       }

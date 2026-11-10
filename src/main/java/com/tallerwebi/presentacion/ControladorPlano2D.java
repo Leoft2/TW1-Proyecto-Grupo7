@@ -125,15 +125,15 @@ public class ControladorPlano2D {
   public ModelAndView generarPlano(Ambiente ambiente, List<Mueble> muebles) {
     try {
       Plano plano = servicioPlano2D.generarPlano(ambiente, muebles);
-      if (!orientacionFuncional.cumpleOrientacion(plano)) {
+      if (
+        !orientacionFuncional.cumpleOrientacion(plano) ||
+        (new RelacionSofaTelevisor().haySofaYTelevisor(muebles) &&
+          !plano.getMueblesExcluidos().isEmpty())
+      ) {
         plano =
           new BusquedaDePlanoOrientado()
             .buscar(ambiente, muebles, servicioPlano2D, servicioZonaExclusion)
-            .orElseThrow(() ->
-              new ValidacionException(
-                "No se pudo orientar los muebles ni garantizar el acceso lateral de la cama."
-              )
-            );
+            .orElseThrow(() -> new ValidacionException(mensajeDeOrientacion(muebles)));
       }
       Map<String, Object> modelo = new ModelMap();
       modelo.put(ATRIBUTO_PLANO, plano);
@@ -144,6 +144,14 @@ public class ControladorPlano2D {
     } catch (ValidacionException e) {
       return planoConError(e);
     }
+  }
+
+  private String mensajeDeOrientacion(List<Mueble> muebles) {
+    String mensaje = "No se pudo orientar los muebles ni garantizar el acceso lateral de la cama.";
+    if (new RelacionSofaTelevisor().haySofaYTelevisor(muebles)) {
+      mensaje += RelacionSofaTelevisor.MENSAJE_CONFLICTO;
+    }
+    return mensaje;
   }
 
   private ModelAndView planoConError(ValidacionException error) {

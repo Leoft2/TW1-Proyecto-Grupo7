@@ -13,6 +13,7 @@ public class ServicioOrientacionFuncionalImpl implements ServicioOrientacionFunc
 
   private final ServicioOrientacionDeMuebles orientacion = new ServicioOrientacionDeMueblesImpl();
   private final ServicioAccesoLateralCama acceso = new ServicioAccesoLateralCama();
+  private final RelacionSofaTelevisor relacionSofaTelevisor = new RelacionSofaTelevisor();
 
   @Override
   public boolean cumpleOrientacion(Plano plano) {
@@ -99,7 +100,7 @@ public class ServicioOrientacionFuncionalImpl implements ServicioOrientacionFunc
       return acceso.hayAcceso(ubicado, frente.get(), plano);
     }
     if (esSofa(categoria)) {
-      return miraReferencia(ubicado, frente.get(), plano.getMuebles(), "Rack de TV");
+      return miraTelevisor(ubicado, frente.get(), plano.getMuebles());
     }
     if (categoria.startsWith(CATEGORIA_SILLA)) {
       return miraReferencia(ubicado, frente.get(), plano.getMuebles(), "Mesa");
@@ -118,6 +119,20 @@ public class ServicioOrientacionFuncionalImpl implements ServicioOrientacionFunc
 
   private boolean esSofa(String categoria) {
     return categoria.startsWith("Sofá") || categoria.startsWith("Sofa");
+  }
+
+  private boolean miraTelevisor(MuebleUbicado sofa, Muro frente, List<MuebleUbicado> muebles) {
+    boolean hayRack = false;
+    for (MuebleUbicado rack : muebles) {
+      if (!categoriaDe(rack).startsWith("Rack de TV")) {
+        continue;
+      }
+      hayRack = true;
+      if (relacionSofaTelevisor.esValida(sofa, rack, frente, muebles)) {
+        return true;
+      }
+    }
+    return !hayRack;
   }
 
   private boolean miraReferencia(

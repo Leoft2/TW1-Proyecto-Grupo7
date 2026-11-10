@@ -146,6 +146,7 @@ public class ServicioPlano2DImpl implements ServicioPlano2D {
   }
 
   @Override
+  @Transactional(Transactional.TxType.SUPPORTS)
   public boolean estaDentroDelPerimetro(MuebleUbicado muebleUbicado, Ambiente ambiente) {
     Double ubicacionX = muebleUbicado.getPosicionX();
     Double ubicacionY = muebleUbicado.getPosicionY();

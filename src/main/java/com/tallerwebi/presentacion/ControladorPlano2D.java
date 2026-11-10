@@ -33,6 +33,9 @@ public class ControladorPlano2D {
 
   private final ServicioCirculacion servicioCirculacion = new ServicioCirculacionImpl();
   private final ServicioColisiones servicioColisiones = new ServicioColisionesImpl();
+  private final IndicadorOrientacion indicadorOrientacion = new IndicadorOrientacion();
+  private final ServicioOrientacionFuncional orientacionFuncional =
+    new ServicioOrientacionFuncionalImpl();
 
   private ServicioPlano2D servicioPlano2D;
   private ServicioCategoriaDeMueble servicioCategoriaDeMueble;
@@ -122,6 +125,16 @@ public class ControladorPlano2D {
   public ModelAndView generarPlano(Ambiente ambiente, List<Mueble> muebles) {
     try {
       Plano plano = servicioPlano2D.generarPlano(ambiente, muebles);
+      if (!orientacionFuncional.cumpleOrientacion(plano)) {
+        plano =
+          new BusquedaDePlanoOrientado()
+            .buscar(ambiente, muebles, servicioPlano2D, servicioZonaExclusion)
+            .orElseThrow(() ->
+              new ValidacionException(
+                "No se pudo orientar los muebles ni garantizar el acceso lateral de la cama."
+              )
+            );
+      }
       Map<String, Object> modelo = new ModelMap();
       modelo.put(ATRIBUTO_PLANO, plano);
       modelo.put(ATRIBUTO_ZONAS_DE_EXCLUSION, servicioZonaExclusion.calcularZonas(ambiente));
@@ -241,7 +254,10 @@ public class ControladorPlano2D {
       servicioPersistenciaPlano.guardar(plano, usuarioEmail);
     }
     sesion.setAttribute(ATRIBUTO_PLANO, plano);
-    return ResponseEntity.ok("La posición del mueble se guardó correctamente.");
+    return ResponseEntity
+      .ok()
+      .header("X-Orientacion", indicadorOrientacion.frente(muebleUbicado, plano.getAmbiente()))
+      .body("La posición del mueble se guardó correctamente.");
   }
 
   private List<MuebleUbicado> otrosMuebles(Plano plano, Integer indice) {

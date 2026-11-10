@@ -424,6 +424,11 @@ h1, h2, h3, h4, h5, h6,
   rx: 0.04;
 }
 
+.plano-orientacion {
+  fill: #503522;
+  pointer-events: none;
+}
+
 .plano-mueble-nombre {
   fill: #86391f;
   font-family: var(--hb-fuente-texto), sans-serif;

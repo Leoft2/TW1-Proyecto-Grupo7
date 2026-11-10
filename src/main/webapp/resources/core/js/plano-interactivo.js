@@ -58,6 +58,23 @@ if (plano && alerta) {
     }
   }
 
+  function actualizarOrientacion(mueble, frente) {
+    const indicador = mueble.querySelector(".plano-orientacion");
+    const cuerpo = mueble.querySelector(".plano-mueble-cuerpo");
+    const ancho = Number(cuerpo.getAttribute("width"));
+    const largo = Number(cuerpo.getAttribute("height"));
+    let posicionX = Number(cuerpo.getAttribute("x")) + ancho / 2;
+    let posicionY = Number(cuerpo.getAttribute("y")) + largo / 2;
+    const angulos = { SUPERIOR: 0, DERECHO: 90, INFERIOR: 180, IZQUIERDO: 270 };
+    if (frente === "DERECHO") posicionX += ancho * 0.32;
+    if (frente === "IZQUIERDO") posicionX -= ancho * 0.32;
+    if (frente === "INFERIOR") posicionY += largo * 0.32;
+    if (frente === "SUPERIOR") posicionY -= largo * 0.32;
+    indicador.setAttribute("transform", `translate(${posicionX} ${posicionY}) rotate(${angulos[frente] || 0})`);
+    indicador.setAttribute("visibility", frente ? "visible" : "hidden");
+    indicador.setAttribute("aria-label", frente ? `Frente hacia ${frente}` : "Orientación no determinada");
+  }
+
   function guardarMovimiento(mueble, posicionNueva, desplazamiento) {
     const datos = new URLSearchParams();
     datos.set("indice", mueble.dataset.indice);
@@ -85,6 +102,7 @@ if (plano && alerta) {
         mueble.removeAttribute("transform");
         mueble.dataset.posicionX = posicionNueva.x;
         mueble.dataset.posicionY = posicionNueva.y;
+        actualizarOrientacion(mueble, respuesta.headers.get("X-Orientacion"));
         actualizarTabla(mueble.dataset.indice, posicionNueva.x, posicionNueva.y);
         limpiarAdvertencia();
       })

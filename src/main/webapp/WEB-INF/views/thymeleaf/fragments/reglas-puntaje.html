@@ -1,0 +1,19 @@
+<!DOCTYPE HTML>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+<details th:fragment="reglas-puntaje" class="card mb-4">
+    <summary class="card-body fw-semibold">Ver reglas de puntaje</summary>
+    <div class="card-body pt-0">
+        <p>El ranking suma o resta puntos por cada mueble según estas reglas:</p>
+        <ul>
+            <li>Cama opuesta a una ventana: +1. Si no está opuesta a ninguna ventana: -1. Si no hay ventanas: +1.</li>
+            <li>Cama con acceso libre en ambos laterales: +1.</li>
+            <li>Sofá orientado hacia un rack de TV: +1.</li>
+            <li>Silla orientada hacia una mesa: +1.</li>
+        </ul>
+        <p class="mb-1">Cada sofá o silla suma una sola vez, aunque haya varios racks o mesas. Sin rack o mesa, respectivamente, no se suman esos puntos.</p>
+        <p class="mb-0">La orientación y el acceso lateral son requisitos para aceptar una distribución; no se ofrecen opciones que los incumplan. El escritorio no suma puntos de orientación actualmente.</p>
+    </div>
+</details>
+</body>
+</html>

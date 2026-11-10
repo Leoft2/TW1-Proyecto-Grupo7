@@ -271,6 +271,7 @@
                                        font-size=${0.16}"
                               th:text="${ubicado.mueble.nombre}">Sofa
                         </text>
+                        <text th:replace="~{fragments/orientacion-mueble :: indicador(${ubicado}, ${plano.ambiente})}"></text>
                     </g>
 
                     <text x="0.08" y="-0.18" class="plano-dimension"
@@ -288,6 +289,7 @@
                 </svg>
 
                 <div class="hb-plano-legend">
+                    <span>↑ Flecha: frente del mueble</span>
                     <span><i class="hb-legend-swatch"></i> Mueble ubicado</span>
                     <span><i class="hb-legend-no-disponible"></i> Zona no disponible</span>
                     <span><i class="hb-legend-zona-apertura"></i> Zona de exclusión por apertura</span>

@@ -32,8 +32,15 @@ public class ServicioRankingDeDistribucionesTest {
   public void init() {
     servicioPlano2D = mock(ServicioPlano2D.class);
     servicioReglasDeUbicacion = mock(ServicioReglasDeUbicacion.class);
+    ServicioOrientacionFuncional orientacion = mock(ServicioOrientacionFuncional.class);
+    when(orientacion.cumpleOrientacion(any(Plano.class))).thenReturn(true);
     servicioRankingDeDistribuciones =
-      new ServicioRankingDeDistribucionesImpl(servicioPlano2D, servicioReglasDeUbicacion);
+      new ServicioRankingDeDistribucionesImpl(
+        servicioPlano2D,
+        servicioReglasDeUbicacion,
+        ambiente -> null,
+        orientacion
+      );
     cama = givenUnaCama();
     ambiente = givenAmbiente();
   }

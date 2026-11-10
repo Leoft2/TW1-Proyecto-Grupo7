@@ -33,6 +33,7 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
   private final ServicioReglasDeUbicacion servicioReglasDeUbicacion;
   private final ServicioZonaExclusion servicioZonaExclusion;
   private final ServicioOrientacionFuncional orientacionFuncional;
+  private final PuntajePorDespejeFrontal puntajePorDespejeFrontal;
   // Transforma el ambiente y devuelve los planos a la orientacion original.
   private final SimetriaDeAmbiente simetria = new SimetriaDeAmbiente();
   private final PropuestasDeOrientacion propuestasDeOrientacion = new PropuestasDeOrientacion();
@@ -61,6 +62,7 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
     this.servicioReglasDeUbicacion = servicioReglasDeUbicacion;
     this.servicioZonaExclusion = servicioZonaExclusion;
     this.orientacionFuncional = orientacionFuncional;
+    this.puntajePorDespejeFrontal = new PuntajePorDespejeFrontal(servicioReglasDeUbicacion);
   }
 
   /** Constructor sin zonas de exclusion: se usa cuando no hace falta filtrar por aberturas. */
@@ -110,7 +112,7 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
         reflejarVerticalmente
       );
       if (orientacionFuncional.cumpleOrientacion(plano)) {
-        agregarSiEsUnaOpcionNueva(ranking, puntuar(plano, ambiente));
+        agregarSiEsUnaOpcionNueva(ranking, puntuar(plano, ambiente, zonasAmbienteOriginal));
       }
       agregarPropuestasDeOrientacion(ranking, plano, ambiente, zonasAmbienteOriginal);
       agregarVariantes(ranking, plano, ambiente, zonasAmbienteOriginal, puntajeMaximo);
@@ -123,7 +125,7 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
       )
         .buscar(ambiente, muebles, zonasAmbienteOriginal)
         .ifPresent(plano -> {
-          agregarSiEsUnaOpcionNueva(ranking, puntuar(plano, ambiente));
+          agregarSiEsUnaOpcionNueva(ranking, puntuar(plano, ambiente, zonasAmbienteOriginal));
           agregarVariantes(ranking, plano, ambiente, zonasAmbienteOriginal, puntajeMaximo);
         });
     }
@@ -150,7 +152,7 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
         esDistribucionValida(propuesta, plano.getMuebles().size(), ambiente, zonas) &&
         orientacionFuncional.cumpleOrientacion(propuesta)
       ) {
-        agregarSiEsUnaOpcionNueva(ranking, puntuar(propuesta, ambiente));
+        agregarSiEsUnaOpcionNueva(ranking, puntuar(propuesta, ambiente, zonas));
       }
     }
   }
@@ -246,7 +248,7 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
         esDistribucionValida(variante, plano.getMuebles().size(), ambiente, zonas) &&
         orientacionFuncional.cumpleOrientacion(variante)
       ) {
-        agregarSiEsUnaOpcionNueva(ranking, puntuar(variante, ambiente));
+        agregarSiEsUnaOpcionNueva(ranking, puntuar(variante, ambiente, zonas));
       }
       if (Math.abs(distancia) >= anchoDelEje) {
         break;
@@ -296,6 +298,7 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
       if (mueble.getCategoriaDeMueble() != null && esCama(mueble)) {
         puntajeMaximo += PUNTOS_POR_CUMPLIR_REGLA;
       }
+      puntajeMaximo += puntajePorDespejeFrontal.puntajeMaximo(mueble);
     }
     return puntajeMaximo + orientacionFuncional.puntajeMaximo(muebles);
   }
@@ -356,7 +359,7 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
    * Puntua un plano: los muebles sin categoria generan un aviso; cada cama suma 1 si queda opuesta
    * a la ventana y resta 1 si no. Las reglas funcionales cumplidas tambien suman puntos.
    */
-  private OpcionDeDistribucion puntuar(Plano plano, Ambiente ambiente) {
+  private OpcionDeDistribucion puntuar(Plano plano, Ambiente ambiente, List<ZonaExclusion> zonas) {
     int puntaje = 0;
     List<String> desglose = new ArrayList<>();
     List<String> avisos = new ArrayList<>();
@@ -375,6 +378,15 @@ public class ServicioRankingDeDistribucionesImpl implements ServicioRankingDeDis
           puntaje += PUNTOS_POR_INCUMPLIR_REGLA;
           desglose.add(mueble.getNombre() + ": cama no opuesta a la ventana (-1)");
         }
+      } else {
+        int puntosDelPlacard = puntajePorDespejeFrontal.agregarPuntaje(
+          ubicado,
+          plano,
+          ambiente,
+          zonas,
+          desglose
+        );
+        puntaje += puntosDelPlacard;
       }
     }
     List<String> orientacionesCumplidas = orientacionFuncional.desgloseOrientacion(plano);

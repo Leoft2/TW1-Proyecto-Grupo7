@@ -111,6 +111,13 @@ public class VistaReglasDePuntajeTest {
     assertThat(html, containsString("Cama con acceso libre en ambos laterales: +1"));
     assertThat(html, containsString("Sofá orientado hacia un rack de TV: +1"));
     assertThat(html, containsString("Silla orientada hacia una mesa: +1"));
+    assertThat(
+      html,
+      containsString(
+        "Placard con despeje frontal de 0.60 m o más: +2. Con despeje entre 0.40 y 0.59 m: +1."
+      )
+    );
+    assertThat(html, containsString("el despeje frontal de 0.40 m del placard"));
     assertThat(html, containsString("no se ofrecen opciones que los incumplan"));
   }
 }

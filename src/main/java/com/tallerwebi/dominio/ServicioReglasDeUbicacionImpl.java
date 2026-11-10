@@ -74,6 +74,27 @@ public class ServicioReglasDeUbicacionImpl implements ServicioReglasDeUbicacion 
   }
 
   /**
+   * Devuelve el despeje frontal del placard en metros, o null si el mueble no es un placard o no
+   * tiene un muro de apoyo. Acepta zonas nulas: en ese caso no considera el barrido de puertas.
+   */
+  @Override
+  public Double despejeFrontalDe(
+    MuebleUbicado candidato,
+    Ambiente ambiente,
+    List<MuebleUbicado> mueblesUbicados,
+    List<ZonaExclusion> zonas
+  ) {
+    if (!esPlacard(candidato.getMueble())) {
+      return null;
+    }
+    Muro frente = muroFrontalDe(candidato, ambiente);
+    if (frente == null) {
+      return null;
+    }
+    return despejeHacia(candidato, ambiente, mueblesUbicados, zonas, frente);
+  }
+
+  /**
    * Solo la cama tiene una regla de categoria: debe apoyarse en el muro opuesto a una ventana. Un
    * mueble de cualquier otra categoria cumple automaticamente.
    */
@@ -301,19 +322,21 @@ public class ServicioReglasDeUbicacionImpl implements ServicioReglasDeUbicacion 
       );
       despeje = Math.min(despeje, despejeConObstaculo);
     }
-    for (ZonaExclusion zona : zonas) {
-      if (zona.getTipo() != TipoAbertura.PUERTA) {
-        continue;
+    if (zonas != null) {
+      for (ZonaExclusion zona : zonas) {
+        if (zona.getTipo() != TipoAbertura.PUERTA) {
+          continue;
+        }
+        double despejeConZona = despejeARectangulo(
+          candidato,
+          zona.getPosicionX(),
+          zona.getPosicionY(),
+          zona.getAncho(),
+          zona.getProfundidad(),
+          frente
+        );
+        despeje = Math.min(despeje, despejeConZona);
       }
-      double despejeConZona = despejeARectangulo(
-        candidato,
-        zona.getPosicionX(),
-        zona.getPosicionY(),
-        zona.getAncho(),
-        zona.getProfundidad(),
-        frente
-      );
-      despeje = Math.min(despeje, despejeConZona);
     }
     return despeje;
   }

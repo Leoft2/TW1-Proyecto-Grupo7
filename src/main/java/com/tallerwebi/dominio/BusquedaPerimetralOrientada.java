@@ -51,6 +51,9 @@ public class BusquedaPerimetralOrientada {
       if (orientacion.cumpleOrientacion(plano) && posicionesValidas(plano, zonas)) {
         return Optional.of(plano);
       }
+      if (new RelacionSofaTelevisor().haySofaYTelevisor(muebles)) {
+        return buscarPropuesta(plano, zonas);
+      }
       return Optional.empty();
     }
     Mueble mueble = muebles.get(ubicados.size());
@@ -61,6 +64,15 @@ public class BusquedaPerimetralOrientada {
       Optional<Plano> resultado = buscarEnMuro(ambiente, muebles, zonas, ubicados, mueble, muro);
       if (resultado.isPresent()) {
         return resultado;
+      }
+    }
+    return Optional.empty();
+  }
+
+  private Optional<Plano> buscarPropuesta(Plano plano, List<ZonaExclusion> zonas) {
+    for (Plano propuesta : new PropuestasDeOrientacion().generar(plano)) {
+      if (posicionesValidas(propuesta, zonas) && orientacion.cumpleOrientacion(propuesta)) {
+        return Optional.of(propuesta);
       }
     }
     return Optional.empty();

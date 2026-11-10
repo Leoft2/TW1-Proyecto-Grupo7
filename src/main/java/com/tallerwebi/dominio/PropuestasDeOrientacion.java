@@ -6,6 +6,7 @@ import java.util.Optional;
 
 public class PropuestasDeOrientacion {
 
+  private static final String CATEGORIA_RACK = "Rack de TV";
   private final ServicioOrientacionDeMuebles orientacion = new ServicioOrientacionDeMueblesImpl();
 
   public List<Plano> generar(Plano plano) {
@@ -23,6 +24,17 @@ public class PropuestasDeOrientacion {
       for (int indice = 0; indice < muebles.size(); indice++) {
         if (categoriaDe(muebles.get(indice)).startsWith(referencia)) {
           propuestas.add(crearPropuesta(plano, ubicado, frente.get(), indice));
+          if (CATEGORIA_RACK.equals(referencia)) {
+            for (
+              double distancia = RelacionSofaTelevisor.DISTANCIA_MINIMA;
+              distancia <= RelacionSofaTelevisor.DISTANCIA_MAXIMA;
+              distancia += 0.5
+            ) {
+              propuestas.add(
+                crearPropuestaConDistancia(plano, ubicado, frente.get(), indice, distancia)
+              );
+            }
+          }
         }
       }
     }
@@ -55,6 +67,46 @@ public class PropuestasDeOrientacion {
     } else {
       posicionX = ambiente.getAncho() - referencia.getAncho();
     }
+    return crearPlano(plano, indice, posicionX, posicionY);
+  }
+
+  private Plano crearPropuestaConDistancia(
+    Plano plano,
+    MuebleUbicado origen,
+    Muro frente,
+    int indice,
+    double distancia
+  ) {
+    Mueble referencia = plano.getMuebles().get(indice).getMueble();
+    double posicionX = centrar(
+      origen.getPosicionX(),
+      origen.getMueble().getAncho(),
+      referencia.getAncho(),
+      plano.getAmbiente().getAncho(),
+      plano.getAmbiente().getAnchoMinimoDePasillo()
+    );
+    double posicionY = centrar(
+      origen.getPosicionY(),
+      origen.getMueble().getLargo(),
+      referencia.getLargo(),
+      plano.getAmbiente().getLargo(),
+      plano.getAmbiente().getAnchoMinimoDePasillo()
+    );
+    if (frente == Muro.SUPERIOR) {
+      posicionY = origen.getPosicionY() - distancia - referencia.getLargo();
+    } else if (frente == Muro.INFERIOR) {
+      posicionY = origen.getPosicionY() + origen.getMueble().getLargo() + distancia;
+    } else if (frente == Muro.IZQUIERDO) {
+      posicionX = origen.getPosicionX() - distancia - referencia.getAncho();
+    } else {
+      posicionX = origen.getPosicionX() + origen.getMueble().getAncho() + distancia;
+    }
+    return crearPlano(plano, indice, posicionX, posicionY);
+  }
+
+  private Plano crearPlano(Plano plano, int indice, double posicionX, double posicionY) {
+    Ambiente ambiente = plano.getAmbiente();
+    Mueble referencia = plano.getMuebles().get(indice).getMueble();
     List<MuebleUbicado> muebles = new ArrayList<>();
     for (int actual = 0; actual < plano.getMuebles().size(); actual++) {
       MuebleUbicado ubicado = plano.getMuebles().get(actual);
@@ -87,7 +139,7 @@ public class PropuestasDeOrientacion {
   private String categoriaDeReferencia(MuebleUbicado ubicado) {
     String categoria = categoriaDe(ubicado);
     if (categoria.startsWith("Sofá") || categoria.startsWith("Sofa")) {
-      return "Rack de TV";
+      return CATEGORIA_RACK;
     }
     if (categoria.startsWith("Silla")) {
       return "Mesa";

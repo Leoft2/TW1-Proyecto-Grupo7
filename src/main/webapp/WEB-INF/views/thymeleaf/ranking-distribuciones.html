@@ -15,6 +15,8 @@
         </div>
     </header>
 
+    <div th:replace="~{fragments/reglas-puntaje :: reglas-puntaje}"></div>
+
     <div th:if="${mensaje}" class="alert alert-warning" role="alert" th:text="${mensaje}">
         No fue posible generar una distribución válida.
     </div>
@@ -42,6 +44,7 @@
         </ul>
 
         <div class="hb-plano-card p-3">
+            <p class="text-muted">Las flechas indican el frente de los muebles orientados.</p>
             <svg th:attr="viewBox=${'0 0 ' + opcion.plano.ambiente.ancho + ' ' + opcion.plano.ambiente.largo}"
                  class="plano-svg w-100" preserveAspectRatio="xMidYMid meet"
                  role="img" aria-label="Vista previa de la distribución">
@@ -57,6 +60,7 @@
                                   y=${ubicado.posicionY + ubicado.mueble.largo / 2}"
                           text-anchor="middle" dominant-baseline="middle"
                           font-size="0.16" th:text="${ubicado.mueble.nombre}">Cama</text>
+                    <text th:replace="~{fragments/orientacion-mueble :: indicador(${ubicado}, ${opcion.plano.ambiente})}"></text>
                 </g>
             </svg>
         </div>

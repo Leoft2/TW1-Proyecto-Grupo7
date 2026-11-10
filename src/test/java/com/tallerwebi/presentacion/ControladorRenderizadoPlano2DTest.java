@@ -354,7 +354,9 @@ public class ControladorRenderizadoPlano2DTest {
 
   private void givenServicioGeneroPlanoSinExcepciones() {
     when(servicioPlano2D.generarPlano(any(Ambiente.class), any(List.class)))
-      .thenReturn(new Plano());
+      .thenReturn(
+        new Plano(new Ambiente(4.0, 4.0), new ArrayList<>(), new ArrayList<>(), new ArrayList<>())
+      );
   }
 
   private void whenGeneroPlanoDesdeFormularioConSesion(DatosPlano datosPlano, HttpSession sesion) {

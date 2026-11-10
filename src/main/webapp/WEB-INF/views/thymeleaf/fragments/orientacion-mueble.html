@@ -1,0 +1,12 @@
+<svg xmlns:th="http://www.thymeleaf.org">
+    <path th:fragment="indicador(ubicado, ambiente)"
+          th:with="frente=${@indicadorOrientacion.frente(ubicado, ambiente)},
+                   centroX=${ubicado.posicionX + ubicado.mueble.ancho / 2},
+                   centroY=${ubicado.posicionY + ubicado.mueble.largo / 2}"
+          class="plano-orientacion"
+          d="M 0 -0.10 L 0.07 0.01 L 0.025 0.01 L 0.025 0.10 L -0.025 0.10 L -0.025 0.01 L -0.07 0.01 Z"
+          th:attr="transform=${'translate(' + (centroX + (frente == 'DERECHO' ? ubicado.mueble.ancho * 0.32 : (frente == 'IZQUIERDO' ? -ubicado.mueble.ancho * 0.32 : 0))) + ' ' + (centroY + (frente == 'INFERIOR' ? ubicado.mueble.largo * 0.32 : (frente == 'SUPERIOR' ? -ubicado.mueble.largo * 0.32 : 0))) + ') rotate(' + (frente == 'DERECHO' ? 90 : (frente == 'INFERIOR' ? 180 : (frente == 'IZQUIERDO' ? 270 : 0))) + ')'},
+                   visibility=${frente == '' ? 'hidden' : 'visible'},
+                   aria-label=${frente == '' ? 'Orientación no determinada' : 'Frente hacia ' + frente}"
+          role="img"></path>
+</svg>

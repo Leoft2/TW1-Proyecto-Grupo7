@@ -1,6 +1,9 @@
 package com.tallerwebi.dominio;
 
-@FunctionalInterface
+import java.util.List;
+
 public interface ServicioRecomendacionPintura {
-  RecomendacionPintura recomendar(Ambiente ambiente);
+  RecomendacionPintura recomendar(Ambiente ambiente, Estilo estilo);
+  RecomendacionPintura recomendar(Ambiente ambiente, Estilo estilo, Integer colorOverrideIndex);
+  List<Color> coloresOrdenadosPorPrecio(Estilo estilo);
 }

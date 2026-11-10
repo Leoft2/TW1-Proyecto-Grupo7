@@ -4,21 +4,36 @@ import java.util.List;
 
 public final class Recomendacion {
 
-  private final Estilo estilo;
-  private final List<Color> colores;
-  private final Iluminacion iluminacion;
+  private Estilo estilo;
+  private List<Color> colores;
+  private List<Color> coloresSecundarios;
+  private Iluminacion iluminacion;
 
   public Recomendacion(Estilo estilo, List<Color> colores, Iluminacion iluminacion) {
     this.estilo = estilo;
-    this.colores = List.copyOf(colores);
+    if (colores != null) {
+      this.colores = List.copyOf(colores);
+    }
     this.iluminacion = iluminacion;
   }
 
-  public Recomendacion() {
-    this.estilo = null;
-    this.colores = null;
-    this.iluminacion = null;
+  public Recomendacion(
+    Estilo estilo,
+    List<Color> colores,
+    List<Color> coloresSecundarios,
+    Iluminacion iluminacion
+  ) {
+    this.estilo = estilo;
+    if (colores != null) {
+      this.colores = List.copyOf(colores);
+    }
+    if (coloresSecundarios != null) {
+      this.coloresSecundarios = List.copyOf(coloresSecundarios);
+    }
+    this.iluminacion = iluminacion;
   }
+
+  public Recomendacion() {}
 
   public Estilo getEstilo() {
     return this.estilo;
@@ -28,19 +43,31 @@ public final class Recomendacion {
     return this.colores;
   }
 
+  public List<Color> getColoresSecundarios() {
+    return this.coloresSecundarios;
+  }
+
   public Iluminacion getIluminacion() {
     return this.iluminacion;
   }
 
-  public Estilo setEstilo(Estilo estilo) {
-    return this.estilo;
+  public void setEstilo(Estilo estilo) {
+    this.estilo = estilo;
   }
 
-  public List<Color> setColores(List<Color> colores) {
-    return this.colores;
+  public void setColores(List<Color> colores) {
+    if (colores != null) {
+      this.colores = List.copyOf(colores);
+    }
   }
 
-  public Iluminacion setIluminacion(Iluminacion iluminacion) {
-    return this.iluminacion;
+  public void setColoresSecundarios(List<Color> coloresSecundarios) {
+    if (coloresSecundarios != null) {
+      this.coloresSecundarios = List.copyOf(coloresSecundarios);
+    }
+  }
+
+  public void setIluminacion(Iluminacion iluminacion) {
+    this.iluminacion = iluminacion;
   }
 }

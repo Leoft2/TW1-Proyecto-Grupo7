@@ -1,6 +1,7 @@
 package com.tallerwebi.presentacion;
 
 import com.tallerwebi.dominio.Ambiente;
+import com.tallerwebi.dominio.BaldePintura;
 import com.tallerwebi.dominio.Estilo;
 import com.tallerwebi.dominio.Mueble;
 import com.tallerwebi.dominio.RecomendacionPintura;
@@ -16,6 +17,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -33,6 +35,7 @@ public class ControladorRediseno {
   private static final String PRESUPUESTO = "presupuesto";
   private static final String ESTILO = "estilo";
   private static final String AMBIENTE = "ambiente";
+  private static final String SOLO_SOSTENIBLES = "soloSostenibles";
 
   @Autowired
   public ControladorRediseno(
@@ -61,24 +64,34 @@ public class ControladorRediseno {
     @PathVariable("id") Long id,
     @RequestParam(name = ESTILO, required = false) String estilo,
     @RequestParam(name = PRESUPUESTO, required = false) String presupuesto,
-    @RequestParam(name = "soloSostenibles", required = false) String soloSostenibles
-  ) {
-    FiltroDeMuebles propuesta;
-
-    try {
-      propuesta = FiltroDeMuebles.deUnaPropuesta(estilo, presupuesto, soloSostenibles, null);
-    } catch (FiltroDeMueblesInvalidoException e) {
-      return this.redirectAlFormulario(id);
-    }
-
-    return new ModelAndView("resultadosRediseno", this.modeloDelResultado(id, propuesta));
+    @RequestParam(name = SOLO_SOSTENIBLES, required = false) String soloSostenibles
+  ) throws FiltroDeMueblesInvalidoException {
+    FiltroDeMuebles propuesta = FiltroDeMuebles.deUnaPropuesta(
+      estilo,
+      presupuesto,
+      soloSostenibles,
+      null
+    );
+    return new ModelAndView("resultadosRediseno", this.modeloDelResultado(id, propuesta, null));
   }
 
   private ModelAndView redirectAlFormulario(Long id) {
     return new ModelAndView("redirect:/ambientes/" + id + "/redisenar");
   }
 
-  private Map<String, Object> modeloDelResultado(Long id, FiltroDeMuebles propuesta) {
+  @ExceptionHandler(FiltroDeMueblesInvalidoException.class)
+  public ModelAndView manejarFiltroInvalido(
+    FiltroDeMueblesInvalidoException excepcion,
+    @PathVariable("id") Long id
+  ) {
+    return this.redirectAlFormulario(id);
+  }
+
+  private Map<String, Object> modeloDelResultado(
+    Long id,
+    FiltroDeMuebles propuesta,
+    Integer colorIndex
+  ) {
     Ambiente ambiente = this.servicioAmbiente.buscarAmbiente(id);
     TipoDeAmbiente tipo = ambiente.getTipoDeAmbiente();
     Map<String, Object> modelo = new ModelMap();
@@ -87,9 +100,16 @@ public class ControladorRediseno {
     modelo.put(AMBIENTE, ambiente);
     modelo.put("tipoDeAmbiente", tipo == null ? null : tipo.getNombre());
     modelo.put("recomendacion", this.servicioRediseño.recomendar(propuesta.getEstilo()));
+    modelo.put(
+      "coloresOrdenados",
+      this.servicioRecomendacionPintura.coloresOrdenadosPorPrecio(propuesta.getEstilo())
+    );
     RecomendacionPintura recomendacionPintura =
-      this.servicioRecomendacionPintura.recomendar(ambiente);
+      this.servicioRecomendacionPintura.recomendar(ambiente, propuesta.getEstilo(), colorIndex);
     modelo.put("recomendacionPintura", recomendacionPintura);
+    if (colorIndex != null) {
+      modelo.put("colorSeleccionadoIndex", colorIndex);
+    }
     modelo.put("soloSostenibles", propuesta.getSoloSostenibles());
 
     List<Mueble> muebles = null;
@@ -109,5 +129,84 @@ public class ControladorRediseno {
     modelo.put("muebles", muebles);
 
     return modelo;
+  }
+
+  @RequestMapping(path = "/ambientes/{id}/redisenar/pintura/litros", method = RequestMethod.POST)
+  public ModelAndView actualizarLitros(
+    @PathVariable("id") Long id,
+    @RequestParam("itemIndex") int itemIndex,
+    @RequestParam("litros") Double litros,
+    @RequestParam(name = "colorIndex", required = false) Integer colorIndex,
+    @RequestParam(name = ESTILO, required = false) String estilo,
+    @RequestParam(name = PRESUPUESTO, required = false) String presupuesto,
+    @RequestParam(name = SOLO_SOSTENIBLES, required = false) String soloSostenibles
+  ) throws FiltroDeMueblesInvalidoException {
+    FiltroDeMuebles propuesta = FiltroDeMuebles.deUnaPropuesta(
+      estilo,
+      presupuesto,
+      soloSostenibles,
+      null
+    );
+    Map<String, Object> modelo = this.modeloDelResultado(id, propuesta, colorIndex);
+
+    RecomendacionPintura recomendacionPintura = (RecomendacionPintura) modelo.get(
+      "recomendacionPintura"
+    );
+    List<RecomendacionPintura.ItemPintura> items = recomendacionPintura.getItems();
+
+    if (itemIndex >= 0 && itemIndex < items.size()) {
+      RecomendacionPintura.ItemPintura item = items.get(itemIndex);
+      item.setLitrosSeleccionados(litros);
+      recalcularItem(item);
+      recomendacionPintura.calcularTotal();
+    }
+    return new ModelAndView("resultadosRediseno", modelo);
+  }
+
+  private void recalcularItem(RecomendacionPintura.ItemPintura item) {
+    BaldePintura balde = item.getBaldePintura();
+    if (balde == null) {
+      return;
+    }
+    Double metros = item.getMetrosCuadrados();
+    Double litros = item.getLitrosSeleccionados();
+    if (litros == null || litros <= 0) {
+      litros = balde.getCantidadLitros();
+    }
+    if (litros == null || litros <= 0 || metros == null) {
+      return;
+    }
+    int cantidad = (int) Math.ceil(metros / litros);
+    item.setCantidadBaldes(cantidad);
+    Double precio = balde.getPrecio();
+    if (precio != null) {
+      item.setPrecioTotal(cantidad * precio);
+    }
+  }
+
+  @RequestMapping(path = "/ambientes/{id}/redisenar/pintura/color", method = RequestMethod.POST)
+  public ModelAndView actualizarColor(
+    @PathVariable("id") Long id,
+    @RequestParam("colorIndex") Integer colorIndex,
+    @RequestParam(name = ESTILO, required = false) String estilo,
+    @RequestParam(name = PRESUPUESTO, required = false) String presupuesto,
+    @RequestParam(name = SOLO_SOSTENIBLES, required = false) String soloSostenibles
+  ) throws FiltroDeMueblesInvalidoException {
+    FiltroDeMuebles propuesta = FiltroDeMuebles.deUnaPropuesta(
+      estilo,
+      presupuesto,
+      soloSostenibles,
+      null
+    );
+    Map<String, Object> modelo = this.modeloDelResultado(id, propuesta, colorIndex);
+
+    Ambiente ambiente = this.servicioAmbiente.buscarAmbiente(id);
+    Estilo estiloElegido = propuesta.getEstilo();
+    RecomendacionPintura recomendacionPintura =
+      this.servicioRecomendacionPintura.recomendar(ambiente, estiloElegido, colorIndex);
+    recomendacionPintura.calcularTotal();
+    modelo.put("recomendacionPintura", recomendacionPintura);
+    modelo.put("colorSeleccionadoIndex", colorIndex);
+    return new ModelAndView("resultadosRediseno", modelo);
   }
 }

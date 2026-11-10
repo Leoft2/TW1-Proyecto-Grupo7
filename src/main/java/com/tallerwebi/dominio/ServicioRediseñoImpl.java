@@ -2,13 +2,16 @@ package com.tallerwebi.dominio;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import org.springframework.stereotype.Service;
 
 @Service("servicioRediseño")
 public class ServicioRediseñoImpl implements ServicioRediseño {
 
-  private static final String COLOR_BLANCO_ROTO = "Blanco roto";
-  private static final String HEX_BLANCO_ROTO = "#F2F0EB";
+  private static final String COLOR_BLANCO_ROTO = "Blanco";
+  private static final String HEX_BLANCO_ROTO = "ffffff";
+  private static final String COLOR_NEUTRO = "Neutro";
+  private static final String HEX_NEUTRO = "E5E5E5";
 
   public ServicioRediseñoImpl() {}
 
@@ -18,44 +21,50 @@ public class ServicioRediseñoImpl implements ServicioRediseño {
       case Retro -> crearRecomendacion(
         estilo,
         Iluminacion.CALIDA,
-        new Color("Mostaza", "#D4A017"),
-        new Color("Oliva", "#6B7B3A"),
-        new Color("Terracota", "#C1663F")
+        Arrays.asList(new Color(COLOR_NEUTRO, HEX_NEUTRO)),
+        new Color("Limonchello", "fadb49"),
+        new Color("El Palmar", "567c49"),
+        new Color("Talampaya", "b6213f")
       );
       case Minimalista -> crearRecomendacion(
         estilo,
         Iluminacion.INTERMEDIA,
-        new Color("Blanco", "#F5F5F2"),
-        new Color("Gris perla", "#C9C9C4"),
-        new Color("Carbón", "#2B2B2B")
+        Arrays.asList(new Color(COLOR_NEUTRO, HEX_NEUTRO)),
+        new Color("Blanco", "ffffff"),
+        new Color("El Leoncito", "938d81"),
+        new Color("Lago Puelo", "47627d")
       );
       case Japandi -> crearRecomendacion(
         estilo,
         Iluminacion.CALIDA,
-        new Color("Arena", "#D9CBB8"),
-        new Color("Madera clara", "#C8A87C"),
-        new Color("Salvia", "#9CAF94")
+        Arrays.asList(new Color(COLOR_NEUTRO, HEX_NEUTRO)),
+        new Color("Quebrada del Condorito", "dbc861"),
+        new Color("Los Arrayanes", "7f532b"),
+        new Color("El Palmar", "567c49")
       );
       case Industrial -> crearRecomendacion(
         estilo,
         Iluminacion.FRIA,
-        new Color("Cemento", "#8C8C86"),
-        new Color("Hierro", "#33322E"),
-        new Color("Ladrillo", "#A0522D")
+        Arrays.asList(new Color(COLOR_NEUTRO, HEX_NEUTRO)),
+        new Color("El Leoncito", "938d81"),
+        new Color("Lago Puelo", "47627d"),
+        new Color("Talampaya", "b6213f")
       );
       case Boho -> crearRecomendacion(
         estilo,
         Iluminacion.CALIDA,
-        new Color("Terracota", "#C1663F"),
-        new Color("Mostaza arena", "#E0B252"),
-        new Color("Turquesa", "#4FA3A5")
+        Arrays.asList(new Color(COLOR_NEUTRO, HEX_NEUTRO)),
+        new Color("Talampaya", "b6213f"),
+        new Color("Limonchello", "fadb49"),
+        new Color("Mar Egeo", "0191b4")
       );
       case Escandinavo -> crearRecomendacion(
         estilo,
         Iluminacion.INTERMEDIA,
+        Arrays.asList(new Color(COLOR_NEUTRO, HEX_NEUTRO)),
         new Color(COLOR_BLANCO_ROTO, HEX_BLANCO_ROTO),
-        new Color("Celeste", "#A8C3D1"),
-        new Color("Gris cálido", "#C4B8A8")
+        new Color("Danubio", "5d79c0"),
+        new Color("El Leoncito", "938d81")
       );
     };
   }
@@ -63,8 +72,14 @@ public class ServicioRediseñoImpl implements ServicioRediseño {
   private Recomendacion crearRecomendacion(
     Estilo estilo,
     Iluminacion iluminacion,
+    List<Color> coloresSecundarios,
     Color... colores
   ) {
-    return new Recomendacion(estilo, new ArrayList<>(Arrays.asList(colores)), iluminacion);
+    return new Recomendacion(
+      estilo,
+      new ArrayList<>(Arrays.asList(colores)),
+      coloresSecundarios,
+      iluminacion
+    );
   }
 }

@@ -90,6 +90,7 @@ public class RecomendacionPintura {
     private Integer cantidadBaldes;
     private Double metrosCuadrados;
     private Double precioTotal;
+    private Double litrosSeleccionados;
 
     public ItemPintura() {}
 
@@ -157,6 +158,14 @@ public class RecomendacionPintura {
 
     public void setColorSuperficie(ColorSuperficie colorSuperficie) {
       this.colorSuperficie = colorSuperficie;
+    }
+
+    public Double getLitrosSeleccionados() {
+      return litrosSeleccionados;
+    }
+
+    public void setLitrosSeleccionados(Double litrosSeleccionados) {
+      this.litrosSeleccionados = litrosSeleccionados;
     }
   }
 }

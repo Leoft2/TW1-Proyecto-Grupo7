@@ -205,13 +205,15 @@ public class PuntajeOrientacionTest {
       ranking,
       "puntuar",
       camaOpuesta,
-      ambiente
+      ambiente,
+      new ArrayList<>()
     );
     OpcionDeDistribucion opcionNoOpuesta = ReflectionTestUtils.invokeMethod(
       ranking,
       "puntuar",
       camaNoOpuesta,
-      ambiente
+      ambiente,
+      new ArrayList<>()
     );
 
     //Then

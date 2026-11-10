@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -349,24 +350,9 @@ public class ServicioRankingDeDistribucionesTest {
   @Test
   public void deberiaUsarLasZonasCalculadasCuandoPuntuaElDespejeFrontal() {
     //Given
-    ServicioZonaExclusion servicioZonaExclusion = mock(ServicioZonaExclusion.class);
     List<ZonaExclusion> zonasOriginales = new ArrayList<>();
-    zonasOriginales.add(new ZonaExclusion(1.0, 0.8, 1.0, 0.4, TipoAbertura.PUERTA));
     List<ZonaExclusion> zonasTransformadas = new ArrayList<>();
-    when(servicioZonaExclusion.calcularZonas(any(Ambiente.class)))
-      .thenReturn(
-        zonasOriginales,
-        zonasTransformadas,
-        zonasTransformadas,
-        zonasTransformadas,
-        zonasTransformadas
-      );
-    servicioRankingDeDistribuciones =
-      new ServicioRankingDeDistribucionesImpl(
-        servicioPlano2D,
-        servicioReglasDeUbicacion,
-        servicioZonaExclusion
-      );
+    givenZonasDelAmbienteOriginalYDeLosTransformados(zonasOriginales, zonasTransformadas);
     Mueble placard = givenUnPlacard();
     givenPlanoValidoConZonas(placard, 1.0, 0.5);
     when(servicioReglasDeUbicacion.despejeFrontalDe(any(), any(), anyList(), any()))
@@ -377,6 +363,24 @@ public class ServicioRankingDeDistribucionesTest {
 
     //Then
     thenSeUsoLaZonaCalculada(zonasOriginales);
+  }
+
+  @Test
+  public void deberiaNoPuntuarElDespejeFrontalConLasZonasTransformadas() {
+    //Given
+    List<ZonaExclusion> zonasOriginales = new ArrayList<>();
+    List<ZonaExclusion> zonasTransformadas = new ArrayList<>();
+    givenZonasDelAmbienteOriginalYDeLosTransformados(zonasOriginales, zonasTransformadas);
+    Mueble placard = givenUnPlacard();
+    givenPlanoValidoConZonas(placard, 1.0, 0.5);
+    when(servicioReglasDeUbicacion.despejeFrontalDe(any(), any(), anyList(), any()))
+      .thenReturn(0.60);
+
+    //When
+    whenGeneroElRankingCon(placard);
+
+    //Then
+    thenNoSeUsoLaZonaTransformada(zonasTransformadas);
   }
 
   @Test
@@ -544,6 +548,29 @@ public class ServicioRankingDeDistribucionesTest {
       );
   }
 
+  private void givenZonasDelAmbienteOriginalYDeLosTransformados(
+    List<ZonaExclusion> zonasOriginales,
+    List<ZonaExclusion> zonasTransformadas
+  ) {
+    zonasOriginales.add(new ZonaExclusion(1.0, 0.8, 1.0, 0.4, TipoAbertura.PUERTA));
+    zonasTransformadas.add(new ZonaExclusion(2.0, 0.8, 1.0, 0.4, TipoAbertura.PUERTA));
+    ServicioZonaExclusion servicioZonaExclusion = mock(ServicioZonaExclusion.class);
+    when(servicioZonaExclusion.calcularZonas(any(Ambiente.class)))
+      .thenReturn(
+        zonasOriginales,
+        zonasTransformadas,
+        zonasTransformadas,
+        zonasTransformadas,
+        zonasTransformadas
+      );
+    servicioRankingDeDistribuciones =
+      new ServicioRankingDeDistribucionesImpl(
+        servicioPlano2D,
+        servicioReglasDeUbicacion,
+        servicioZonaExclusion
+      );
+  }
+
   private void givenPlanoValidoConZonas(Mueble mueble, Double x, Double y) {
     when(servicioPlano2D.estaDentroDelPerimetro(any(MuebleUbicado.class), any(Ambiente.class)))
       .thenReturn(true);
@@ -699,6 +726,11 @@ public class ServicioRankingDeDistribucionesTest {
 
   private void thenSeUsoLaZonaCalculada(List<ZonaExclusion> zonas) {
     verify(servicioReglasDeUbicacion, atLeastOnce())
+      .despejeFrontalDe(any(MuebleUbicado.class), any(Ambiente.class), anyList(), eq(zonas));
+  }
+
+  private void thenNoSeUsoLaZonaTransformada(List<ZonaExclusion> zonas) {
+    verify(servicioReglasDeUbicacion, never())
       .despejeFrontalDe(any(MuebleUbicado.class), any(Ambiente.class), anyList(), eq(zonas));
   }
 }

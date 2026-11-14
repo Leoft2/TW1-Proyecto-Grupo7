@@ -1,7 +1,10 @@
 package com.tallerwebi.infraestructura;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasProperty;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -58,6 +61,51 @@ public class RepositorioPlanoTest {
     assertThat(recuperado.getUsuario().getEmail(), is(equalTo(usuario.getEmail())));
     assertThat(recuperado.getMuebles().get(0).getPosicionX(), is(equalTo(1.0)));
     assertThat(recuperado.getMuebles().get(0).getPosicionY(), is(equalTo(1.5)));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaGuardarEnElAmbienteElMuebleUbicadoEnElPlanoCuandoGuardoUnPlanoNuevo() {
+    //Given
+    Usuario usuario = givenTengoUnUsuario("ambiente-con-mueble@unlam.edu.ar");
+    givenTengoUnPlanoGuardadoPara(usuario);
+
+    //When
+    Plano recuperado = repositorioPlano.buscarUltimoDe(usuario.getEmail());
+
+    //Then
+    assertThat(recuperado.getAmbiente().getMuebles(), contains(hasProperty("nombre", is("Silla"))));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void deberiaGuardarEnElAmbienteElMuebleExcluidoDelPlanoCuandoGuardoUnPlanoNuevo() {
+    //Given
+    Usuario usuario = givenTengoUnUsuario("ambiente-con-excluido@unlam.edu.ar");
+    givenTengoUnPlanoConUnMuebleExcluidoPara(usuario);
+
+    //When
+    Plano recuperado = repositorioPlano.buscarUltimoDe(usuario.getEmail());
+
+    //Then
+    assertThat(recuperado.getAmbiente().getMuebles(), contains(hasProperty("nombre", is("Mesa"))));
+  }
+
+  @Test
+  @Transactional
+  @Rollback
+  public void noDeberiaDuplicarEnElAmbienteUnMuebleUbicadoMasDeUnaVezCuandoGuardoUnPlanoNuevo() {
+    //Given
+    Usuario usuario = givenTengoUnUsuario("ambiente-sin-duplicados@unlam.edu.ar");
+    givenTengoUnPlanoConElMismoMuebleUbicadoDosVecesPara(usuario);
+
+    //When
+    Plano recuperado = repositorioPlano.buscarUltimoDe(usuario.getEmail());
+
+    //Then
+    assertThat(recuperado.getAmbiente().getMuebles(), hasSize(1));
   }
 
   @Test
@@ -160,6 +208,32 @@ public class RepositorioPlanoTest {
     List<MuebleUbicado> muebles = new ArrayList<>();
     muebles.add(new MuebleUbicado(mueble, 0.0, 0.0));
     Plano plano = new Plano(new Ambiente(4.0, 3.0), muebles, new ArrayList<>(), new ArrayList<>());
+    repositorioPlano.guardar(plano, usuario.getEmail());
+    flushYClear();
+  }
+
+  private void givenTengoUnPlanoConUnMuebleExcluidoPara(Usuario usuario) {
+    Mueble mesa = new Mueble("Mesa", 1.0, 1.0);
+    sessionFactory.getCurrentSession().persist(mesa);
+    List<Mueble> excluidos = new ArrayList<>();
+    excluidos.add(mesa);
+    Plano plano = new Plano(
+      new Ambiente(4.0, 3.0),
+      new ArrayList<>(),
+      excluidos,
+      new ArrayList<>()
+    );
+    repositorioPlano.guardar(plano, usuario.getEmail());
+    flushYClear();
+  }
+
+  private void givenTengoUnPlanoConElMismoMuebleUbicadoDosVecesPara(Usuario usuario) {
+    Mueble silla = new Mueble("Silla", 1.0, 1.0);
+    sessionFactory.getCurrentSession().persist(silla);
+    List<MuebleUbicado> ubicados = new ArrayList<>();
+    ubicados.add(new MuebleUbicado(silla, 0.0, 0.0));
+    ubicados.add(new MuebleUbicado(silla, 1.0, 0.0));
+    Plano plano = new Plano(new Ambiente(4.0, 3.0), ubicados, new ArrayList<>(), new ArrayList<>());
     repositorioPlano.guardar(plano, usuario.getEmail());
     flushYClear();
   }

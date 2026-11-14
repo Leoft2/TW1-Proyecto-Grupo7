@@ -58,6 +58,7 @@ public class RepositorioPlanoImpl implements RepositorioPlano {
     if (plano.getId() == null) {
       // Cada version del plano necesita su propio ambiente por la relacion @OneToOne. --> si no se provoca un error de "detached entity passed to persist".
       plano.setAmbiente(copiarAmbiente(plano.getAmbiente()));
+      agregarMueblesDelPlanoAlAmbiente(plano);
       plano.getAmbiente().setUsuario(usuario);
       plano.getAmbiente().setTipoDeAmbiente(tipoDeAmbiente);
       sessionFactory
@@ -73,6 +74,42 @@ public class RepositorioPlanoImpl implements RepositorioPlano {
       plano.getAmbiente().setTipoDeAmbiente(tipoDeAmbiente);
       sessionFactory.getCurrentSession().merge(plano);
     }
+  }
+
+  private void agregarMueblesDelPlanoAlAmbiente(Plano plano) {
+    for (MuebleUbicado muebleUbicado : plano.getMuebles()) {
+      if (muebleUbicado != null && muebleUbicado.getMueble() != null) {
+        agregarMuebleSiNoEstaEnElAmbiente(plano, muebleUbicado.getMueble());
+      }
+    }
+    if (plano.getMueblesExcluidos() != null) {
+      for (Mueble mueble : plano.getMueblesExcluidos()) {
+        agregarMuebleSiNoEstaEnElAmbiente(plano, mueble);
+      }
+    }
+  }
+
+  private void agregarMuebleSiNoEstaEnElAmbiente(Plano plano, Mueble mueble) {
+    if (mueble == null) {
+      return;
+    }
+    List<Mueble> mueblesDelAmbiente = plano.getAmbiente().getMuebles();
+    for (Mueble muebleDelAmbiente : mueblesDelAmbiente) {
+      if (sonElMismoMueble(muebleDelAmbiente, mueble)) {
+        return;
+      }
+    }
+    mueblesDelAmbiente.add(mueble);
+  }
+
+  private boolean sonElMismoMueble(Mueble primero, Mueble segundo) {
+    if (primero == null || segundo == null) {
+      return false;
+    }
+    if (primero.getId() > 0) {
+      return primero.getId() == segundo.getId();
+    }
+    return Objects.equals(primero, segundo);
   }
 
   private Ambiente copiarAmbiente(Ambiente ambiente) {

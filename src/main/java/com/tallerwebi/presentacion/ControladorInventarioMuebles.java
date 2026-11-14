@@ -215,15 +215,12 @@ public class ControladorInventarioMuebles {
             .buscar(ambiente, muebles, servicioPlano2D, servicioZonaExclusion)
             .orElse(null);
         if (plano == null) {
-          String mensaje = "No se pudo orientar los muebles ni garantizar el acceso lateral de la cama.";
+          String mensaje =
+            "No se pudo orientar los muebles ni garantizar el acceso lateral de la cama.";
           if (new RelacionSofaTelevisor().haySofaYTelevisor(muebles)) {
             mensaje += RelacionSofaTelevisor.MENSAJE_CONFLICTO;
           }
-          return new ModelAndView(
-            "plano-interactivo",
-            "error",
-            mensaje
-          );
+          return new ModelAndView("plano-interactivo", "error", mensaje);
         }
       }
       String usuarioEmail = (String) sesion.getAttribute("USUARIO_EMAIL");

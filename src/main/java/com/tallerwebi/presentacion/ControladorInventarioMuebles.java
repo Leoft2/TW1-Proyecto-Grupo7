@@ -207,8 +207,7 @@ public class ControladorInventarioMuebles {
       Plano plano = servicioPlano2D.generarPlano(ambiente, muebles);
       if (
         !orientacionFuncional.cumpleOrientacion(plano) ||
-        (new RelacionSofaTelevisor().haySofaYTelevisor(muebles) &&
-          !plano.getMueblesExcluidos().isEmpty())
+        (tieneZonaFuncional(muebles) && !plano.getMueblesExcluidos().isEmpty())
       ) {
         plano =
           new BusquedaDePlanoOrientado()
@@ -235,6 +234,13 @@ public class ControladorInventarioMuebles {
     } catch (ValidacionException e) {
       return new ModelAndView("redirect:/plano/ambiente");
     }
+  }
+
+  private boolean tieneZonaFuncional(List<Mueble> muebles) {
+    return (
+      new RelacionSofaTelevisor().haySofaYTelevisor(muebles) ||
+      new RelacionSillaMesa().haySillaYMesa(muebles)
+    );
   }
 
   public ModelAndView agregar(Mueble datos) {

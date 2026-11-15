@@ -127,8 +127,7 @@ public class ControladorPlano2D {
       Plano plano = servicioPlano2D.generarPlano(ambiente, muebles);
       if (
         !orientacionFuncional.cumpleOrientacion(plano) ||
-        (new RelacionSofaTelevisor().haySofaYTelevisor(muebles) &&
-          !plano.getMueblesExcluidos().isEmpty())
+        (tieneZonaFuncional(muebles) && !plano.getMueblesExcluidos().isEmpty())
       ) {
         plano =
           new BusquedaDePlanoOrientado()
@@ -151,7 +150,17 @@ public class ControladorPlano2D {
     if (new RelacionSofaTelevisor().haySofaYTelevisor(muebles)) {
       mensaje += RelacionSofaTelevisor.MENSAJE_CONFLICTO;
     }
+    if (new RelacionSillaMesa().haySillaYMesa(muebles)) {
+      mensaje += " No se encontro una ubicacion para todas las sillas junto a la mesa.";
+    }
     return mensaje;
+  }
+
+  private boolean tieneZonaFuncional(List<Mueble> muebles) {
+    return (
+      new RelacionSofaTelevisor().haySofaYTelevisor(muebles) ||
+      new RelacionSillaMesa().haySillaYMesa(muebles)
+    );
   }
 
   private ModelAndView planoConError(ValidacionException error) {
@@ -264,8 +273,22 @@ public class ControladorPlano2D {
     sesion.setAttribute(ATRIBUTO_PLANO, plano);
     return ResponseEntity
       .ok()
-      .header("X-Orientacion", indicadorOrientacion.frente(muebleUbicado, plano.getAmbiente()))
+      .header(
+        "X-Orientacion",
+        indicadorOrientacion.frente(muebleUbicado, plano.getAmbiente(), plano.getMuebles())
+      )
+      .header("X-Orientaciones", orientacionesDe(plano))
       .body("La posición del mueble se guardó correctamente.");
+  }
+
+  private String orientacionesDe(Plano plano) {
+    List<String> orientaciones = new ArrayList<>();
+    for (MuebleUbicado ubicado : plano.getMuebles()) {
+      orientaciones.add(
+        indicadorOrientacion.frente(ubicado, plano.getAmbiente(), plano.getMuebles())
+      );
+    }
+    return String.join(",", orientaciones);
   }
 
   private List<MuebleUbicado> otrosMuebles(Plano plano, Integer indice) {

@@ -120,7 +120,7 @@ public class PuntajeOrientacionTest {
     Plano plano = givenPlano();
     givenMuebleUbicado(plano, "Silla", 0.5, 0.5, 1.0, 0.0);
     givenMuebleUbicado(plano, "Silla", 0.5, 0.5, 3.0, 0.0);
-    givenMuebleUbicado(plano, "Mesa de comedor", 2.5, 1.0, 1.0, 2.0);
+    givenMuebleUbicado(plano, "Mesa de comedor", 2.5, 1.0, 1.0, 0.7);
     givenMuebleUbicado(plano, "Mesa de luz", 2.5, 0.5, 1.0, 4.5);
 
     //When
@@ -268,7 +268,7 @@ public class PuntajeOrientacionTest {
       "Rack de TV",
       "Silla",
       "Silla",
-      "Mesa",
+      "Mesa de comedor",
       "Mesa de luz"
     );
 

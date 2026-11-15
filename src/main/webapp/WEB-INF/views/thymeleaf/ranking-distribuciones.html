@@ -60,7 +60,7 @@
                                   y=${ubicado.posicionY + ubicado.mueble.largo / 2}"
                           text-anchor="middle" dominant-baseline="middle"
                           font-size="0.16" th:text="${ubicado.mueble.nombre}">Cama</text>
-                    <text th:replace="~{fragments/orientacion-mueble :: indicador(${ubicado}, ${opcion.plano.ambiente})}"></text>
+                    <text th:replace="~{fragments/orientacion-mueble :: indicador(${ubicado}, ${opcion.plano.ambiente}, ${opcion.plano.muebles})}"></text>
                 </g>
             </svg>
         </div>

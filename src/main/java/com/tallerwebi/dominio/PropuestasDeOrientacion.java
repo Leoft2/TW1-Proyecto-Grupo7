@@ -142,7 +142,7 @@ public class PropuestasDeOrientacion {
       return CATEGORIA_RACK;
     }
     if (categoria.startsWith("Silla")) {
-      return "Mesa";
+      return "Mesa de comedor";
     }
     return "";
   }

@@ -22,14 +22,20 @@ public class RelacionSofaTelevisorTest {
     MuebleUbicado rack = givenMueble(plano, "Rack de TV", 1.0, 0.5, 3.5, 2.5);
     ServicioOrientacionFuncional orientacion = new ServicioOrientacionFuncionalImpl();
 
-    //When y Then
-    assertThat(orientacion.cumpleOrientacion(plano), is(equalTo(true)));
+    //When
+    boolean distanciaMinima = orientacion.cumpleOrientacion(plano);
     rack.moverA(3.5, 5.0);
-    assertThat(orientacion.cumpleOrientacion(plano), is(equalTo(true)));
+    boolean distanciaMaxima = orientacion.cumpleOrientacion(plano);
     rack.moverA(3.5, 2.49);
-    assertThat(orientacion.cumpleOrientacion(plano), is(equalTo(false)));
+    boolean menorAlMinimo = orientacion.cumpleOrientacion(plano);
     rack.moverA(3.5, 5.01);
-    assertThat(orientacion.cumpleOrientacion(plano), is(equalTo(false)));
+    boolean mayorAlMaximo = orientacion.cumpleOrientacion(plano);
+
+    //Then
+    assertThat(distanciaMinima, is(equalTo(true)));
+    assertThat(distanciaMaxima, is(equalTo(true)));
+    assertThat(menorAlMinimo, is(equalTo(false)));
+    assertThat(mayorAlMaximo, is(equalTo(false)));
   }
 
   @Test
@@ -40,12 +46,17 @@ public class RelacionSofaTelevisorTest {
     MuebleUbicado rack = givenMueble(plano, "Rack de TV", 1.0, 0.5, 4.9, 3.0);
     ServicioOrientacionFuncional orientacion = new ServicioOrientacionFuncionalImpl();
 
-    //When y Then
-    assertThat(orientacion.cumpleOrientacion(plano), is(equalTo(true)));
+    //When
+    boolean parcialmenteAlineado = orientacion.cumpleOrientacion(plano);
     rack.moverA(5.0, 3.0);
-    assertThat(orientacion.cumpleOrientacion(plano), is(equalTo(false)));
+    boolean sinAlineacion = orientacion.cumpleOrientacion(plano);
     rack.moverA(3.5, 0.0);
-    assertThat(orientacion.cumpleOrientacion(plano), is(equalTo(false)));
+    boolean sinEstarDelante = orientacion.cumpleOrientacion(plano);
+
+    //Then
+    assertThat(parcialmenteAlineado, is(equalTo(true)));
+    assertThat(sinAlineacion, is(equalTo(false)));
+    assertThat(sinEstarDelante, is(equalTo(false)));
   }
 
   @Test
@@ -57,10 +68,14 @@ public class RelacionSofaTelevisorTest {
     MuebleUbicado mesa = givenMueble(plano, "Mesa", 0.5, 0.5, 3.7, 2.0);
     ServicioOrientacionFuncional orientacion = new ServicioOrientacionFuncionalImpl();
 
-    //When y Then
-    assertThat(orientacion.cumpleOrientacion(plano), is(equalTo(false)));
+    //When
+    boolean visualBloqueada = orientacion.cumpleOrientacion(plano);
     mesa.moverA(4.5, 2.0);
-    assertThat(orientacion.cumpleOrientacion(plano), is(equalTo(true)));
+    boolean visualLibre = orientacion.cumpleOrientacion(plano);
+
+    //Then
+    assertThat(visualBloqueada, is(equalTo(false)));
+    assertThat(visualLibre, is(equalTo(true)));
   }
 
   @Test
@@ -73,14 +88,20 @@ public class RelacionSofaTelevisorTest {
     muebles.add(sofa);
     muebles.add(rack);
 
-    //When y Then
-    assertThat(relacion.esValida(sofa, rack, Muro.SUPERIOR, muebles), is(equalTo(true)));
+    //When
+    boolean superior = relacion.esValida(sofa, rack, Muro.SUPERIOR, muebles);
     rack.moverA(4.5, 6.5);
-    assertThat(relacion.esValida(sofa, rack, Muro.INFERIOR, muebles), is(equalTo(true)));
+    boolean inferior = relacion.esValida(sofa, rack, Muro.INFERIOR, muebles);
     rack.moverA(1.5, 4.25);
-    assertThat(relacion.esValida(sofa, rack, Muro.IZQUIERDO, muebles), is(equalTo(true)));
+    boolean izquierdo = relacion.esValida(sofa, rack, Muro.IZQUIERDO, muebles);
     rack.moverA(7.5, 4.25);
-    assertThat(relacion.esValida(sofa, rack, Muro.DERECHO, muebles), is(equalTo(true)));
+    boolean derecho = relacion.esValida(sofa, rack, Muro.DERECHO, muebles);
+
+    //Then
+    assertThat(superior, is(equalTo(true)));
+    assertThat(inferior, is(equalTo(true)));
+    assertThat(izquierdo, is(equalTo(true)));
+    assertThat(derecho, is(equalTo(true)));
   }
 
   @Test
@@ -92,12 +113,17 @@ public class RelacionSofaTelevisorTest {
     MuebleUbicado rack = givenMueble(plano, "Rack de TV", 1.0, 0.5, 1.5, 3.0);
     ServicioOrientacionFuncional orientacion = new ServicioOrientacionFuncionalImpl();
 
-    //When y Then
-    assertThat(orientacion.cumpleOrientacion(plano), is(equalTo(false)));
+    //When
+    boolean unSofaSinRack = orientacion.cumpleOrientacion(plano);
     givenMueble(plano, "Rack de TV", 1.0, 0.5, 6.5, 3.0);
-    assertThat(orientacion.cumpleOrientacion(plano), is(equalTo(true)));
+    boolean ambosConRack = orientacion.cumpleOrientacion(plano);
     rack.moverA(4.0, 3.0);
-    assertThat(orientacion.cumpleOrientacion(plano), is(equalTo(false)));
+    boolean rackDesalineado = orientacion.cumpleOrientacion(plano);
+
+    //Then
+    assertThat(unSofaSinRack, is(equalTo(false)));
+    assertThat(ambosConRack, is(equalTo(true)));
+    assertThat(rackDesalineado, is(equalTo(false)));
   }
 
   @Test

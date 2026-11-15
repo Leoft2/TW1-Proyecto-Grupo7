@@ -2,6 +2,7 @@ package com.tallerwebi.dominio;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class BusquedaPerimetralOrientada {
@@ -11,6 +12,7 @@ public class BusquedaPerimetralOrientada {
   private final ServicioPlano2D servicioPlano;
   private final ServicioReglasDeUbicacion reglas;
   private final ServicioOrientacionFuncional orientacion;
+  private final RelacionSillaMesa relacionSillaMesa = new RelacionSillaMesa();
   private int intentos;
 
   public BusquedaPerimetralOrientada(
@@ -32,7 +34,13 @@ public class BusquedaPerimetralOrientada {
       return Optional.empty();
     }
     intentos = 0;
-    return buscarMueble(ambiente, muebles, zonas, new ArrayList<>());
+    List<Mueble> ordenados = new ArrayList<>(muebles);
+    if (tieneMesa(muebles)) {
+      ordenados.sort((primero, segundo) ->
+        Boolean.compare(relacionSillaMesa.esSilla(primero), relacionSillaMesa.esSilla(segundo))
+      );
+    }
+    return buscarMueble(ambiente, ordenados, zonas, new ArrayList<>());
   }
 
   private Optional<Plano> buscarMueble(
@@ -42,26 +50,156 @@ public class BusquedaPerimetralOrientada {
     List<MuebleUbicado> ubicados
   ) {
     if (ubicados.size() == muebles.size()) {
-      Plano plano = new Plano(
-        ambiente,
-        new ArrayList<>(ubicados),
-        new ArrayList<>(),
-        new ArrayList<>()
-      );
-      if (orientacion.cumpleOrientacion(plano) && posicionesValidas(plano, zonas)) {
-        return Optional.of(plano);
-      }
-      if (new RelacionSofaTelevisor().haySofaYTelevisor(muebles)) {
-        return buscarPropuesta(plano, zonas);
-      }
-      return Optional.empty();
+      return validarPlanoCompleto(ambiente, muebles, zonas, ubicados);
     }
     Mueble mueble = muebles.get(ubicados.size());
+    if (requiereMesa(mueble, ubicados)) {
+      return buscarAlrededorDeMesas(ambiente, muebles, zonas, ubicados, mueble);
+    }
+    Optional<Plano> centrado = buscarMesaCentrada(ambiente, muebles, zonas, ubicados, mueble);
+    if (centrado.isPresent()) {
+      return centrado;
+    }
     for (Muro muro : Muro.values()) {
       if (intentos >= MAXIMO_DE_INTENTOS) {
         return Optional.empty();
       }
       Optional<Plano> resultado = buscarEnMuro(ambiente, muebles, zonas, ubicados, mueble, muro);
+      if (resultado.isPresent()) {
+        return resultado;
+      }
+    }
+    return Optional.empty();
+  }
+
+  private Optional<Plano> validarPlanoCompleto(
+    Ambiente ambiente,
+    List<Mueble> muebles,
+    List<ZonaExclusion> zonas,
+    List<MuebleUbicado> ubicados
+  ) {
+    Plano plano = new Plano(
+      ambiente,
+      new ArrayList<>(ubicados),
+      new ArrayList<>(),
+      new ArrayList<>()
+    );
+    if (orientacion.cumpleOrientacion(plano) && posicionesValidas(plano, zonas)) {
+      return Optional.of(plano);
+    }
+    if (new RelacionSofaTelevisor().haySofaYTelevisor(muebles)) {
+      return buscarPropuesta(plano, zonas);
+    }
+    return Optional.empty();
+  }
+
+  private Optional<Plano> buscarMesaCentrada(
+    Ambiente ambiente,
+    List<Mueble> muebles,
+    List<ZonaExclusion> zonas,
+    List<MuebleUbicado> ubicados,
+    Mueble mesa
+  ) {
+    if (
+      !relacionSillaMesa.esMesa(mesa) ||
+      !relacionSillaMesa.haySillaYMesa(muebles) ||
+      intentos >= MAXIMO_DE_INTENTOS
+    ) {
+      return Optional.empty();
+    }
+    for (MuebleUbicado candidato : new PosicionesDeMesa()
+      .generar(ambiente, muebles, ubicados, mesa)) {
+      if (intentos >= MAXIMO_DE_INTENTOS) {
+        return Optional.empty();
+      }
+      intentos++;
+      if (!valida(candidato, ambiente, ubicados, zonas)) {
+        continue;
+      }
+      ubicados.add(candidato);
+      Optional<Plano> resultado = buscarMueble(ambiente, muebles, zonas, ubicados);
+      ubicados.remove(ubicados.size() - 1);
+      if (resultado.isPresent()) {
+        return resultado;
+      }
+    }
+    return Optional.empty();
+  }
+
+  private boolean requiereMesa(Mueble mueble, List<MuebleUbicado> ubicados) {
+    if (!relacionSillaMesa.esSilla(mueble)) {
+      return false;
+    }
+    return new AsignacionSillas(relacionSillaMesa).tieneCapacidad(ubicados);
+  }
+
+  private boolean tieneMesa(List<Mueble> muebles) {
+    for (Mueble mueble : muebles) {
+      if (relacionSillaMesa.esMesa(mueble)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private Optional<Plano> buscarAlrededorDeMesas(
+    Ambiente ambiente,
+    List<Mueble> muebles,
+    List<ZonaExclusion> zonas,
+    List<MuebleUbicado> ubicados,
+    Mueble silla
+  ) {
+    Map<MuebleUbicado, MuebleUbicado> asignaciones = relacionSillaMesa.asignaciones(ubicados);
+    for (MuebleUbicado mesa : new ArrayList<>(ubicados)) {
+      if (!relacionSillaMesa.esMesa(mesa.getMueble())) {
+        continue;
+      }
+      if (
+        new AsignacionSillas(relacionSillaMesa).contarEnMesa(mesa, asignaciones) >=
+        AsignacionSillas.MAXIMO_POR_MESA
+      ) {
+        continue;
+      }
+      for (Muro lado : Muro.values()) {
+        Optional<Plano> resultado = buscarEnLado(
+          ambiente,
+          muebles,
+          zonas,
+          ubicados,
+          silla,
+          mesa,
+          lado
+        );
+        if (resultado.isPresent()) {
+          return resultado;
+        }
+      }
+    }
+    return Optional.empty();
+  }
+
+  private Optional<Plano> buscarEnLado(
+    Ambiente ambiente,
+    List<Mueble> muebles,
+    List<ZonaExclusion> zonas,
+    List<MuebleUbicado> ubicados,
+    Mueble silla,
+    MuebleUbicado mesa,
+    Muro lado
+  ) {
+    for (MuebleUbicado candidato : new PosicionesDeSilla().generar(silla, mesa, lado)) {
+      if (intentos >= MAXIMO_DE_INTENTOS) {
+        return Optional.empty();
+      }
+      intentos++;
+      if (!valida(candidato, ambiente, ubicados, zonas)) {
+        continue;
+      }
+      ubicados.add(candidato);
+      Optional<Plano> resultado = relacionSillaMesa.asignaciones(ubicados).containsKey(candidato)
+        ? buscarMueble(ambiente, muebles, zonas, ubicados)
+        : Optional.empty();
+      ubicados.remove(ubicados.size() - 1);
       if (resultado.isPresent()) {
         return resultado;
       }

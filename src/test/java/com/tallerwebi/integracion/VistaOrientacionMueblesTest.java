@@ -60,6 +60,37 @@ public class VistaOrientacionMueblesTest {
   }
 
   @Test
+  public void deberiaMostrarLaSillaMirandoHaciaLaMesaSinApoyarseEnUnMuro() throws Exception {
+    //Given
+    MockHttpSession sesion = givenSesionConPlano();
+    Plano plano = (Plano) sesion.getAttribute("plano");
+    Mueble silla = new Mueble("Silla", 0.5, 0.5);
+    silla.setCategoriaDeMueble(new CategoriaDeMueble("Silla", 0.5, 0.5));
+    Mueble mesa = new Mueble("Mesa de comedor", 1.0, 1.0);
+    mesa.setCategoriaDeMueble(new CategoriaDeMueble("Mesa de comedor", 1.0, 1.0));
+    plano.getMuebles().clear();
+    plano.getMuebles().add(new MuebleUbicado(silla, 2.0, 1.5));
+    plano.getMuebles().add(new MuebleUbicado(mesa, 2.0, 2.0));
+
+    //When
+    String html = whenAbroPlano(sesion);
+    MvcResult movimiento = mockMvc
+      .perform(
+        post("/plano/mover-mueble")
+          .session(sesion)
+          .param("indice", "1")
+          .param("posicionX", "3")
+          .param("posicionY", "3")
+      )
+      .andExpect(status().isOk())
+      .andReturn();
+
+    //Then
+    assertThat(html, containsString("Frente hacia INFERIOR"));
+    assertThat(movimiento.getResponse().getHeader("X-Orientaciones"), is(equalTo(",")));
+  }
+
+  @Test
   public void deberiaMostrarElFrenteEnLaVistaDelRanking() throws Exception {
     //Given
     MockHttpSession sesion = givenSesionConPlano();

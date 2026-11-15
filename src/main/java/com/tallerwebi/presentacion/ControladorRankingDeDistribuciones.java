@@ -67,7 +67,7 @@ public class ControladorRankingDeDistribuciones {
         );
       if (opciones.isEmpty()) {
         mensaje =
-          "No fue posible generar una distribución válida. Las opciones probadas no pudieron ubicar todos los muebles sin interferir con puertas, obstáculos o el ancho mínimo de circulación. También se revisan la orientación y el acceso lateral de las camas. Si hay sofá y rack de TV, revisá que puedan quedar frente a frente, separados entre 1,5 y 4 m y sin muebles bloqueando la vista.";
+          "No fue posible generar una distribución válida. Las opciones probadas no pudieron ubicar todos los muebles sin interferir con puertas, obstáculos o el ancho mínimo de circulación. También se revisan la orientación y el acceso lateral de las camas. Si hay sofá y rack de TV, revisá que puedan quedar frente a frente, separados entre 1,5 y 4 m y sin muebles bloqueando la vista. Las sillas deben quedar junto a una mesa de comedor, a una distancia de hasta 0,30 m.";
       }
     } catch (ValidacionException e) {
       opciones = new ArrayList<>();

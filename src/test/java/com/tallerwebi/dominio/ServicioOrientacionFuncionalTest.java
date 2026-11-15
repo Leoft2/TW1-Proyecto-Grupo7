@@ -51,7 +51,7 @@ public class ServicioOrientacionFuncionalTest {
     //Given
     Plano plano = givenPlano();
     givenMueble(plano, "Silla", 0.5, 0.5, 1.0, 0.0);
-    givenMueble(plano, "Mesa de luz", 1.0, 1.0, 1.0, 2.0);
+    givenMueble(plano, "Mesa de comedor", 1.0, 1.0, 1.0, 0.7);
 
     //When
     boolean resultado = whenSeEvalua(plano);

@@ -102,7 +102,15 @@ if (plano && alerta) {
         mueble.removeAttribute("transform");
         mueble.dataset.posicionX = posicionNueva.x;
         mueble.dataset.posicionY = posicionNueva.y;
-        actualizarOrientacion(mueble, respuesta.headers.get("X-Orientacion"));
+        const orientaciones = respuesta.headers.get("X-Orientaciones");
+        if (orientaciones !== null) {
+          const frentes = orientaciones.split(",");
+          plano.querySelectorAll(".plano-mueble-arrastrable").forEach((ubicado) => {
+            actualizarOrientacion(ubicado, frentes[Number(ubicado.dataset.indice)] || "");
+          });
+        } else {
+          actualizarOrientacion(mueble, respuesta.headers.get("X-Orientacion"));
+        }
         actualizarTabla(mueble.dataset.indice, posicionNueva.x, posicionNueva.y);
         limpiarAdvertencia();
       })

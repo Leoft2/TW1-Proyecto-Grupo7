@@ -271,7 +271,7 @@
                                        font-size=${0.16}"
                               th:text="${ubicado.mueble.nombre}">Sofa
                         </text>
-                        <text th:replace="~{fragments/orientacion-mueble :: indicador(${ubicado}, ${plano.ambiente})}"></text>
+                        <text th:replace="~{fragments/orientacion-mueble :: indicador(${ubicado}, ${plano.ambiente}, ${plano.muebles})}"></text>
                     </g>
 
                     <text x="0.08" y="-0.18" class="plano-dimension"

@@ -110,7 +110,12 @@ public class VistaReglasDePuntajeTest {
     assertThat(html, containsString("Si no hay ventanas: +1"));
     assertThat(html, containsString("Cama con acceso libre en ambos laterales: +1"));
     assertThat(html, containsString("Sofá orientado hacia un rack de TV: +1"));
-    assertThat(html, containsString("Silla orientada hacia una mesa: +1"));
+    assertThat(
+      html,
+      containsString(
+        "Silla orientada hacia una mesa de comedor, a una distancia de hasta 0,30 m: +1"
+      )
+    );
     assertThat(
       html,
       containsString(

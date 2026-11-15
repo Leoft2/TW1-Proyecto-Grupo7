@@ -26,6 +26,7 @@ public class ServicioReglasDeUbicacionImpl implements ServicioReglasDeUbicacion 
   private final ServicioZonaExclusion servicioZonaExclusion;
   // Se instancia directo porque no tiene dependencias propias; no se inyecta por constructor.
   private final ServicioColisiones servicioColisiones = new ServicioColisionesImpl();
+  private final RelacionSillaMesa relacionSillaMesa = new RelacionSillaMesa();
 
   public ServicioReglasDeUbicacionImpl(ServicioZonaExclusion servicioZonaExclusion) {
     this.servicioZonaExclusion = servicioZonaExclusion;
@@ -174,6 +175,9 @@ public class ServicioReglasDeUbicacionImpl implements ServicioReglasDeUbicacion 
       return true;
     }
     for (MuebleUbicado otro : mueblesUbicados) {
+      if (relacionSillaMesa.formanPareja(candidato, otro)) {
+        continue;
+      }
       if (dejaUnPasilloEstrechoCon(candidato, otro, minimo, frente)) {
         return true;
       }

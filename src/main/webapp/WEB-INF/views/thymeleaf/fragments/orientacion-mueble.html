@@ -1,6 +1,6 @@
 <svg xmlns:th="http://www.thymeleaf.org">
-    <path th:fragment="indicador(ubicado, ambiente)"
-          th:with="frente=${@indicadorOrientacion.frente(ubicado, ambiente)},
+    <path th:fragment="indicador(ubicado, ambiente, muebles)"
+          th:with="frente=${@indicadorOrientacion.frente(ubicado, ambiente, muebles)},
                    centroX=${ubicado.posicionX + ubicado.mueble.ancho / 2},
                    centroY=${ubicado.posicionY + ubicado.mueble.largo / 2}"
           class="plano-orientacion"

@@ -13,6 +13,7 @@ public class CategoriaDeMueble {
   private Long id;
 
   private String nombre;
+  private String etiqueta;
   private Double anchoPromedio;
   private Double profundidadPromedio;
 
@@ -30,6 +31,14 @@ public class CategoriaDeMueble {
 
   public String getNombre() {
     return nombre;
+  }
+
+  public String getEtiqueta() {
+    return etiqueta;
+  }
+
+  public void setEtiqueta(String etiqueta) {
+    this.etiqueta = etiqueta;
   }
 
   public Double getAnchoPromedio() {

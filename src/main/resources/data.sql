@@ -10,24 +10,24 @@ INSERT INTO TipoDeAmbiente(id, nombre) VALUES
                                            (5, 'Comedor'),
                                            (6, 'Personalizado');
 
-INSERT INTO CategoriaDeMueble(id, nombre, anchoPromedio, profundidadPromedio) VALUES
-                                                                                  (1, 'Biblioteca', 0.80, 0.35),
-                                                                                  (2, 'Cama doble', 1.40, 1.90),
-                                                                                  (3, 'Cama individual', 0.90, 1.90),
-                                                                                  (4, 'Cama queen', 1.60, 2.00),
-                                                                                  (5, 'Escritorio', 1.20, 0.60),
-                                                                                  (6, 'Mesa de comedor', 1.60, 0.90),
-                                                                                  (7, 'Mesa de luz', 0.50, 0.40),
-                                                                                  (8, 'Mesa ratona', 1.10, 0.60),
-                                                                                  (9, 'Placard', 1.80, 0.60),
-                                                                                  (10, 'Rack de TV', 1.60, 0.40),
-                                                                                  (11, 'Silla', 0.45, 0.50),
-                                                                                  (12, 'Sillón', 0.80, 0.85),
-                                                                                  (13, 'Sofá 3 cuerpos', 2.10, 0.90),
-                                                                                  (14, 'Lampara de pie', 0.40, 0.40),
-                                                                                  (15, 'Lampara de mesa', 0.30, 0.30),
-                                                                                  (16, 'Alacena', 1.20, 0.50),
-                                                                                  (17, 'Zapatero', 1.00, 0.30);
+INSERT INTO CategoriaDeMueble(id, nombre, anchoPromedio, profundidadPromedio, etiqueta) VALUES
+                                                                                  (1, 'Biblioteca', 0.80, 0.35, NULL),
+                                                                                  (2, 'Cama doble', 1.40, 1.90, 'Cama'),
+                                                                                  (3, 'Cama individual', 0.90, 1.90, NULL),
+                                                                                  (4, 'Cama queen', 1.60, 2.00, NULL),
+                                                                                  (5, 'Escritorio', 1.20, 0.60, NULL),
+                                                                                  (6, 'Mesa de comedor', 1.60, 0.90, 'Mesa'),
+                                                                                  (7, 'Mesa de luz', 0.50, 0.40, NULL),
+                                                                                  (8, 'Mesa ratona', 1.10, 0.60, NULL),
+                                                                                  (9, 'Placard', 1.80, 0.60, NULL),
+                                                                                  (10, 'Rack de TV', 1.60, 0.40, 'TV'),
+                                                                                  (11, 'Silla', 0.45, 0.50, NULL),
+                                                                                  (12, 'Sillón', 0.80, 0.85, NULL),
+                                                                                  (13, 'Sofá 3 cuerpos', 2.10, 0.90, 'Sofá'),
+                                                                                  (14, 'Lampara de pie', 0.40, 0.40, NULL),
+                                                                                  (15, 'Lampara de mesa', 0.30, 0.30, NULL),
+                                                                                  (16, 'Alacena', 1.20, 0.50, NULL),
+                                                                                  (17, 'Zapatero', 1.00, 0.30, NULL);
 
 INSERT INTO Material(id, nombre, sostenible) VALUES
                                                  (1, 'Madera certificada', true),

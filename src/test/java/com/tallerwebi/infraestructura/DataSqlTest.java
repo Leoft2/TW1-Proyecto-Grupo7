@@ -116,6 +116,26 @@ public class DataSqlTest {
 
   @Test
   @Transactional
+  public void deberiaSembrarLasEtiquetasCortasCuandoArrancaLaAplicacion() {
+    // Given: las etiquetas cortas estan definidas en data.sql
+
+    // When
+    List<String> etiquetas = this.cuandoConsultoLasEtiquetasSembradas();
+
+    // Then
+    assertThat(
+      etiquetas,
+      containsInAnyOrder(
+        "Cama doble=Cama",
+        "Mesa de comedor=Mesa",
+        "Rack de TV=TV",
+        "Sofá 3 cuerpos=Sofá"
+      )
+    );
+  }
+
+  @Test
+  @Transactional
   public void dadoQueArrancaLaAplicacion_cuandoConsultoElCatalogo_entoncesTodosLosMueblesTienenTipoDeAmbiente() {
     List<String> mueblesSinTipo =
       this.obtenerMuebles()
@@ -603,6 +623,14 @@ public class DataSqlTest {
     return this.sessionFactory.getCurrentSession()
       .createQuery("FROM Ambiente", Ambiente.class)
       .getResultList();
+  }
+
+  private List<String> cuandoConsultoLasEtiquetasSembradas() {
+    return this.obtenerCategorias()
+      .stream()
+      .filter(categoria -> categoria.getEtiqueta() != null)
+      .map(categoria -> categoria.getNombre() + "=" + categoria.getEtiqueta())
+      .toList();
   }
 
   private List<CategoriaDeMueble> obtenerCategorias() {

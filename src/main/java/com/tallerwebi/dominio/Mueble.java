@@ -123,6 +123,18 @@ public class Mueble {
     return this.nombre;
   }
 
+  public String getNombreVisible() {
+    if (categoriaDeMueble == null) {
+      return nombre;
+    }
+    String etiqueta = categoriaDeMueble.getEtiqueta();
+    if (etiqueta != null && !etiqueta.isBlank()) {
+      return etiqueta;
+    }
+    String categoria = categoriaDeMueble.getNombre();
+    return categoria != null && !categoria.isBlank() ? categoria : nombre;
+  }
+
   public void setDescripcion(String descripcion) {
     this.descripcion = descripcion;
   }

@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 
 import com.tallerwebi.dominio.Ambiente;
+import com.tallerwebi.dominio.CategoriaDeMueble;
 import com.tallerwebi.dominio.Mueble;
 import com.tallerwebi.dominio.TipoDeAmbiente;
 import java.io.File;
@@ -55,6 +56,20 @@ public class VistaMueblesTest {
     assertThat(html, containsString("Cama matrimonial"));
     assertThat(html, containsString("2.0 m x 1.6 m"));
     assertThat(html, containsString("/mueble/7"));
+  }
+
+  @Test
+  public void deberiaMostrarLaEtiquetaSimpleCuandoElMuebleTieneCategoriaConEtiqueta() {
+    Mueble cama = new Mueble("Cama Boho", 2.0, 1.6);
+    CategoriaDeMueble camaDoble = new CategoriaDeMueble("Cama doble", 1.4, 1.9);
+    camaDoble.setEtiqueta("Cama");
+    cama.setCategoriaDeMueble(camaDoble);
+    Ambiente dormitorio = new Ambiente(4.0, 3.0, new TipoDeAmbiente("Habitación"));
+    dormitorio.agregarMueble(cama);
+
+    String html = this.cuandoMiroLaVistaDeMuebles(dormitorio);
+
+    assertThat(html, containsString(">Cama</td>"));
   }
 
   @Test

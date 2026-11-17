@@ -248,7 +248,7 @@
                     <g th:each="ubicado, i : ${plano.muebles}" class="plano-mueble plano-mueble-arrastrable"
                        th:attr="data-indice=${i.index},data-posicion-x=${ubicado.posicionX},
                                 data-posicion-y=${ubicado.posicionY},data-anclado=${ubicado.anclado},
-                                aria-label=${'Seleccionar ' + ubicado.mueble.nombre}"
+                                aria-label=${'Seleccionar ' + ubicado.mueble.nombreVisible}"
                        tabindex="0" role="button" aria-pressed="false"
                        th:classappend="${ubicado.enConflicto} ? 'plano-mueble-conflicto'">
                         <title th:if="${ubicado.enConflicto}"
@@ -269,7 +269,7 @@
                               th:attr="x=${ubicado.posicionX + (ubicado.mueble.ancho / 2)},
                                        y=${ubicado.posicionY + (ubicado.mueble.largo / 2)},
                                        font-size=${0.16}"
-                              th:text="${ubicado.mueble.nombre}">Sofa
+                              th:text="${ubicado.mueble.nombreVisible}">Sofa
                         </text>
                         <text th:replace="~{fragments/orientacion-mueble :: indicador(${ubicado}, ${plano.ambiente}, ${plano.muebles})}"></text>
                     </g>
@@ -322,7 +322,7 @@
                     </thead>
                     <tbody>
                     <tr th:each="ubicado, i : ${plano.muebles}" th:attr="data-indice=${i.index}">
-                        <td th:text="${ubicado.mueble.nombre}">Sofa</td>
+                        <td th:text="${ubicado.mueble.nombreVisible}">Sofa</td>
                         <td th:text="${#numbers.formatDecimal(ubicado.mueble.ancho, 1, 1)}">2,1</td>
                         <td th:text="${#numbers.formatDecimal(ubicado.mueble.largo, 1, 1)}">0,9</td>
                         <td class="plano-posicion-x" th:text="${#numbers.formatDecimal(ubicado.posicionX, 1, 1)}">0,0</td>
@@ -364,7 +364,7 @@
                     </thead>
                     <tbody>
                     <tr th:each="excluido, i : ${plano.mueblesExcluidos}">
-                        <td th:text="${excluido.nombre}">Sillon</td>
+                        <td th:text="${excluido.nombreVisible}">Sillon</td>
                         <td th:with="motivo=${i.index < #lists.size(plano.motivosDeExclusion) ? plano.motivosDeExclusion[i.index] : ''}"
                             th:text="${motivo}">No entra en el perimetro
                         </td>

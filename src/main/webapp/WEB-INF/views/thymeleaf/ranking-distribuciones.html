@@ -52,14 +52,14 @@
                                           height=${opcion.plano.ambiente.largo}"
                       fill="#f3eee6" stroke="#5d6259" stroke-width="0.04"></rect>
                 <g th:each="ubicado : ${opcion.plano.muebles}">
-                    <title th:text="${ubicado.mueble.nombre}">Mueble</title>
+                    <title th:text="${ubicado.mueble.nombreVisible}">Mueble</title>
                     <rect th:attr="x=${ubicado.posicionX}, y=${ubicado.posicionY},
                                    width=${ubicado.mueble.ancho}, height=${ubicado.mueble.largo}"
                           fill="#d6e2d7" stroke="#536657" stroke-width="0.03"></rect>
                     <text th:attr="x=${ubicado.posicionX + ubicado.mueble.ancho / 2},
                                   y=${ubicado.posicionY + ubicado.mueble.largo / 2}"
                           text-anchor="middle" dominant-baseline="middle"
-                          font-size="0.16" th:text="${ubicado.mueble.nombre}">Cama</text>
+                          font-size="0.16" th:text="${ubicado.mueble.nombreVisible}">Cama</text>
                     <text th:replace="~{fragments/orientacion-mueble :: indicador(${ubicado}, ${opcion.plano.ambiente}, ${opcion.plano.muebles})}"></text>
                 </g>
             </svg>

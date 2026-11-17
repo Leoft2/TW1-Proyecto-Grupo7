@@ -38,7 +38,7 @@
         <ul th:if="${!#lists.isEmpty(ambiente.muebles)}" class="list-unstyled hb-lista-muebles">
           <li th:each="mueble : ${ambiente.muebles}">
             <i class="bi bi-diamond-fill"></i>
-            <a th:href="@{/mueble/{id}(id=${mueble.id})}" th:text="${mueble.nombre}">Cama</a>
+            <a th:href="@{/mueble/{id}(id=${mueble.id})}" th:text="${mueble.nombreVisible}">Cama</a>
           </li>
         </ul>
         <p th:if="${#lists.isEmpty(ambiente.muebles)}" class="text-secondary mb-0">Este ambiente todavía no tiene muebles.</p>

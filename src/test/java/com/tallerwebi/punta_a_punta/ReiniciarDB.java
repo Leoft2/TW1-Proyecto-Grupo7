@@ -15,6 +15,14 @@ public class ReiniciarDB {
         : "user";
 
       String sqlCommands =
+        "DELETE FROM MuebleUbicado;\n" +
+        "DELETE FROM plano_muebles_excluidos;\n" +
+        "DELETE FROM plano_motivos_exclusion;\n" +
+        "DELETE FROM Plano;\n" +
+        "DELETE FROM ambiente_muebles;\n" +
+        "DELETE FROM ambiente_aberturas;\n" +
+        "DELETE FROM ambiente_obstaculos;\n" +
+        "DELETE FROM Ambiente;\n" +
         "DELETE FROM Usuario;\n" +
         "ALTER TABLE Usuario AUTO_INCREMENT = 1;\n" +
         "INSERT INTO Usuario(id, email, password, rol, activo) VALUES\n" +

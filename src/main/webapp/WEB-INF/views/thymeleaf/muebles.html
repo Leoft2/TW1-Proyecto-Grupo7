@@ -31,7 +31,7 @@
           </thead>
           <tbody>
             <tr th:each="mueble : ${muebles}">
-              <td class="ps-4 fw-semibold" th:text="${mueble.nombre}">Cama</td>
+              <td class="ps-4 fw-semibold" th:text="${mueble.nombreVisible}">Cama</td>
               <td>
                 <span class="hb-chip" th:if="${mueble.ancho != null and mueble.largo != null}"
                   th:text="${mueble.ancho} + ' m x ' + ${mueble.largo} + ' m'">2.0 m x 1.6 m</span>

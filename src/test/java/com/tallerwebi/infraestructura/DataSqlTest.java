@@ -1,6 +1,7 @@
 package com.tallerwebi.infraestructura;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
@@ -21,6 +22,7 @@ import com.tallerwebi.dominio.FormaPintura;
 import com.tallerwebi.dominio.Litros;
 import com.tallerwebi.dominio.Material;
 import com.tallerwebi.dominio.Mueble;
+import com.tallerwebi.dominio.Plano;
 import com.tallerwebi.dominio.RecomendacionPintura;
 import com.tallerwebi.dominio.RepositorioAmbiente;
 import com.tallerwebi.dominio.ServicioCatalogo;
@@ -31,6 +33,7 @@ import com.tallerwebi.dominio.TipoDeAmbiente;
 import com.tallerwebi.dominio.Usuario;
 import com.tallerwebi.dominio.excepcion.PresupuestoNegativoException;
 import jakarta.transaction.Transactional;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -186,7 +189,7 @@ public class DataSqlTest {
   public void dadoQueArrancaLaAplicacion_cuandoConsultoLosAmbientes_entoncesElUsuarioDeTestTieneAmbientesConTipo() {
     List<Ambiente> ambientes = this.obtenerAmbientes();
 
-    assertThat(ambientes, hasSize(8));
+    assertThat(ambientes, hasSize(10));
     List<String> tipos = new ArrayList<>();
     for (Ambiente ambiente : ambientes) {
       assertThat(ambiente.getUsuario(), is(notNullValue()));
@@ -205,7 +208,7 @@ public class DataSqlTest {
 
     List<Ambiente> ambientes = repositorioAmbiente.obtenerAmbientesDe("test@unlam.edu.ar");
 
-    assertThat(ambientes, hasSize(8));
+    assertThat(ambientes, hasSize(10));
     assertThat(
       nombresDeMueblesDe(ambientes.get(0)),
       containsInAnyOrder("Cama Boho", "Escritorio Minimalista", "Lámpara de Mesa Japandi")
@@ -236,6 +239,156 @@ public class DataSqlTest {
     }
 
     assertThat(formas, is(EnumSet.allOf(FormaPintura.class)));
+  }
+
+  @Test
+  @Transactional
+  public void deberiaSembrarDosVersionesDePlanoCuandoConsultoElHistorial() {
+    List<Plano> versiones = this.cuandoConsultoElHistorialDelUsuarioDeTest();
+
+    assertThat(versiones, hasSize(2));
+  }
+
+  @Test
+  @Transactional
+  public void deberiaTenerLaVersionMasNuevaComoActivaCuandoConsultoElHistorial() {
+    List<Plano> versiones = this.cuandoConsultoElHistorialDelUsuarioDeTest();
+
+    assertThat(versiones.get(0).isActiva(), is(true));
+  }
+
+  @Test
+  @Transactional
+  public void deberiaSembrarLasVersionesConSusFechasCuandoConsultoElHistorial() {
+    List<LocalDateTime> fechas =
+      this.cuandoConsultoElHistorialDelUsuarioDeTest()
+        .stream()
+        .map(Plano::getFechaDeCreacion)
+        .toList();
+
+    assertThat(
+      fechas,
+      containsInAnyOrder(
+        LocalDateTime.of(2026, 11, 10, 9, 15),
+        LocalDateTime.of(2026, 11, 12, 18, 40)
+      )
+    );
+  }
+
+  @Test
+  @Transactional
+  public void deberiaSembrarOchoMueblesEnLaVersionMasViejaCuandoConsultoElHistorial() {
+    List<Plano> versiones = this.cuandoConsultoElHistorialDelUsuarioDeTest();
+
+    assertThat(versiones.get(1).getMuebles(), hasSize(8));
+  }
+
+  @Test
+  @Transactional
+  public void deberiaSembrarNueveMueblesEnLaVersionMasNuevaCuandoConsultoElHistorial() {
+    List<Plano> versiones = this.cuandoConsultoElHistorialDelUsuarioDeTest();
+
+    assertThat(versiones.get(0).getMuebles(), hasSize(9));
+  }
+
+  @Test
+  @Transactional
+  public void deberiaSembrarDosMesasCincoSillasYUnaCamaDobleEnLaVersionMasViejaCuandoConsultoElHistorial() {
+    List<Plano> versiones = this.cuandoConsultoElHistorialDelUsuarioDeTest();
+
+    assertThat(
+      this.nombresDeLosMueblesUbicados(versiones.get(1)),
+      containsInAnyOrder(
+        "Mesa de Comedor Japandi",
+        "Mesa de Comedor Industrial",
+        "Silla de Comedor Retro",
+        "Silla de Comedor Retro",
+        "Silla de Comedor Retro",
+        "Silla de Comedor Retro",
+        "Silla de Comedor Retro",
+        "Cama Boho"
+      )
+    );
+  }
+
+  @Test
+  @Transactional
+  public void deberiaSembrarUnaBibliotecaAdemasDeLosMueblesDeLaVersionMasViejaCuandoConsultoElHistorial() {
+    List<Plano> versiones = this.cuandoConsultoElHistorialDelUsuarioDeTest();
+
+    assertThat(
+      this.nombresDeLosMueblesUbicados(versiones.get(0)),
+      containsInAnyOrder(
+        "Mesa de Comedor Japandi",
+        "Mesa de Comedor Industrial",
+        "Silla de Comedor Retro",
+        "Silla de Comedor Retro",
+        "Silla de Comedor Retro",
+        "Silla de Comedor Retro",
+        "Silla de Comedor Retro",
+        "Cama Boho",
+        "Biblioteca Minimalista"
+      )
+    );
+  }
+
+  @Test
+  @Transactional
+  public void deberiaSembrarElAmbienteDeDiezPorDiezConSuAlturaYPasilloCuandoConsultoElHistorial() {
+    Ambiente ambiente = this.cuandoConsultoElHistorialDelUsuarioDeTest().get(1).getAmbiente();
+
+    assertThat(
+      List.of(
+        ambiente.getAncho(),
+        ambiente.getLargo(),
+        ambiente.getAltura(),
+        ambiente.getAnchoMinimoDePasillo()
+      ),
+      contains(10.0, 10.0, 2.7, 0.6)
+    );
+  }
+
+  @Test
+  @Transactional
+  public void deberiaSembrarLaPuertaYLaVentanaCuandoConsultoElAmbienteDelHistorial() {
+    Ambiente ambiente = this.cuandoConsultoElHistorialDelUsuarioDeTest().get(1).getAmbiente();
+
+    assertThat(
+      this.descripcionesDeAberturas(ambiente),
+      containsInAnyOrder("PUERTA:IZQUIERDO:0.3:1.0:1.0", "VENTANA:DERECHO:1.0:2.0:2.0")
+    );
+  }
+
+  @Test
+  @Transactional
+  public void deberiaSembrarLaTomaDeCorrienteCuandoConsultoElAmbienteDelHistorial() {
+    Ambiente ambiente = this.cuandoConsultoElHistorialDelUsuarioDeTest().get(1).getAmbiente();
+
+    assertThat(
+      this.descripcionesDeObstaculos(ambiente),
+      contains("TOMA_DE_CORRIENTE:IZQUIERDO:1.6:0.15:0.1")
+    );
+  }
+
+  @Test
+  @Transactional
+  public void deberiaSembrarLasMedidasDelCatalogoEnMetrosCuandoConsultoLaCamaBoho() {
+    Mueble cama = this.cuandoConsultoElMueblePorNombre("Cama Boho");
+
+    assertThat(List.of(cama.getAncho(), cama.getLargo()), contains(1.4, 1.9));
+  }
+
+  @Test
+  @Transactional
+  public void deberiaTenerTodasLasMedidasDelCatalogoEnMetrosCuandoConsultoLosMueblesSembrados() {
+    List<String> mueblesConMedidasEnCentimetros =
+      this.obtenerMuebles()
+        .stream()
+        .filter(mueble -> mueble.getAncho() > 3.0 || mueble.getLargo() > 3.0)
+        .map(Mueble::getNombre)
+        .toList();
+
+    assertThat(mueblesConMedidasEnCentimetros, empty());
   }
 
   @Test
@@ -383,6 +536,56 @@ public class DataSqlTest {
       this.sessionFactory.getCurrentSession().get(BaldePintura.class, balde.getId());
 
     assertThat(recargado.getOpcionesLitros(), is("4,10"));
+  }
+
+  // El historial viene ordenado de la version mas nueva a la mas vieja.
+  private List<Plano> cuandoConsultoElHistorialDelUsuarioDeTest() {
+    return new RepositorioPlanoImpl(this.sessionFactory).buscarHistorialDe("test@unlam.edu.ar");
+  }
+
+  private Mueble cuandoConsultoElMueblePorNombre(String nombre) {
+    return this.sessionFactory.getCurrentSession()
+      .createQuery("FROM Mueble WHERE nombre = :nombre", Mueble.class)
+      .setParameter("nombre", nombre)
+      .getSingleResult();
+  }
+
+  private List<String> nombresDeLosMueblesUbicados(Plano plano) {
+    return plano.getMuebles().stream().map(ubicado -> ubicado.getMueble().getNombre()).toList();
+  }
+
+  private List<String> descripcionesDeAberturas(Ambiente ambiente) {
+    return ambiente
+      .getAberturas()
+      .stream()
+      .map(abertura ->
+        String.format(
+          "%s:%s:%s:%s:%s",
+          abertura.getTipo(),
+          abertura.getMuro(),
+          abertura.getPosicion(),
+          abertura.getAncho(),
+          abertura.getRadioDeGiro()
+        )
+      )
+      .toList();
+  }
+
+  private List<String> descripcionesDeObstaculos(Ambiente ambiente) {
+    return ambiente
+      .getObstaculos()
+      .stream()
+      .map(obstaculo ->
+        String.format(
+          "%s:%s:%s:%s:%s",
+          obstaculo.getTipo(),
+          obstaculo.getMuro(),
+          obstaculo.getPosicion(),
+          obstaculo.getAncho(),
+          obstaculo.getProfundidad()
+        )
+      )
+      .toList();
   }
 
   private Usuario obtenerUsuario(String email) {

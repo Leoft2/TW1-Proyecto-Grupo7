@@ -7,7 +7,8 @@ INSERT INTO TipoDeAmbiente(id, nombre) VALUES
                                            (2, 'Habitación'),
                                            (3, 'Pasillo'),
                                            (4, 'Cocina'),
-                                           (5, 'Comedor');
+                                           (5, 'Comedor'),
+                                           (6, 'Personalizado');
 
 INSERT INTO CategoriaDeMueble(id, nombre, anchoPromedio, profundidadPromedio) VALUES
                                                                                   (1, 'Biblioteca', 0.80, 0.35),
@@ -38,25 +39,26 @@ INSERT INTO Material(id, nombre, sostenible) VALUES
                                                  (7, 'Plástico', false),
                                                  (8, 'Otro', false);
 
+-- Las medidas estan en metros, igual que en el alta de inventario y en el plano 2D.
 INSERT INTO Mueble(id, nombre, descripcion, precio, ancho, largo, estilo, material_id, categoria_de_mueble_id, enCatalogo) VALUES
-                                                                                                                               (1, 'Sillón Retró', 'Sillón de voluteadas tapizado en terciopelo color mostaza, con patas de madera maciza.', 85000.0, 85.0, 80.0, 'Retro', 4, 12, true),
-                                                                                                                               (2, 'Lámpara de Pie Retro', 'Lámpara de pie con pantalla de tela y base de metal esmaltado, para rincón de lectura.', 25000.0, 40.0, 40.0, 'Retro', 5, 14, true),
-                                                                                                                               (3, 'Escritorio Minimalista', 'Escritorio de melamina clara con cajones y un solo cajón para documentos.', 120000.0, 120.0, 60.0, 'Minimalista', 6, 5, true),
-                                                                                                                               (4, 'Biblioteca Minimalista', 'Biblioteca abierta de cinco estantes en madera clara, ideal para pocos libros.', 95000.0, 80.0, 30.0, 'Minimalista', 1, 1, true),
-                                                                                                                               (5, 'Mesa de Comedor Japandi', 'Mesa de comedor con tablero de madera maciza y patas cónicas de línea simple.', 150000.0, 160.0, 90.0, 'Japandi', 1, 6, true),
-                                                                                                                               (6, 'Sillón Japandi', 'Sillón bajo con cojines de lino natural y estructura de madera clara.', 60000.0, 90.0, 80.0, 'Japandi', 1, 12, true),
-                                                                                                                               (7, 'Estantería Industrial', 'Estantería de hierro y madera con estantes reforzados, estilo fábrica.', 75000.0, 100.0, 35.0, 'Industrial', 2, 1, true),
-                                                                                                                               (8, 'Cama Boho', 'Cama doble con dosel de telas livianas y estructura de madera clara.', 180000.0, 140.0, 190.0, 'Boho', 1, 2, true),
-                                                                                                                               (9, 'Escritorio Escandinavo', 'Escritorio de líneas escandinavas, con terminación clara y tiradores redondos.', 110000.0, 120.0, 60.0, 'Escandinavo', 1, 5, true),
-                                                                                                                               (10, 'Silla de Comedor Retro', 'Silla de comedor con estructura de madera curvada y asiento tapizado en tela afrutada.', 35000.0, 45.0, 50.0, 'Retro', 4, 11, true),
-                                                                                                                               (11, 'Mesada de Cocina Minimalista', 'Mesada de cocina con cajones ocultos y superficie continua sin tiradores.', 88000.0, 180.0, 60.0, 'Minimalista', 6, 7, true),
-                                                                                                                               (12, 'Mesa de Comedor Industrial', 'Mesa de comedor con estructura de hierro negro y tablero de madera rústica.', 135000.0, 180.0, 90.0, 'Industrial', 2, 6, true),
-                                                                                                                               (13, 'Cama Escandinava', 'Cama de madera clara con cabecero de listones y patas afinadas.', 165000.0, 140.0, 190.0, 'Escandinavo', 1, 2, true),
-                                                                                                                               (14, 'Butaca Boho', 'Butaca con flecos de algodón, cojines estampados y patas de madera tallada.', 48000.0, 75.0, 75.0, 'Boho', 4, 12, true),
-                                                                                                                               (15, 'Lámpara de Mesa Japandi', 'Lámpara de mesa con pantalla de papel de arroz y base de cerámica mate.', 18000.0, 30.0, 30.0, 'Japandi', 3, 15, true),
-                                                                                                                               (16, 'Zapatero Escandinavo', 'Zapatero bajo de madera clara con cajón y patas cónicas, ideal para pasillo.', 52000.0, 80.0, 30.0, 'Escandinavo', 1, 17, true),
-                                                                                                                               (17, 'Escritorio Boho', 'Escritorio de madera con detalle trenzado en las laterales y cajón espacioso.', 98000.0, 110.0, 55.0, 'Boho', 3, 17, true),
-                                                                                                                               (18, 'Alacena Industrial', 'Alacena cerrada de hierro y madera, ideal para ordenar la cocina.', 70000.0, 90.0, 40.0, 'Industrial', 5, 16, true);
+                                                                                                                               (1, 'Sillón Retró', 'Sillón de voluteadas tapizado en terciopelo color mostaza, con patas de madera maciza.', 85000.0, 0.85, 0.80, 'Retro', 4, 12, true),
+                                                                                                                               (2, 'Lámpara de Pie Retro', 'Lámpara de pie con pantalla de tela y base de metal esmaltado, para rincón de lectura.', 25000.0, 0.40, 0.40, 'Retro', 5, 14, true),
+                                                                                                                               (3, 'Escritorio Minimalista', 'Escritorio de melamina clara con cajones y un solo cajón para documentos.', 120000.0, 1.20, 0.60, 'Minimalista', 6, 5, true),
+                                                                                                                               (4, 'Biblioteca Minimalista', 'Biblioteca abierta de cinco estantes en madera clara, ideal para pocos libros.', 95000.0, 0.80, 0.30, 'Minimalista', 1, 1, true),
+                                                                                                                               (5, 'Mesa de Comedor Japandi', 'Mesa de comedor con tablero de madera maciza y patas cónicas de línea simple.', 150000.0, 1.60, 0.90, 'Japandi', 1, 6, true),
+                                                                                                                               (6, 'Sillón Japandi', 'Sillón bajo con cojines de lino natural y estructura de madera clara.', 60000.0, 0.90, 0.80, 'Japandi', 1, 12, true),
+                                                                                                                               (7, 'Estantería Industrial', 'Estantería de hierro y madera con estantes reforzados, estilo fábrica.', 75000.0, 1.00, 0.35, 'Industrial', 2, 1, true),
+                                                                                                                               (8, 'Cama Boho', 'Cama doble con dosel de telas livianas y estructura de madera clara.', 180000.0, 1.40, 1.90, 'Boho', 1, 2, true),
+                                                                                                                               (9, 'Escritorio Escandinavo', 'Escritorio de líneas escandinavas, con terminación clara y tiradores redondos.', 110000.0, 1.20, 0.60, 'Escandinavo', 1, 5, true),
+                                                                                                                               (10, 'Silla de Comedor Retro', 'Silla de comedor con estructura de madera curvada y asiento tapizado en tela afrutada.', 35000.0, 0.45, 0.50, 'Retro', 4, 11, true),
+                                                                                                                               (11, 'Mesada de Cocina Minimalista', 'Mesada de cocina con cajones ocultos y superficie continua sin tiradores.', 88000.0, 1.80, 0.60, 'Minimalista', 6, 7, true),
+                                                                                                                               (12, 'Mesa de Comedor Industrial', 'Mesa de comedor con estructura de hierro negro y tablero de madera rústica.', 135000.0, 1.80, 0.90, 'Industrial', 2, 6, true),
+                                                                                                                               (13, 'Cama Escandinava', 'Cama de madera clara con cabecero de listones y patas afinadas.', 165000.0, 1.40, 1.90, 'Escandinavo', 1, 2, true),
+                                                                                                                               (14, 'Butaca Boho', 'Butaca con flecos de algodón, cojines estampados y patas de madera tallada.', 48000.0, 0.75, 0.75, 'Boho', 4, 12, true),
+                                                                                                                               (15, 'Lámpara de Mesa Japandi', 'Lámpara de mesa con pantalla de papel de arroz y base de cerámica mate.', 18000.0, 0.30, 0.30, 'Japandi', 3, 15, true),
+                                                                                                                               (16, 'Zapatero Escandinavo', 'Zapatero bajo de madera clara con cajón y patas cónicas, ideal para pasillo.', 52000.0, 0.80, 0.30, 'Escandinavo', 1, 17, true),
+                                                                                                                               (17, 'Escritorio Boho', 'Escritorio de madera con detalle trenzado en las laterales y cajón espacioso.', 98000.0, 1.10, 0.55, 'Boho', 3, 17, true),
+                                                                                                                               (18, 'Alacena Industrial', 'Alacena cerrada de hierro y madera, ideal para ordenar la cocina.', 70000.0, 0.90, 0.40, 'Industrial', 5, 16, true);
 
 INSERT INTO mueble_tipos_de_ambiente(mueble_id, tipo_de_ambiente_id) VALUES
                                                                          (1, 1),
@@ -90,18 +92,29 @@ INSERT INTO mueble_tipos_de_ambiente(mueble_id, tipo_de_ambiente_id) VALUES
 -- 1: paredes por la mitad, 2: todas las paredes de un color, 3: techo de un color,
 -- 4: pared opuesta a la puerta, 5: paredes opuestas, 6: techo y pared opuesta,
 -- 7: todo de un color, 8: todo menos una pared.
-INSERT INTO Ambiente(id, ancho, largo, altura, tipo_de_ambiente_id, usuario_id) VALUES
-                                                                                    (1, 4.0, 4.0, 3.3, 2, 1),
-                                                                                    (2, 5.0, 3.0, 2.7, 4, 1),
-                                                                                    (3, 4.0, 4.0, 3.0, 1, 1),
-                                                                                    (4, 2.0, 6.0, 2.7, 3, 1),
-                                                                                    (5, 6.0, 3.0, 2.7, 5, 1),
-                                                                                    (6, 3.0, 6.0, 2.7, 2, 1),
-                                                                                    (7, 2.5, 2.5, 2.7, 4, 1),
-                                                                                    (8, 4.0, 4.0, 2.7, 1, 1);
+-- 9 y 10 son los ambientes personalizados de las dos versiones del historial de planos.
+INSERT INTO Ambiente(id, ancho, largo, altura, anchoMinimoDePasillo, tipo_de_ambiente_id, usuario_id) VALUES
+                                                                                    (1, 4.0, 4.0, 3.3, null, 2, 1),
+                                                                                    (2, 5.0, 3.0, 2.7, null, 4, 1),
+                                                                                    (3, 4.0, 4.0, 3.0, null, 1, 1),
+                                                                                    (4, 2.0, 6.0, 2.7, null, 3, 1),
+                                                                                    (5, 6.0, 3.0, 2.7, null, 5, 1),
+                                                                                    (6, 3.0, 6.0, 2.7, null, 2, 1),
+                                                                                    (7, 2.5, 2.5, 2.7, null, 4, 1),
+                                                                                    (8, 4.0, 4.0, 2.7, null, 1, 1),
+                                                                                    (9, 10.0, 10.0, 2.7, 0.6, 6, 1),
+                                                                                    (10, 10.0, 10.0, 2.7, 0.6, 6, 1);
 
 INSERT INTO ambiente_aberturas(ambiente_id, tipo, muro, posicion, ancho, radioDeGiro) VALUES
-    (4, 'PUERTA', 'INFERIOR', 0.5, 0.8, 0.8);
+    (4, 'PUERTA', 'INFERIOR', 0.5, 0.8, 0.8),
+    (9, 'PUERTA', 'IZQUIERDO', 0.3, 1.0, 1.0),
+    (9, 'VENTANA', 'DERECHO', 1.0, 2.0, 2.0),
+    (10, 'PUERTA', 'IZQUIERDO', 0.3, 1.0, 1.0),
+    (10, 'VENTANA', 'DERECHO', 1.0, 2.0, 2.0);
+
+INSERT INTO ambiente_obstaculos(ambiente_id, tipo, muro, posicion, ancho, profundidad) VALUES
+    (9, 'TOMA_DE_CORRIENTE', 'IZQUIERDO', 1.6, 0.15, 0.1),
+    (10, 'TOMA_DE_CORRIENTE', 'IZQUIERDO', 1.6, 0.15, 0.1);
 
 INSERT INTO ambiente_muebles(ambiente_id, mueble_id) VALUES
                                                          (1, 8),
@@ -122,7 +135,16 @@ INSERT INTO ambiente_muebles(ambiente_id, mueble_id) VALUES
                                                          (7, 11),
                                                          (7, 18),
                                                          (8, 6),
-                                                         (8, 14);
+                                                         (8, 14),
+                                                         (9, 5),
+                                                         (9, 12),
+                                                         (9, 10),
+                                                         (9, 8),
+                                                         (10, 5),
+                                                         (10, 12),
+                                                         (10, 10),
+                                                         (10, 8),
+                                                         (10, 4);
 
 INSERT INTO BaldePintura(nombre, colorNombre, hex, cantidadLitros, precio) VALUES
   ('Balde Mar Egeo', 'Mar Egeo', '#0191b4', 4.0, 9400.0),
@@ -145,3 +167,29 @@ INSERT INTO Litros(valor) VALUES (1.0), (4.0), (10.0), (20.0);
 
 INSERT INTO balde_litros(balde_id, litros_id)
 SELECT b.id, l.id FROM BaldePintura b CROSS JOIN Litros l;
+
+-- Historial de planos del usuario test: dos versiones del mismo ambiente personalizado.
+-- V1 (inactiva) tiene 2 mesas de comedor, 5 sillas y una cama doble.
+-- V2 (activa) repite esos muebles y suma una biblioteca.
+INSERT INTO Plano(id, ambiente_id, usuario_id, mensaje, fechaDeCreacion, activa) VALUES
+    (1, 9, 1, null, '2026-11-10 09:15:00', false),
+    (2, 10, 1, null, '2026-11-12 18:40:00', true);
+
+INSERT INTO MuebleUbicado(mueble_id, coordenadaX, coordenadaY, enConflicto, anclado, plano_id, posicion) VALUES
+    (5, 1.0, 1.0, false, false, 1, 0),
+    (12, 4.0, 1.0, false, false, 1, 1),
+    (10, 1.2, 2.2, false, false, 1, 2),
+    (10, 2.0, 2.2, false, false, 1, 3),
+    (10, 4.2, 2.2, false, false, 1, 4),
+    (10, 5.0, 2.2, false, false, 1, 5),
+    (10, 5.8, 2.2, false, false, 1, 6),
+    (8, 7.0, 6.0, false, false, 1, 7),
+    (5, 1.0, 1.0, false, false, 2, 0),
+    (12, 4.0, 1.0, false, false, 2, 1),
+    (10, 1.2, 2.2, false, false, 2, 2),
+    (10, 2.0, 2.2, false, false, 2, 3),
+    (10, 4.2, 2.2, false, false, 2, 4),
+    (10, 5.0, 2.2, false, false, 2, 5),
+    (10, 5.8, 2.2, false, false, 2, 6),
+    (8, 7.0, 6.0, false, false, 2, 7),
+    (4, 0.2, 5.0, false, false, 2, 8);

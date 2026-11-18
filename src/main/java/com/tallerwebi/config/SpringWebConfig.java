@@ -1,10 +1,13 @@
 package com.tallerwebi.config;
 
+import com.tallerwebi.dominio.ServicioAdministracionBaldesPintura;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.http.CacheControl;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -86,5 +89,12 @@ public class SpringWebConfig implements WebMvcConfigurer {
     viewResolver.setTemplateEngine(templateEngine());
     viewResolver.setCharacterEncoding("UTF-8");
     return viewResolver;
+  }
+
+  @Bean
+  public ApplicationListener<ContextRefreshedEvent> iniciadorScrapingPinturas(
+    ServicioAdministracionBaldesPintura servicioAdministracion
+  ) {
+    return new InicializadorScrapingPinturas(servicioAdministracion);
   }
 }
